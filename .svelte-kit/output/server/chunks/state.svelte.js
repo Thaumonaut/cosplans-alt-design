@@ -1,0 +1,1 @@
+import"clsx";import{at as t}from"./vendor-ui.js";import"@sveltejs/kit/internal/server";const o=t.toString().includes("$$")||/function \w+\(\) \{\}/.test(t.toString());o&&new URL("https://example.com");

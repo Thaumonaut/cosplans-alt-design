@@ -1,0 +1,112 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  /* Fresh green theme inspired by cosplay creativity */
+  --background: 145 5% 98%;
+  --foreground: 145 2% 25%;
+  --card: 0 0% 100%;
+  --card-foreground: 145 2% 25%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 145 2% 25%;
+  --primary: 145 65% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 145 5% 95%;
+  --secondary-foreground: 145 2% 25%;
+  --muted: 145 5% 96%;
+  --muted-foreground: 145 2% 55%;
+  --accent: 145 40% 88%;
+  --accent-foreground: 145 2% 25%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 145 5% 92%;
+  --input: 145 5% 96%;
+  --ring: 145 65% 50%;
+  --chart-1: 145 65% 50%;
+  --chart-2: 180 60% 75%;
+  --chart-3: 120 55% 70%;
+  --chart-4: 160 70% 60%;
+  --chart-5: 140 50% 80%;
+  --radius: 1rem;
+  --sidebar: 145 2% 99%;
+  --sidebar-foreground: 145 2% 25%;
+  --sidebar-primary: 145 65% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 145 5% 95%;
+  --sidebar-accent-foreground: 145 2% 25%;
+  --sidebar-border: 145 5% 94%;
+  --sidebar-ring: 145 65% 50%;
+}
+
+.dark {
+  /* Dark mode with calming green accents */
+  --background: 145 5% 15%;
+  --foreground: 145 5% 95%;
+  --card: 145 5% 18%;
+  --card-foreground: 145 5% 95%;
+  --popover: 145 5% 18%;
+  --popover-foreground: 145 5% 95%;
+  --primary: 145 65% 55%;
+  --primary-foreground: 145 5% 15%;
+  --secondary: 145 5% 25%;
+  --secondary-foreground: 145 5% 95%;
+  --muted: 145 5% 25%;
+  --muted-foreground: 145 2% 60%;
+  --accent: 145 30% 30%;
+  --accent-foreground: 145 5% 95%;
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 145 5% 95%;
+  --border: 145 5% 25%;
+  --input: 145 5% 25%;
+  --ring: 145 65% 55%;
+  --chart-1: 145 65% 55%;
+  --chart-2: 180 60% 75%;
+  --chart-3: 120 55% 70%;
+  --chart-4: 160 70% 65%;
+  --chart-5: 140 50% 80%;
+  --sidebar: 145 5% 18%;
+  --sidebar-foreground: 145 5% 95%;
+  --sidebar-primary: 145 65% 55%;
+  --sidebar-primary-foreground: 145 5% 15%;
+  --sidebar-accent: 145 5% 25%;
+  --sidebar-accent-foreground: 145 5% 95%;
+  --sidebar-border: 145 5% 25%;
+  --sidebar-ring: 145 65% 55%;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}

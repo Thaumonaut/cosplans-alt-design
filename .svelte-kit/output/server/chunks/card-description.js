@@ -1,0 +1,1 @@
+import{am as e,f as m}from"./vendor-ui.js";import{c as p}from"./button.js";function u(t,o){t.component(s=>{let{class:a="",children:c,$$slots:r,$$events:d,...i}=o;s.push(`<div${e({"data-slot":"card-description",class:m(p("text-muted-foreground text-sm",a)),...i})}>`),c?.(s),s.push("<!----></div>")})}export{u as C};

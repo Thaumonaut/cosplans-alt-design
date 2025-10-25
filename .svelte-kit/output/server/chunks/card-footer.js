@@ -1,0 +1,1 @@
+import{am as r,f as l}from"./vendor-ui.js";import{c as p}from"./button.js";function d(t,o){t.component(s=>{let{class:a="",children:c,$$slots:i,$$events:m,...e}=o;s.push(`<div${r({"data-slot":"card-footer",class:l(p("flex items-center px-6 [.border-t]:pt-6",a)),...e})}>`),c?.(s),s.push("<!----></div>")})}export{d as C};

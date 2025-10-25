@@ -1,0 +1,99 @@
+{
+	"/": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/accessories": [
+		"src/routes/+layout.ts"
+	],
+	"/api/events": [
+		"src/routes/api/events/+server.ts"
+	],
+	"/api/projects": [
+		"src/routes/api/projects/+server.ts"
+	],
+	"/api/projects/[id]": [
+		"src/routes/api/projects/[id]/+server.ts"
+	],
+	"/api/tasks": [
+		"src/routes/api/tasks/+server.ts"
+	],
+	"/archived": [
+		"src/routes/+layout.ts"
+	],
+	"/budget": [
+		"src/routes/+layout.ts"
+	],
+	"/calendar": [
+		"src/routes/+layout.ts"
+	],
+	"/characters": [
+		"src/routes/characters/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/dashboard": [
+		"src/routes/dashboard/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/equipment": [
+		"src/routes/+layout.ts"
+	],
+	"/events": [
+		"src/routes/+layout.ts"
+	],
+	"/ideas": [
+		"src/routes/+layout.ts"
+	],
+	"/in-progress": [
+		"src/routes/+layout.ts"
+	],
+	"/marketplace": [
+		"src/routes/+layout.ts"
+	],
+	"/materials": [
+		"src/routes/+layout.ts"
+	],
+	"/messages": [
+		"src/routes/+layout.ts"
+	],
+	"/outfits": [
+		"src/routes/+layout.ts"
+	],
+	"/photoshoots": [
+		"src/routes/+layout.ts"
+	],
+	"/planning": [
+		"src/routes/+layout.ts"
+	],
+	"/post-production": [
+		"src/routes/+layout.ts"
+	],
+	"/profile": [
+		"src/routes/+layout.ts"
+	],
+	"/projects/[id]": [
+		"src/routes/projects/[id]/+page.ts",
+		"src/routes/+layout.ts"
+	],
+	"/props": [
+		"src/routes/+layout.ts"
+	],
+	"/settings": [
+		"src/routes/+layout.ts"
+	],
+	"/settings/profile": [
+		"src/routes/+layout.ts"
+	],
+	"/settings/team": [
+		"src/routes/+layout.ts"
+	],
+	"/tasks": [
+		"src/routes/+layout.ts"
+	],
+	"/timeline": [
+		"src/routes/+layout.ts"
+	],
+	"/tools": [
+		"src/routes/+layout.ts"
+	]
+}

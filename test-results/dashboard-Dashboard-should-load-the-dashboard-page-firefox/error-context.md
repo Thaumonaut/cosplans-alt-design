@@ -1,0 +1,53 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - navigation [ref=e5]:
+    - generic [ref=e6]:
+      - img [ref=e8]
+      - generic [ref=e10]: Cosplans
+    - generic [ref=e11]:
+      - link "Sign In" [ref=e12] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Get Started" [ref=e13] [cursor=pointer]:
+        - /url: /dashboard
+  - generic [ref=e15]:
+    - heading "Track Your Cosplay Journey From Idea to Convention" [level=1] [ref=e16]
+    - paragraph [ref=e17]: Organize your cosplay projects, manage budgets, track progress, and collaborate with your team. Everything you need to bring your favorite characters to life.
+    - generic [ref=e18]:
+      - link "Start Your First Project" [ref=e19] [cursor=pointer]:
+        - /url: /dashboard
+        - text: Start Your First Project
+        - img
+      - button "View Demo" [ref=e20] [cursor=pointer]
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - heading "Everything You Need for Cosplay Success" [level=2] [ref=e23]
+      - paragraph [ref=e24]: Powerful tools designed specifically for cosplayers and costume creators
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - img [ref=e29]
+        - heading "Project Planning" [level=3] [ref=e34]
+        - paragraph [ref=e35]: Plan your builds with timelines, deadlines, and milestone tracking. Never miss a convention again.
+      - generic [ref=e36]:
+        - img [ref=e39]
+        - heading "Team Collaboration" [level=3] [ref=e44]
+        - paragraph [ref=e45]: Work together on group cosplays. Share progress, assign tasks, and coordinate builds seamlessly.
+      - generic [ref=e46]:
+        - img [ref=e49]
+        - heading "Budget Management" [level=3] [ref=e51]
+        - paragraph [ref=e52]: Track expenses, manage materials inventory, and stay within budget with detailed cost analysis.
+  - generic [ref=e54]:
+    - heading "Ready to Level Up Your Cosplay Game?" [level=2] [ref=e55]
+    - paragraph [ref=e56]: Join thousands of cosplayers who trust Cosplans to manage their projects
+    - link "Get Started for Free" [ref=e57] [cursor=pointer]:
+      - /url: /dashboard
+      - text: Get Started for Free
+      - img
+  - contentinfo [ref=e58]:
+    - generic [ref=e60]:
+      - generic [ref=e61]:
+        - img [ref=e63]
+        - generic [ref=e65]: Cosplans
+      - paragraph [ref=e66]: © 2025 Cosplans. Built for cosplayers, by cosplayers.
+```

@@ -1,0 +1,1 @@
+import{am as i,f as m}from"./vendor-ui.js";import{c as p}from"./button.js";function h(a,t){a.component(s=>{let{src:o,alt:e,class:l="",$$slots:r,$$events:n,...c}=t;s.push("<!--[-->"),s.push(`<img${i({src:o,alt:e,"data-slot":"avatar-image",class:m(p("aspect-square size-full",l)),...c})} onload="this.__e=event" onerror="this.__e=event"/>`),s.push("<!--]-->")})}export{h as A};

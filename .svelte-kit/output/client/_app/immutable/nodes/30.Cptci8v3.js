@@ -1,0 +1,1 @@
+import{f as t,h as s,a as e,$ as l}from"../chunks/CpdYPIwz.js";var r=t('<div class="container mx-auto p-6"><h1 class="text-3xl font-bold mb-6">Tools</h1> <p class="text-muted-foreground">Access cosplay tools and utilities.</p></div>');function p(o){var a=r();s(c=>{l.title="Tools - Cosplay Tracker"}),e(o,a)}export{p as component};
