@@ -63,3 +63,30 @@ bun.lockb
 
 
 /cosplans-old
+cosplay-tracker-react/
+.svelte-kit/*
+.svelte-kit/generated/client/app.js
+.svelte-kit/generated/client/nodes/7.js
+.svelte-kit/generated/client/nodes/8.js
+.svelte-kit/generated/client/nodes/9.js
+.svelte-kit/generated/client/nodes/10.js
+.svelte-kit/generated/client/nodes/11.js
+.svelte-kit/generated/client/nodes/12.js
+.svelte-kit/generated/client/nodes/13.js
+.svelte-kit/generated/client/nodes/14.js
+.svelte-kit/generated/client/nodes/15.js
+.svelte-kit/generated/client/nodes/16.js
+.svelte-kit/generated/client/nodes/17.js
+.svelte-kit/generated/client/nodes/18.js
+.svelte-kit/generated/client/nodes/19.js
+.svelte-kit/generated/client/nodes/20.js
+.svelte-kit/generated/client/nodes/21.js
+.svelte-kit/generated/client/nodes/22.js
+.svelte-kit/generated/client/nodes/23.js
+.svelte-kit/generated/client/nodes/24.js
+.svelte-kit/generated/client/nodes/25.js
+.svelte-kit/generated/client/nodes/26.js
+.svelte-kit/generated/client/nodes/27.js
+.svelte-kit/generated/client/nodes/28.js
+.svelte-kit/generated/client/nodes/29.js
+.svelte-kit/generated/server/internal.js
