@@ -5,6 +5,7 @@ import { projects, addProjectLocal, loadProjects } from './projects.js'
 import { tasks, addTaskLocal, loadTasks } from './tasks.js'
 import { events, addEventLocal, loadEvents } from './events.js'
 import { user, setUser } from './user.js'
+import { authActions } from './auth-store.js'
 import { setupPersistence, loadPersistedData } from './persistence.js'
 import { get } from 'svelte/store'
 

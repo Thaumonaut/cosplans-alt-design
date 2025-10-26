@@ -8,23 +8,19 @@ class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl = '/api') {
-    // Handle server-side rendering by using absolute URLs
-    if (browser) {
-      this.baseUrl = baseUrl
-    } else {
-      // In SSR, we need to use the full URL
-      this.baseUrl = `http://localhost:4173${baseUrl}`
-    }
+    this.baseUrl = baseUrl
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    customFetch?: typeof fetch
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`
+    const fetchFn = customFetch || fetch
     
     try {
-      const response = await fetch(url, {
+      const response = await fetchFn(url, {
         headers: {
           'Content-Type': 'application/json',
           ...options.headers
@@ -50,7 +46,7 @@ class ApiClient {
     status?: string
     limit?: number
     offset?: number
-  }): Promise<ApiResponse<Project[]>> {
+  }, customFetch?: typeof fetch): Promise<ApiResponse<Project[]>> {
     const searchParams = new URLSearchParams()
     
     if (params?.status) searchParams.set('status', params.status)
@@ -60,7 +56,7 @@ class ApiClient {
     const query = searchParams.toString()
     const endpoint = `/projects${query ? `?${query}` : ''}`
     
-    return this.request<Project[]>(endpoint)
+    return this.request<Project[]>(endpoint, {}, customFetch)
   }
 
   async getProject(id: number): Promise<ApiResponse<Project>> {

@@ -12,15 +12,19 @@ type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/" | "/accessories" | "/archived" | "/budget" | "/calendar" | "/characters" | "/dashboard" | "/equipment" | "/events" | "/ideas" | "/in-progress" | "/marketplace" | "/materials" | "/messages" | "/outfits" | "/photoshoots" | "/planning" | "/post-production" | "/profile" | "/projects/[id]" | "/props" | "/settings/profile" | "/settings/team" | "/tasks" | "/timeline" | "/tools" | null
+type LayoutRouteId = RouteId | "/" | "/(auth)/accessories" | "/(auth)/archived" | "/(auth)/budget" | "/(auth)/calendar" | "/(auth)/characters" | "/(auth)/dashboard" | "/(auth)/equipment" | "/(auth)/events" | "/(auth)/ideas" | "/(auth)/in-progress" | "/(auth)/marketplace" | "/(auth)/materials" | "/(auth)/messages" | "/(auth)/outfits" | "/(auth)/photoshoots" | "/(auth)/planning" | "/(auth)/post-production" | "/(auth)/profile" | "/(auth)/projects/[id]" | "/(auth)/props" | "/(auth)/settings/profile" | "/(auth)/settings/team" | "/(auth)/tasks" | "/(auth)/timeline" | "/(auth)/tools" | "/auth/callback" | "/forgot-password" | "/login" | "/logout" | "/signup" | null
 type LayoutParams = RouteParams & { id?: string }
+type LayoutServerParentData = EnsureDefined<{}>;
 type LayoutParentData = EnsureDefined<{}>;
 
 export type PageServerData = null;
 export type PageData = Expand<PageParentData>;
 export type PageProps = { params: RouteParams; data: PageData }
-export type LayoutServerData = null;
+export type LayoutServerLoad<OutputData extends Partial<App.PageData> & Record<string, any> | void = Partial<App.PageData> & Record<string, any> | void> = Kit.ServerLoad<LayoutParams, LayoutServerParentData, OutputData, LayoutRouteId>;
+export type LayoutServerLoadEvent = Parameters<LayoutServerLoad>[0];
+export type LayoutServerData = Expand<OptionalUnion<EnsureDefined<Kit.LoadProperties<Awaited<ReturnType<typeof import('./proxy+layout.server.js').load>>>>>>;
 export type LayoutLoad<OutputData extends OutputDataShape<LayoutParentData> = OutputDataShape<LayoutParentData>> = Kit.Load<LayoutParams, LayoutServerData, LayoutParentData, OutputData, LayoutRouteId>;
 export type LayoutLoadEvent = Parameters<LayoutLoad>[0];
 export type LayoutData = Expand<Omit<LayoutParentData, keyof Kit.LoadProperties<Awaited<ReturnType<typeof import('./proxy+layout.js').load>>>> & OptionalUnion<EnsureDefined<Kit.LoadProperties<Awaited<ReturnType<typeof import('./proxy+layout.js').load>>>>>>;
 export type LayoutProps = { params: LayoutParams; data: LayoutData; children: import("svelte").Snippet }
+export type RequestEvent = Kit.RequestEvent<RouteParams, RouteId>;

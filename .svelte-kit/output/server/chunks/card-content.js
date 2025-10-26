@@ -1,1 +1,1 @@
-import{am as l,f as p}from"./vendor-ui.js";import{c as i}from"./button.js";function f(t,a){t.component(s=>{let{class:o="",children:c,$$slots:m,$$events:e,...n}=a;s.push(`<div${l({"data-slot":"card-content",class:p(i("px-6",o)),...n})}>`),c?.(s),s.push("<!----></div>")})}export{f as C};
+import{at as l,f as p}from"./vendor-ui.js";import{c as i}from"./button.js";function f(t,a){t.component(s=>{let{class:o="",children:c,$$slots:m,$$events:e,...n}=a;s.push(`<div${l({"data-slot":"card-content",class:p(i("px-6",o)),...n})}>`),c?.(s),s.push("<!----></div>")})}export{f as C};

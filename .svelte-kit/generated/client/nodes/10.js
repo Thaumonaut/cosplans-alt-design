@@ -1,3 +1,1 @@
-import * as universal from "../../../../src/routes/characters/+page.ts";
-export { universal };
-export { default as component } from "../../../../src/routes/characters/+page.svelte";
+export { default as component } from "../../../../src/routes/(auth)/calendar/+page.svelte";

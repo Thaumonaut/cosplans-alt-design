@@ -9,6 +9,13 @@
       "_environment.js"
     ]
   },
+  "_auth-store.js": {
+    "file": "chunks/auth-store.js",
+    "name": "auth-store",
+    "imports": [
+      "_vendor-ui.js"
+    ]
+  },
   "_avatar-fallback.js": {
     "file": "chunks/avatar-fallback.js",
     "name": "avatar-fallback",
@@ -146,13 +153,6 @@
     "file": "chunks/environment.js",
     "name": "environment"
   },
-  "_events.js": {
-    "file": "chunks/events.js",
-    "name": "events",
-    "imports": [
-      "_vendor-ui.js"
-    ]
-  },
   "_exports.js": {
     "file": "chunks/exports.js",
     "name": "exports"
@@ -179,6 +179,9 @@
     "imports": [
       "_vendor-ui.js",
       "_environment.js"
+    ],
+    "dynamicImports": [
+      "src/hooks.server.ts"
     ]
   },
   "_label.js": {
@@ -196,6 +199,10 @@
       "_vendor-ui.js",
       "_button.js"
     ]
+  },
+  "_public.js": {
+    "file": "chunks/public.js",
+    "name": "public"
   },
   "_service-creation-form.js": {
     "file": "chunks/service-creation-form.js",
@@ -232,6 +239,13 @@
       "_exports.js",
       "_utils.js",
       "_state.svelte.js"
+    ]
+  },
+  "_supabase.js": {
+    "file": "chunks/supabase.js",
+    "name": "supabase",
+    "imports": [
+      "_public.js"
     ]
   },
   "_switch.js": {
@@ -289,6 +303,15 @@
       "_internal.js"
     ]
   },
+  "src/hooks.server.ts": {
+    "file": "chunks/hooks.server.js",
+    "name": "hooks.server",
+    "src": "src/hooks.server.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "_public.js"
+    ]
+  },
   "src/routes/+error.svelte": {
     "file": "entries/pages/_error.svelte.js",
     "name": "entries/pages/_error.svelte",
@@ -303,6 +326,12 @@
       "_card-title.js",
       "_card-content.js"
     ]
+  },
+  "src/routes/+layout.server.ts": {
+    "file": "entries/pages/_layout.server.ts.js",
+    "name": "entries/pages/_layout.server.ts",
+    "src": "src/routes/+layout.server.ts",
+    "isEntry": true
   },
   "src/routes/+layout.svelte": {
     "file": "entries/pages/_layout.svelte.js",
@@ -323,17 +352,20 @@
       "_dropdown-menu-label.js",
       "_input.js",
       "_dialog.js",
-      "_events.js"
+      "_auth-store.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.DltJAe9R.css"
+      "_app/immutable/assets/_layout.kHPkYLI3.css"
     ]
   },
   "src/routes/+layout.ts": {
     "file": "entries/pages/_layout.ts.js",
     "name": "entries/pages/_layout.ts",
     "src": "src/routes/+layout.ts",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_public.js"
+    ]
   },
   "src/routes/+page.svelte": {
     "file": "entries/pages/_page.svelte.js",
@@ -396,6 +428,12 @@
       "_badge.js",
       "_progress.js"
     ]
+  },
+  "src/routes/auth/callback/+page.server.ts": {
+    "file": "entries/pages/auth/callback/_page.server.ts.js",
+    "name": "entries/pages/auth/callback/_page.server.ts",
+    "src": "src/routes/auth/callback/+page.server.ts",
+    "isEntry": true
   },
   "src/routes/budget/+page.svelte": {
     "file": "entries/pages/budget/_page.svelte.js",
@@ -484,7 +522,7 @@
       "_progress.js",
       "_card-title.js",
       "_checkbox.js",
-      "_events.js",
+      "_auth-store.js",
       "_avatar-fallback.js",
       "_character-creation-form.js"
     ]
@@ -524,6 +562,16 @@
       "_progress.js"
     ]
   },
+  "src/routes/forgot-password/+page.svelte": {
+    "file": "entries/pages/forgot-password/_page.svelte.js",
+    "name": "entries/pages/forgot-password/_page.svelte",
+    "src": "src/routes/forgot-password/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_vendor-ui.js",
+      "_supabase.js"
+    ]
+  },
   "src/routes/ideas/+page.svelte": {
     "file": "entries/pages/ideas/_page.svelte.js",
     "name": "entries/pages/ideas/_page.svelte",
@@ -552,6 +600,25 @@
       "_badge.js",
       "_progress.js"
     ]
+  },
+  "src/routes/login/+page.svelte": {
+    "file": "entries/pages/login/_page.svelte.js",
+    "name": "entries/pages/login/_page.svelte",
+    "src": "src/routes/login/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_vendor-ui.js",
+      "_exports.js",
+      "_utils.js",
+      "_state.svelte.js",
+      "_supabase.js"
+    ]
+  },
+  "src/routes/logout/+page.server.ts": {
+    "file": "entries/pages/logout/_page.server.ts.js",
+    "name": "entries/pages/logout/_page.server.ts",
+    "src": "src/routes/logout/+page.server.ts",
+    "isEntry": true
   },
   "src/routes/marketplace/+page.svelte": {
     "file": "entries/pages/marketplace/_page.svelte.js",
@@ -786,6 +853,19 @@
       "_switch.js"
     ]
   },
+  "src/routes/signup/+page.svelte": {
+    "file": "entries/pages/signup/_page.svelte.js",
+    "name": "entries/pages/signup/_page.svelte",
+    "src": "src/routes/signup/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_vendor-ui.js",
+      "_exports.js",
+      "_utils.js",
+      "_state.svelte.js",
+      "_supabase.js"
+    ]
+  },
   "src/routes/tasks/+page.svelte": {
     "file": "entries/pages/tasks/_page.svelte.js",
     "name": "entries/pages/tasks/_page.svelte",
@@ -793,7 +873,7 @@
     "isEntry": true,
     "imports": [
       "_vendor-ui.js",
-      "_events.js",
+      "_auth-store.js",
       "_button.js",
       "_card.js",
       "_card-header.js",

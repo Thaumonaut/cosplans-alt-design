@@ -1,10 +1,21 @@
 {
+	"/(auth)": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/": [
 		"src/routes/+layout.ts",
-		"src/routes/+layout.ts"
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/accessories": [
-		"src/routes/+layout.ts"
+	"/(auth)/accessories": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
 	"/api/events": [
 		"src/routes/api/events/+server.ts"
@@ -18,82 +29,179 @@
 	"/api/tasks": [
 		"src/routes/api/tasks/+server.ts"
 	],
-	"/archived": [
-		"src/routes/+layout.ts"
+	"/(auth)/archived": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/budget": [
-		"src/routes/+layout.ts"
+	"/auth/callback": [
+		"src/routes/auth/callback/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/calendar": [
-		"src/routes/+layout.ts"
+	"/(auth)/budget": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/characters": [
-		"src/routes/characters/+page.ts",
-		"src/routes/+layout.ts"
+	"/(auth)/calendar": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/dashboard": [
-		"src/routes/dashboard/+page.ts",
-		"src/routes/+layout.ts"
+	"/(auth)/characters": [
+		"src/routes/(auth)/characters/+page.ts",
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/equipment": [
-		"src/routes/+layout.ts"
+	"/(auth)/dashboard": [
+		"src/routes/(auth)/dashboard/+page.ts",
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/events": [
-		"src/routes/+layout.ts"
+	"/(auth)/equipment": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/ideas": [
-		"src/routes/+layout.ts"
+	"/(auth)/events": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/in-progress": [
-		"src/routes/+layout.ts"
+	"/forgot-password": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/marketplace": [
-		"src/routes/+layout.ts"
+	"/(auth)/ideas": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/materials": [
-		"src/routes/+layout.ts"
+	"/(auth)/in-progress": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/messages": [
-		"src/routes/+layout.ts"
+	"/login": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/outfits": [
-		"src/routes/+layout.ts"
+	"/logout": [
+		"src/routes/logout/+page.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/photoshoots": [
-		"src/routes/+layout.ts"
+	"/(auth)/marketplace": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/planning": [
-		"src/routes/+layout.ts"
+	"/(auth)/materials": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/post-production": [
-		"src/routes/+layout.ts"
+	"/(auth)/messages": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/profile": [
-		"src/routes/+layout.ts"
+	"/(auth)/outfits": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/projects/[id]": [
-		"src/routes/projects/[id]/+page.ts",
-		"src/routes/+layout.ts"
+	"/(auth)/photoshoots": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/props": [
-		"src/routes/+layout.ts"
+	"/(auth)/planning": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/settings": [
-		"src/routes/+layout.ts"
+	"/(auth)/post-production": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/settings/profile": [
-		"src/routes/+layout.ts"
+	"/(auth)/profile": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/settings/team": [
-		"src/routes/+layout.ts"
+	"/(auth)/projects/[id]": [
+		"src/routes/(auth)/projects/[id]/+page.ts",
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/tasks": [
-		"src/routes/+layout.ts"
+	"/(auth)/props": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/timeline": [
-		"src/routes/+layout.ts"
+	"/(auth)/settings": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	],
-	"/tools": [
-		"src/routes/+layout.ts"
+	"/(auth)/settings/profile": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/settings/team": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/signup": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/tasks": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/timeline": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/(auth)/tools": [
+		"src/routes/(auth)/+layout.ts",
+		"src/routes/(auth)/+layout.server.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
 	]
 }

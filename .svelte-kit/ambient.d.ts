@@ -26,6 +26,13 @@
  * ```
  */
 declare module '$env/static/private' {
+	export const SUPABASE_SERVICE_ROLE_KEY: string;
+	export const SUPABASE_JWT_SECRET: string;
+	export const COSPLANS_ENVIRONMENT: string;
+	export const SUPABASE_URL: string;
+	export const SUPABASE_ANON_KEY: string;
+	export const SUPABASE_DB_URI: string;
+	export const DIAGNOSTICS_BUCKET: string;
 	export const GJS_DEBUG_TOPICS: string;
 	export const LESSOPEN: string;
 	export const USER: string;
@@ -70,6 +77,7 @@ declare module '$env/static/private' {
 	export const PATH: string;
 	export const SESSION_MANAGER: string;
 	export const INVOCATION_ID: string;
+	export const KIRO_BACKGROUND_COMMAND: string;
 	export const npm_package_name: string;
 	export const NODE: string;
 	export const XDG_MENU_PREFIX: string;
@@ -113,6 +121,7 @@ declare module '$env/static/private' {
 	export const PNPM_SCRIPT_SRC_DIR: string;
 	export const VTE_VERSION: string;
 	export const INIT_CWD: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -125,7 +134,8 @@ declare module '$env/static/private' {
  * ```
  */
 declare module '$env/static/public' {
-	
+	export const PUBLIC_SUPABASE_URL: string;
+	export const PUBLIC_SUPABASE_ANON_KEY: string;
 }
 
 /**
@@ -142,6 +152,13 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
+		SUPABASE_SERVICE_ROLE_KEY: string;
+		SUPABASE_JWT_SECRET: string;
+		COSPLANS_ENVIRONMENT: string;
+		SUPABASE_URL: string;
+		SUPABASE_ANON_KEY: string;
+		SUPABASE_DB_URI: string;
+		DIAGNOSTICS_BUCKET: string;
 		GJS_DEBUG_TOPICS: string;
 		LESSOPEN: string;
 		USER: string;
@@ -186,6 +203,7 @@ declare module '$env/dynamic/private' {
 		PATH: string;
 		SESSION_MANAGER: string;
 		INVOCATION_ID: string;
+		KIRO_BACKGROUND_COMMAND: string;
 		npm_package_name: string;
 		NODE: string;
 		XDG_MENU_PREFIX: string;
@@ -229,6 +247,7 @@ declare module '$env/dynamic/private' {
 		PNPM_SCRIPT_SRC_DIR: string;
 		VTE_VERSION: string;
 		INIT_CWD: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
@@ -246,6 +265,8 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
+		PUBLIC_SUPABASE_URL: string;
+		PUBLIC_SUPABASE_ANON_KEY: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }

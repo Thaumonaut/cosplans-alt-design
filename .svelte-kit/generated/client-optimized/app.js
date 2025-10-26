@@ -31,38 +31,48 @@ export const nodes = [
 	() => import('./nodes/27'),
 	() => import('./nodes/28'),
 	() => import('./nodes/29'),
-	() => import('./nodes/30')
+	() => import('./nodes/30'),
+	() => import('./nodes/31'),
+	() => import('./nodes/32'),
+	() => import('./nodes/33'),
+	() => import('./nodes/34'),
+	() => import('./nodes/35')
 ];
 
-export const server_loads = [];
+export const server_loads = [0];
 
 export const dictionary = {
 		"/": [5],
 		"/accessories": [6],
 		"/archived": [7],
-		"/budget": [8],
-		"/calendar": [9],
-		"/characters": [10,[],[2]],
-		"/dashboard": [11],
-		"/equipment": [12],
-		"/events": [13],
-		"/ideas": [14],
-		"/in-progress": [15],
-		"/marketplace": [16],
-		"/materials": [17],
-		"/messages": [18],
-		"/outfits": [19],
-		"/photoshoots": [20],
-		"/planning": [21],
-		"/post-production": [22],
-		"/profile": [23],
-		"/projects/[id]": [24],
-		"/props": [25],
-		"/settings/profile": [26,[3],[4]],
-		"/settings/team": [27,[3],[4]],
-		"/tasks": [28],
-		"/timeline": [29],
-		"/tools": [30]
+		"/auth/callback": [~8],
+		"/budget": [9],
+		"/calendar": [10],
+		"/characters": [11,[],[2]],
+		"/dashboard": [12],
+		"/equipment": [13],
+		"/events": [14],
+		"/forgot-password": [15],
+		"/ideas": [16],
+		"/in-progress": [17],
+		"/login": [18],
+		"/logout": [~19],
+		"/marketplace": [20],
+		"/materials": [21],
+		"/messages": [22],
+		"/outfits": [23],
+		"/photoshoots": [24],
+		"/planning": [25],
+		"/post-production": [26],
+		"/profile": [27],
+		"/projects/[id]": [28],
+		"/props": [29],
+		"/settings/profile": [30,[3],[4]],
+		"/settings/team": [31,[3],[4]],
+		"/signup": [32],
+		"/tasks": [33],
+		"/timeline": [34],
+		"/tools": [35]
 	};
 
 export const hooks = {

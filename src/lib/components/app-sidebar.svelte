@@ -243,6 +243,7 @@
           {/each}
         </SidebarMenu>
       </SidebarGroupContent>
+      <div class="h-[80px]"></div>
     </SidebarGroup>
   </SidebarContent>
 

@@ -1,1 +1,1 @@
-import"clsx";import{ax as n}from"./vendor-ui.js";import{c as p}from"./button.js";function d(s,t){s.component(e=>{let{inset:a=!1,class:l,children:m}=t;n(e,{class:p("px-2 py-1.5 text-sm font-medium",a&&"pl-8",l),children:o=>{m?.(o),o.push("<!---->")},$$slots:{default:!0}})})}export{d as D};
+import"clsx";import{ay as n}from"./vendor-ui.js";import{c as p}from"./button.js";function d(s,t){s.component(e=>{let{inset:a=!1,class:l,children:m}=t;n(e,{class:p("px-2 py-1.5 text-sm font-medium",a&&"pl-8",l),children:o=>{m?.(o),o.push("<!---->")},$$slots:{default:!0}})})}export{d as D};

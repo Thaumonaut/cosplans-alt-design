@@ -1,1 +1,0 @@
-import{p as a,aS as o,w as t,O as p,b as m}from"./CpdYPIwz.js";import{c as n}from"./BdgeB-LE.js";function u(e,r){a(r,!0);{let s=p(()=>n("bg-border -mx-1 my-1 h-px",r.class));o(e,{get class(){return t(s)}})}m()}export{u as D};
