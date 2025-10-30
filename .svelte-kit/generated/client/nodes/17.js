@@ -1,1 +1,0 @@
-export { default as component } from "../../../../src/routes/(auth)/marketplace/+page.svelte";

@@ -5,25 +5,30 @@
   import { preloadData, invalidate, goto } from '$app/navigation';
   import AppSidebar from '$lib/components/app-sidebar.svelte';
   import PageHeader from '$lib/components/page-header.svelte';
+
   import { initializeStores } from '$lib/stores/init.js';
   import { CRITICAL_ROUTES, CRITICAL_RESOURCES } from '$lib/config/preload.js';
   import { preloadRoute } from '$lib/utils/performance.js';
   import { authActions } from '$lib/stores/auth-store.js';
   import type { LayoutData } from './$types';
 
-  export let data: LayoutData;
+  let { data }: { data: LayoutData } = $props();
 
-  $: ({ supabase, session, user } = data);
+  const { supabase, session } = data;
   
-  // Initialize auth state in stores
-  $: if (user && session) {
-    authActions.initialize(user, session);
-  }
+  // Initialize auth state in stores using $effect
+  $effect(() => {
+    if (session) {
+      authActions.initialize(session.user, session);
+    }
+  });
 
-  // Client-side redirect to login if no session (shouldn't happen due to server-side guard, but good fallback)
-  $: if (typeof window !== 'undefined' && !session) {
-    goto('/login');
-  }
+  // Client-side redirect to login if no session using $effect
+  $effect(() => {
+    if (typeof window !== 'undefined' && !session) {
+      goto('/login');
+    }
+  });
   
   // Initialize all stores on app startup
   onMount(() => {

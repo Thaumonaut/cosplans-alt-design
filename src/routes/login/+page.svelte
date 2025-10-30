@@ -11,7 +11,7 @@
   let rememberMe = false;
   let error = '';
 
-  $: isFormValid = email && password;
+  const isFormValid = $derived(email && password);
 
   const togglePasswordVisibility = () => {
     showPassword = !showPassword;

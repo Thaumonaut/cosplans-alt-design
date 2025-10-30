@@ -17,13 +17,14 @@
 </script>
 
 <Card>
-  <CardContent class="p-6">
+  <CardContent class="p-7">
     <div class="flex items-start justify-between">
-      <div class="space-y-2">
-        <p class="text-sm text-muted-foreground">{title}</p>
-        <p class="text-3xl font-bold">{value}</p>
+      <div class="space-y-3">
+        <!-- Increased title font weight for better contrast -->
+        <p class="text-sm font-medium text-muted-foreground">{title}</p>
+        <p class="text-4xl font-bold">{value}</p>
         {#if change}
-          <div class="flex items-center gap-1 text-sm">
+          <div class="flex items-center gap-1.5 text-sm">
             {#if change.trend === 'up'}
               <TrendingUp class="size-4 text-primary" />
             {:else}
@@ -35,8 +36,8 @@
           </div>
         {/if}
       </div>
-      <div class="rounded-lg bg-primary/10 p-3 text-primary">
-        {@render icon({ class: "size-6" })}
+      <div class="rounded-lg bg-primary/10 p-4 text-primary">
+        {@render icon()}
       </div>
     </div>
   </CardContent>

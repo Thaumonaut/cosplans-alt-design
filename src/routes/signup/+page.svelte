@@ -19,31 +19,31 @@
   let debouncedPassword = '';
   let debounceTimer: ReturnType<typeof setTimeout>;
   
-  $: {
+  $effect(() => {
     // Debounce password validation
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debouncedPassword = password;
     }, 300);
-  }
+  });
 
   // Password strength validation (using debounced password)
-  $: hasMinLength = debouncedPassword.length >= 8;
-  $: hasLowercase = /[a-z]/.test(debouncedPassword);
-  $: hasUppercase = /[A-Z]/.test(debouncedPassword);
-  $: hasNumber = /[0-9]/.test(debouncedPassword);
-  $: hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(debouncedPassword);
-  $: isPasswordValid = hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecial;
-  $: passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const hasMinLength = $derived(debouncedPassword.length >= 8);
+  const hasLowercase = $derived(/[a-z]/.test(debouncedPassword));
+  const hasUppercase = $derived(/[A-Z]/.test(debouncedPassword));
+  const hasNumber = $derived(/[0-9]/.test(debouncedPassword));
+  const hasSpecial = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(debouncedPassword));
+  const isPasswordValid = $derived(hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecial);
+  const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
   
   // Calculate password strength (0-5 requirements met)
-  $: requirementsMet = [hasMinLength, hasLowercase, hasUppercase, hasNumber, hasSpecial].filter(Boolean).length;
-  $: strengthPercentage = (requirementsMet / 5) * 100;
-  $: strengthColor = requirementsMet <= 2 ? 'bg-red-500' : requirementsMet <= 3 ? 'bg-yellow-500' : requirementsMet === 4 ? 'bg-blue-500' : 'bg-green-500';
-  $: strengthLabel = requirementsMet <= 2 ? 'Weak' : requirementsMet <= 3 ? 'Fair' : requirementsMet === 4 ? 'Good' : 'Strong';
+  const requirementsMet = $derived([hasMinLength, hasLowercase, hasUppercase, hasNumber, hasSpecial].filter(Boolean).length);
+  const strengthPercentage = $derived((requirementsMet / 5) * 100);
+  const strengthColor = $derived(requirementsMet <= 2 ? 'bg-red-500' : requirementsMet <= 3 ? 'bg-yellow-500' : requirementsMet === 4 ? 'bg-blue-500' : 'bg-green-500');
+  const strengthLabel = $derived(requirementsMet <= 2 ? 'Weak' : requirementsMet <= 3 ? 'Fair' : requirementsMet === 4 ? 'Good' : 'Strong');
   
   // Form validation
-  $: isFormValid = email && firstName && lastName && isPasswordValid && passwordsMatch;
+  const isFormValid = $derived(email && firstName && lastName && isPasswordValid && passwordsMatch);
 
   const togglePasswordVisibility = (field: 'password' | 'confirm') => {
     if (field === 'password') {

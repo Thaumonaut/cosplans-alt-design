@@ -2,13 +2,23 @@
   import { Loader2, AlertCircle, RefreshCw } from 'lucide-svelte'
   import { Button } from '$lib/components/ui'
 
-  export let loading = false
-  export let error: string | null = null
-  export let empty = false
-  export let emptyMessage = 'No data available'
-  export let errorMessage = 'Something went wrong'
-  export let showRetry = true
-  export let onRetry: (() => void) | undefined = undefined
+  let { 
+    loading = false,
+    error = null,
+    empty = false,
+    emptyMessage = 'No data available',
+    errorMessage = 'Something went wrong',
+    showRetry = true,
+    onRetry = undefined
+  }: {
+    loading?: boolean;
+    error?: string | null;
+    empty?: boolean;
+    emptyMessage?: string;
+    errorMessage?: string;
+    showRetry?: boolean;
+    onRetry?: (() => void) | undefined;
+  } = $props();
 
   function handleRetry() {
     if (onRetry) {

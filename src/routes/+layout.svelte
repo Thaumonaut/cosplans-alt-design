@@ -5,16 +5,18 @@
   import { authActions } from "$lib/stores/auth-store.js";
   import type { LayoutData } from "./$types";
 
-  export let data: LayoutData;
+  let { data }: { data: LayoutData } = $props();
 
-  $: ({ supabase, session, user } = data);
+  const { supabase, session } = data;
 
   // Initialize auth state in stores if we have session data
-  $: if (user && session) {
-    authActions.initialize(user, session);
-  } else {
-    authActions.clear();
-  }
+  $effect(() => {
+    if (session?.user) {
+      authActions.initialize(session.user, session);
+    } else {
+      authActions.clear();
+    }
+  });
 
   onMount(() => {
     // Set up Supabase auth state listener for the entire app
