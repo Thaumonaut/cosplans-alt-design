@@ -1,8 +1,10 @@
 <script lang="ts">
   import { authService } from '$lib/auth/auth-service';
   
-  export let mode: 'login' | 'signup' = 'login';
-  export let redirectTo: string = '/dashboard';
+  let { mode = 'login', redirectTo = '/dashboard' }: { 
+    mode?: 'login' | 'signup'; 
+    redirectTo?: string; 
+  } = $props();
   
   let loading = false;
   let error: string | null = null;

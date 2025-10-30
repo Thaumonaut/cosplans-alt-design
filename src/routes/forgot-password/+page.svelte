@@ -6,7 +6,7 @@
   let emailSent = false;
   let error = '';
 
-  $: isFormValid = email && email.includes('@');
+  const isFormValid = $derived(email && email.includes('@'));
 
   const handleSubmit = async () => {
     if (!isFormValid) return;

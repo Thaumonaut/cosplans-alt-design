@@ -15,13 +15,26 @@
     Package,
     Wrench,
     Palette,
-    ImageIcon,
     Users,
     Camera,
     Edit3,
     Settings,
     LogOut,
-    PencilRuler,
+    MapPin,
+    UserCircle,
+    Clapperboard,
+    Film,
+    Sofa,
+    Folder,
+    ChevronDown,
+    Store,
+    BookOpen,
+    Scissors,
+    PartyPopper,
+    Coffee,
+    ImagePlay,
+    LayoutGrid,
+    FileText,
   } from "lucide-svelte";
 
   import {
@@ -43,124 +56,66 @@
   } from "$lib/components/ui";
   import TeamSelector from "./team-selector.svelte";
 
-  const projectPhases = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      title: "Timeline",
-      url: "/timeline",
-      icon: Clock,
-    },
-    {
-      title: "Planning",
-      url: "/planning",
-      icon: ClipboardList,
-    },
-    {
-      title: "In Progress",
-      url: "/in-progress",
-      icon: Hammer,
-    },
-    {
-      title: "Archived",
-      url: "/archived",
-      icon: Archive,
-    },
+  const mainNav = [
+    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Planning", url: "/planning", icon: ClipboardList },
+    { title: "Projects", url: "/projects", icon: Folder },
+    { title: "Post-Production", url: "/post-production", icon: Edit3 },
+    { title: "Archive", url: "/archived", icon: Archive },
   ];
 
-  const tools = [
-    {
-      title: "Marketplace",
-      url: "/marketplace",
-      icon: Users,
-    },
-    {
-      title: "Profile",
-      url: "/profile",
-      icon: User,
-    },
-    {
-      title: "Messages",
-      url: "/messages",
-      icon: MessageSquare,
-    },
-    {
-      title: "Calendar",
-      url: "/calendar",
-      icon: Calendar,
-    },
-    {
-      title: "Tasks",
-      url: "/tasks",
-      icon: CheckSquare,
-    },
-    {
-      title: "Budget",
-      url: "/budget",
-      icon: DollarSign,
-    },
+  const trackingNav = [
+    { title: "Calendar", url: "/calendar", icon: Calendar },
+    { title: "Timeline", url: "/timeline", icon: Clock },
+    { title: "Tasks", url: "/tasks", icon: CheckSquare },
+    { title: "Budget", url: "/budget", icon: DollarSign },
+    { title: "Notes", url: "/notes", icon: FileText },
   ];
 
-  const resources = [
-    {
-      title: "Characters",
-      url: "/characters",
-      icon: Sparkles,
-    },
-    {
-      title: "Outfits",
-      url: "/outfits",
-      icon: Shirt,
-    },
-    {
-      title: "Props",
-      url: "/props",
-      icon: Package,
-    },
-    {
-      title: "Accessories",
-      url: "/accessories",
-      icon: Palette,
-    },
-    {
-      title: "Materials",
-      url: "/materials",
-      icon: PencilRuler,
-    },
-    {
-      title: "Equipment",
-      url: "/equipment",
-      icon: Camera,
-    },
-    {
-      title: "Tools",
-      url: "/tools",
-      icon: Wrench,
-    },
+  const socialNav = [
+    { title: "Marketplace", url: "/marketplace", icon: Store },
+    { title: "Profile", url: "/profile", icon: User },
+    { title: "Messages", url: "/messages", icon: MessageSquare },
+    { title: "Tutorials", url: "/tutorials", icon: BookOpen },
+    { title: "Patterns", url: "/patterns", icon: Scissors },
   ];
 
-  const events = [
-    {
-      title: "Events",
-      url: "/events",
-      icon: Users,
-    },
-    {
-      title: "Photoshoots",
-      url: "/photoshoots",
-      icon: Camera,
-    },
-    {
-      title: "Post Production",
-      url: "/post-production",
-      icon: Edit3,
-    },
+  const eventsNav = [
+    { title: "Photoshoots", url: "/photoshoots", icon: Clapperboard },
+    { title: "Conventions", url: "/conventions", icon: PartyPopper },
+    { title: "Meetups", url: "/meetups", icon: Coffee },
   ];
 
+  const resourcesNav = [
+    { title: "Photo Gallery", url: "/gallery", icon: ImagePlay },
+    { title: "Characters", url: "/characters", icon: Sparkles },
+    { title: "Moodboards", url: "/moodboards", icon: LayoutGrid },
+  ];
 
+  const characterResources = [
+    { title: "Outfits", url: "/outfits", icon: Shirt },
+    { title: "Accessories & Makeup", url: "/accessories", icon: Palette },
+    { title: "Props", url: "/props", icon: Package },
+    { title: "Materials", url: "/materials", icon: Wrench },
+    { title: "Tools", url: "/tools", icon: Hammer },
+  ];
+
+  const photographyResources = [
+    { title: "Equipment", url: "/equipment", icon: Camera },
+    { title: "Crew", url: "/crew", icon: UserCircle },
+    { title: "Locations", url: "/locations", icon: MapPin },
+    { title: "Poses", url: "/poses", icon: Users },
+    { title: "Shots", url: "/shots", icon: Film },
+    { title: "Sets", url: "/sets", icon: Sofa },
+  ];
+
+  // Collapsible state using proper Svelte 5 runes
+  let trackingOpen = $state(true);
+  let socialOpen = $state(true);
+  let eventsOpen = $state(true);
+  let resourcesOpen = $state(true);
+  let characterOpen = $state(true);
+  let photographyOpen = $state(true);
 </script>
 
 <Sidebar>
@@ -182,10 +137,10 @@
 
   <SidebarContent>
     <SidebarGroup>
-      <SidebarGroupLabel>Project Phases</SidebarGroupLabel>
+      <SidebarGroupLabel>Main</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {#each projectPhases as item}
+          {#each mainNav as item}
             <SidebarMenuItem>
               <SidebarMenuButton href={item.url}>
                 <item.icon class="size-4" />
@@ -197,53 +152,184 @@
       </SidebarGroupContent>
     </SidebarGroup>
 
+    <!-- Tracking Section -->
     <SidebarGroup>
-      <SidebarGroupLabel>Tools</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {#each tools as item}
-            <SidebarMenuItem>
-              <SidebarMenuButton href={item.url}>
-                <item.icon class="size-4" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          {/each}
-        </SidebarMenu>
-      </SidebarGroupContent>
+      <SidebarGroupLabel>
+        <button
+          class="flex w-full items-center justify-between"
+          onclick={() => (trackingOpen = !trackingOpen)}
+        >
+          Tracking
+          <ChevronDown
+            class="ml-auto size-4 transition-transform {trackingOpen
+              ? ''
+              : '-rotate-90'}"
+          />
+        </button>
+      </SidebarGroupLabel>
+      {#if trackingOpen}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {#each trackingNav as item}
+              <SidebarMenuItem>
+                <SidebarMenuButton href={item.url}>
+                  <item.icon class="size-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            {/each}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      {/if}
     </SidebarGroup>
 
+    <!-- Social Section -->
     <SidebarGroup>
-      <SidebarGroupLabel>Resources</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {#each resources as item}
-            <SidebarMenuItem>
-              <SidebarMenuButton href={item.url}>
-                <item.icon class="size-4" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          {/each}
-        </SidebarMenu>
-      </SidebarGroupContent>
+      <SidebarGroupLabel>
+        <button
+          class="flex w-full items-center justify-between"
+          onclick={() => (socialOpen = !socialOpen)}
+        >
+          Social
+          <ChevronDown
+            class="ml-auto size-4 transition-transform {socialOpen
+              ? ''
+              : '-rotate-90'}"
+          />
+        </button>
+      </SidebarGroupLabel>
+      {#if socialOpen}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {#each socialNav as item}
+              <SidebarMenuItem>
+                <SidebarMenuButton href={item.url}>
+                  <item.icon class="size-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            {/each}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      {/if}
     </SidebarGroup>
 
+    <!-- Events Section -->
     <SidebarGroup>
-      <SidebarGroupLabel>Events & Media</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {#each events as item}
+      <SidebarGroupLabel>
+        <button
+          class="flex w-full items-center justify-between"
+          onclick={() => (eventsOpen = !eventsOpen)}
+        >
+          Events
+          <ChevronDown
+            class="ml-auto size-4 transition-transform {eventsOpen
+              ? ''
+              : '-rotate-90'}"
+          />
+        </button>
+      </SidebarGroupLabel>
+      {#if eventsOpen}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {#each eventsNav as item}
+              <SidebarMenuItem>
+                <SidebarMenuButton href={item.url}>
+                  <item.icon class="size-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            {/each}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      {/if}
+    </SidebarGroup>
+
+    <!-- Resources Section -->
+    <SidebarGroup>
+      <SidebarGroupLabel>
+        <button
+          class="flex w-full items-center justify-between"
+          onclick={() => (resourcesOpen = !resourcesOpen)}
+        >
+          Resources
+          <ChevronDown
+            class="ml-auto size-4 transition-transform {resourcesOpen
+              ? ''
+              : '-rotate-90'}"
+          />
+        </button>
+      </SidebarGroupLabel>
+      {#if resourcesOpen}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {#each resourcesNav as item}
+              <SidebarMenuItem>
+                <SidebarMenuButton href={item.url}>
+                  <item.icon class="size-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            {/each}
+
+            <!-- Character Subsection -->
             <SidebarMenuItem>
-              <SidebarMenuButton href={item.url}>
-                <item.icon class="size-4" />
-                <span>{item.title}</span>
+              <SidebarMenuButton
+                onclick={() => (characterOpen = !characterOpen)}
+                class="data-[state=open]:bg-sidebar-accent"
+              >
+                <Shirt class="size-4" />
+                <span>Character</span>
+                <ChevronDown
+                  class="ml-auto size-4 transition-transform {characterOpen
+                    ? ''
+                    : '-rotate-90'}"
+                />
               </SidebarMenuButton>
+              {#if characterOpen}
+                <div class="border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
+                  {#each characterResources as item}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton href={item.url} class="h-7 text-sm">
+                        <item.icon class="size-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  {/each}
+                </div>
+              {/if}
             </SidebarMenuItem>
-          {/each}
-        </SidebarMenu>
-      </SidebarGroupContent>
-      <div class="h-[80px]"></div>
+
+            <!-- Photography Subsection -->
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onclick={() => (photographyOpen = !photographyOpen)}
+                class="data-[state=open]:bg-sidebar-accent"
+              >
+                <Camera class="size-4" />
+                <span>Photography</span>
+                <ChevronDown
+                  class="ml-auto size-4 transition-transform {photographyOpen
+                    ? ''
+                    : '-rotate-90'}"
+                />
+              </SidebarMenuButton>
+              {#if photographyOpen}
+                <div class="border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
+                  {#each photographyResources as item}
+                    <SidebarMenuItem>
+                      <SidebarMenuButton href={item.url} class="h-7 text-sm">
+                        <item.icon class="size-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  {/each}
+                </div>
+              {/if}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      {/if}
     </SidebarGroup>
   </SidebarContent>
 

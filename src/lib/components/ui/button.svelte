@@ -42,6 +42,11 @@
     disabled?: boolean
     type?: 'button' | 'submit' | 'reset'
     href?: string
+    onclick?: (event: MouseEvent) => void
+    onkeydown?: (event: KeyboardEvent) => void
+    onkeyup?: (event: KeyboardEvent) => void
+    onfocus?: (event: FocusEvent) => void
+    onblur?: (event: FocusEvent) => void
   }
 
   let {

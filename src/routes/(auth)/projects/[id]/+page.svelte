@@ -1,16 +1,16 @@
 <script lang="ts">
   import type { PageData } from './$types'
-  import { page } from '$app/stores'
+
   import { goto } from '$app/navigation'
   import { Button } from '$lib/components/ui'
   import { ArrowLeft, Calendar, Clock, DollarSign, Target } from 'lucide-svelte'
   
-  export let data: PageData
+  let { data }: { data: PageData } = $props();
   
-  $: project = data.project
-  $: tasks = data.tasks
-  $: events = data.events
-  $: errors = data.errors
+  const project = $derived(data.project);
+  const tasks = $derived(data.tasks);
+  const events = $derived(data.events);
+  const errors = $derived(data.errors);
 
   function goBack() {
     goto('/dashboard')
@@ -35,7 +35,7 @@
 <div class="container mx-auto p-6">
   <!-- Header -->
   <div class="mb-6 flex items-center gap-4">
-    <Button variant="ghost" size="sm" on:click={goBack}>
+    <Button variant="ghost" size="sm" onclick={goBack}>
       <ArrowLeft class="mr-2 h-4 w-4" />
       Back to Dashboard
     </Button>
