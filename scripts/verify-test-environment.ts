@@ -9,6 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -34,6 +35,14 @@ function header(message: string) {
   console.log('');
 }
 
+// Load env automatically: prefer .env.test, then fallback to .env
+(() => {
+  const loadedTest = dotenv.config({ path: path.join(process.cwd(), '.env.test') });
+  if (loadedTest.error) {
+    dotenv.config({ path: path.join(process.cwd(), '.env') });
+  }
+})();
+
 let allChecksPassed = true;
 
 async function checkEnvFile() {
@@ -55,7 +64,13 @@ async function checkEnvFile() {
   const missingVars: string[] = [];
   
   for (const varName of requiredVars) {
-    if (!process.env[varName]) {
+    // Allow aliases for convenience
+    const value =
+      process.env[varName] ||
+      (varName === 'SUPABASE_TEST_URL' ? process.env.PUBLIC_SUPABASE_URL : undefined) ||
+      (varName === 'SUPABASE_TEST_KEY' ? process.env.PUBLIC_SUPABASE_ANON_KEY : undefined) ||
+      (varName === 'TEST_BASE_URL' ? (process.env.TEST_BASE_URL || 'http://localhost:5173') : undefined);
+    if (!value) {
       missingVars.push(varName);
     }
   }
@@ -72,8 +87,8 @@ async function checkEnvFile() {
 async function checkSupabaseConnection() {
   header('Check 2: Supabase Test Connection');
   
-  const url = process.env.SUPABASE_TEST_URL;
-  const key = process.env.SUPABASE_TEST_KEY;
+  const url = process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_TEST_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY;
   
   if (!url || !key) {
     log('✗ Supabase credentials not configured', 'red');
@@ -109,8 +124,8 @@ async function checkSupabaseConnection() {
 async function checkSchemaFunctions() {
   header('Check 3: Test Schema Functions');
   
-  const url = process.env.SUPABASE_TEST_URL;
-  const key = process.env.SUPABASE_TEST_KEY;
+  const url = process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_TEST_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY;
   
   if (!url || !key) {
     log('✗ Skipping (Supabase not configured)', 'yellow');

@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import cloudflare from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -8,9 +8,8 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// adapter-auto supports Vercel, Netlify, Cloudflare Pages, and Node.js
-		// For specific deployment targets, consider switching to dedicated adapters
-		adapter: adapter(),
+		// Use Cloudflare adapter to target Cloudflare Workers/Pages
+		adapter: cloudflare(),
 		
 		// Path aliases for cleaner imports
 		alias: {

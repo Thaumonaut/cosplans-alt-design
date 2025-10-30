@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { loginIfNeeded } from './support/auth';
 
 test.describe('Navigation', () => {
   test('should navigate through all main routes', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/dashboard');
+    await loginIfNeeded(page);
     
     const routes = [
       '/characters',

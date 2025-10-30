@@ -1,0 +1,1837 @@
+openapi: 3.0.3
+info:
+  title: Cosplay Tracker API
+  description: |
+    REST API for the MVP Cosplay Tracker redesign. This API provides complete CRUD operations for managing cosplay projects, resources, tools, photoshoots, and team collaboration.
+    
+    **Authentication**: All endpoints require Supabase JWT authentication via Bearer token.
+    
+    **Team Context**: All operations are scoped to the user's currently selected team. Team ID is passed via `X-Team-ID` header.
+  version: 1.0.0
+  contact:
+    name: Cosplay Tracker Team
+servers:
+  - url: https://api.cosplay-tracker.app/v1
+    description: Production API
+  - url: http://localhost:5173/api/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth JWT token
+
+  parameters:
+    teamId:
+      name: X-Team-ID
+      in: header
+      required: true
+      description: Currently selected team ID
+      schema:
+        type: string
+        format: uuid
+    
+    id:
+      name: id
+      in: path
+      required: true
+      description: Resource unique identifier
+      schema:
+        type: string
+        format: uuid
+    
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of results to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    
+    offset:
+      name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    
+    search:
+      name: q
+      in: query
+      description: Search query (fuzzy search)
+      schema:
+        type: string
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error context
+
+    Pagination:
+      type: object
+      required:
+        - total
+        - limit
+        - offset
+      properties:
+        total:
+          type: integer
+          description: Total number of items
+        limit:
+          type: integer
+          description: Maximum items per page
+        offset:
+          type: integer
+          description: Current offset
+
+    # Base Models
+    
+    Idea:
+      type: object
+      required:
+        - id
+        - teamId
+        - character
+        - series
+        - difficulty
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        character:
+          type: string
+        series:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        estimatedCost:
+          type: number
+          format: decimal
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        status:
+          type: string
+          enum: [saved, converted]
+        convertedProjectId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IdeaCreate:
+      type: object
+      required:
+        - character
+        - series
+        - difficulty
+      properties:
+        character:
+          type: string
+        series:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        estimatedCost:
+          type: number
+          format: decimal
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+
+    IdeaUpdate:
+      type: object
+      properties:
+        character:
+          type: string
+        series:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        estimatedCost:
+          type: number
+          format: decimal
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+
+    Project:
+      type: object
+      required:
+        - id
+        - teamId
+        - character
+        - series
+        - status
+        - progress
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        fromIdeaId:
+          type: string
+          format: uuid
+          nullable: true
+        character:
+          type: string
+        series:
+          type: string
+        status:
+          type: string
+          enum: [planning, in-progress, completed, archived]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        estimatedBudget:
+          type: number
+          format: decimal
+          nullable: true
+        spentBudget:
+          type: number
+          format: decimal
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+        coverImage:
+          type: string
+          format: uri
+          nullable: true
+        referenceImages:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required:
+        - character
+        - series
+      properties:
+        fromIdeaId:
+          type: string
+          format: uuid
+        character:
+          type: string
+        series:
+          type: string
+        status:
+          type: string
+          enum: [planning, in-progress, completed, archived]
+          default: planning
+        estimatedBudget:
+          type: number
+          format: decimal
+        deadline:
+          type: string
+          format: date
+        description:
+          type: string
+        coverImage:
+          type: string
+          format: uri
+        referenceImages:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+
+    ProjectUpdate:
+      type: object
+      properties:
+        character:
+          type: string
+        series:
+          type: string
+        status:
+          type: string
+          enum: [planning, in-progress, completed, archived]
+        estimatedBudget:
+          type: number
+          format: decimal
+        spentBudget:
+          type: number
+          format: decimal
+        deadline:
+          type: string
+          format: date
+        description:
+          type: string
+        coverImage:
+          type: string
+          format: uri
+        referenceImages:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+
+    Resource:
+      type: object
+      required:
+        - id
+        - teamId
+        - name
+        - metadata
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        cost:
+          type: number
+          format: decimal
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        metadata:
+          oneOf:
+            - $ref: '#/components/schemas/PropMetadata'
+            - $ref: '#/components/schemas/FabricMetadata'
+            - $ref: '#/components/schemas/WigMetadata'
+            - $ref: '#/components/schemas/PatternMetadata'
+            - $ref: '#/components/schemas/CostumePieceMetadata'
+            - $ref: '#/components/schemas/AccessoryMetadata'
+            - $ref: '#/components/schemas/MaterialMetadata'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PropMetadata:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [prop]
+        dimensions:
+          type: string
+        weight:
+          type: string
+        material:
+          type: string
+        fragile:
+          type: boolean
+        requiresAssembly:
+          type: boolean
+        storageLocation:
+          type: string
+
+    FabricMetadata:
+      type: object
+      required:
+        - category
+        - fabricType
+        - color
+        - quantity
+        - unit
+      properties:
+        category:
+          type: string
+          enum: [fabric]
+        fabricType:
+          type: string
+        color:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+          enum: [yards, meters]
+        width:
+          type: number
+        stretch:
+          type: boolean
+        washable:
+          type: boolean
+
+    WigMetadata:
+      type: object
+      required:
+        - category
+        - color
+        - length
+        - style
+      properties:
+        category:
+          type: string
+          enum: [wig]
+        color:
+          type: string
+        length:
+          type: string
+        style:
+          type: string
+        needsStyling:
+          type: boolean
+        laceType:
+          type: string
+          enum: [none, lace-front, full-lace]
+        heatResistant:
+          type: boolean
+
+    PatternMetadata:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [pattern]
+        patternCompany:
+          type: string
+        patternNumber:
+          type: string
+        size:
+          type: string
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        digitalFileUrl:
+          type: string
+          format: uri
+        physicalPattern:
+          type: boolean
+
+    CostumePieceMetadata:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [costume-piece]
+        pieceType:
+          type: string
+        size:
+          type: string
+        material:
+          type: string
+        color:
+          type: string
+        needsAlterations:
+          type: boolean
+
+    AccessoryMetadata:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [accessory]
+        accessoryType:
+          type: string
+        material:
+          type: string
+        color:
+          type: string
+        quantity:
+          type: integer
+
+    MaterialMetadata:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          type: string
+          enum: [material]
+        materialType:
+          type: string
+        brand:
+          type: string
+        colorVariant:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+
+    ResourceCreate:
+      type: object
+      required:
+        - name
+        - metadata
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        cost:
+          type: number
+          format: decimal
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        metadata:
+          oneOf:
+            - $ref: '#/components/schemas/PropMetadata'
+            - $ref: '#/components/schemas/FabricMetadata'
+            - $ref: '#/components/schemas/WigMetadata'
+            - $ref: '#/components/schemas/PatternMetadata'
+            - $ref: '#/components/schemas/CostumePieceMetadata'
+            - $ref: '#/components/schemas/AccessoryMetadata'
+            - $ref: '#/components/schemas/MaterialMetadata'
+
+    ProjectResource:
+      type: object
+      required:
+        - id
+        - projectId
+        - resourceId
+        - quantity
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [needed, acquired, in-progress, completed]
+        notes:
+          type: string
+        addedAt:
+          type: string
+          format: date-time
+        resource:
+          $ref: '#/components/schemas/Resource'
+
+    Task:
+      type: object
+      required:
+        - id
+        - projectId
+        - title
+        - completed
+        - priority
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+        completed:
+          type: boolean
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high]
+        assignedTo:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required:
+        - projectId
+        - title
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+        assignedTo:
+          type: string
+          format: uuid
+
+    Photoshoot:
+      type: object
+      required:
+        - id
+        - teamId
+        - title
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+          nullable: true
+        location:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [planning, scheduled, completed]
+        notes:
+          type: string
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        shotList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shot'
+        crew:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrewMember'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Shot:
+      type: object
+      required:
+        - id
+        - photoshootId
+        - description
+        - completed
+      properties:
+        id:
+          type: string
+          format: uuid
+        photoshootId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        pose:
+          type: string
+        referenceImage:
+          type: string
+          format: uri
+          nullable: true
+        completed:
+          type: boolean
+        finalPhotos:
+          type: array
+          items:
+            type: string
+            format: uri
+        orderIndex:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CrewMember:
+      type: object
+      required:
+        - id
+        - photoshootId
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        photoshootId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum: [photographer, assistant, makeup, other]
+        contact:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Comment:
+      type: object
+      required:
+        - id
+        - userId
+        - entityType
+        - entityId
+        - content
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        entityType:
+          type: string
+          enum: [idea, project, resource, tool, photoshoot]
+        entityId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Team:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [personal, private]
+        createdBy:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TeamMember:
+      type: object
+      required:
+        - id
+        - teamId
+        - userId
+        - role
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [owner, editor, viewer]
+        status:
+          type: string
+          enum: [invited, active, inactive]
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+        joinedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+paths:
+  # Ideas
+  /ideas:
+    get:
+      summary: List all ideas
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/search'
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [saved, converted]
+      responses:
+        '200':
+          description: List of ideas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Idea'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdeaCreate'
+      responses:
+        '201':
+          description: Idea created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ideas/{id}:
+    get:
+      summary: Get idea by ID
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Idea details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+        '404':
+          description: Idea not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdeaUpdate'
+      responses:
+        '200':
+          description: Idea updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Idea'
+        '404':
+          description: Idea not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete idea
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Idea deleted
+        '404':
+          description: Idea not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ideas/{id}/convert:
+    post:
+      summary: Convert idea to project
+      tags: [Ideas]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '201':
+          description: Project created from idea
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Idea not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Projects
+  /projects:
+    get:
+      summary: List all projects
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/search'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, in-progress, completed, archived]
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create a new project
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{id}:
+    get:
+      summary: Get project by ID
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    patch:
+      summary: Update project
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    delete:
+      summary: Delete project
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Project deleted
+
+  /projects/{id}/resources:
+    get:
+      summary: List project resources
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Project resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectResource'
+
+    post:
+      summary: Link resource to project
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resourceId
+                - quantity
+              properties:
+                resourceId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
+                status:
+                  type: string
+                  enum: [needed, acquired, in-progress, completed]
+                  default: needed
+      responses:
+        '201':
+          description: Resource linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResource'
+
+  /projects/{id}/tasks:
+    get:
+      summary: List project tasks
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Project tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+  /projects/{id}/progress:
+    get:
+      summary: Calculate project progress
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Progress calculation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                  breakdown:
+                    type: object
+                    properties:
+                      projectTasks:
+                        type: number
+                      resources:
+                        type: number
+
+  # Resources
+  /resources:
+    get:
+      summary: List all resources
+      tags: [Resources]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/search'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [prop, fabric, wig, pattern, costume-piece, accessory, material]
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create a new resource
+      tags: [Resources]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceCreate'
+      responses:
+        '201':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+
+  /resources/{id}:
+    get:
+      summary: Get resource by ID
+      tags: [Resources]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Resource details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+
+    patch:
+      summary: Update resource
+      tags: [Resources]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceCreate'
+      responses:
+        '200':
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+
+    delete:
+      summary: Delete resource
+      tags: [Resources]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Resource deleted
+
+  # Tasks
+  /tasks:
+    get:
+      summary: List all tasks
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: completed
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create a new task
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /tasks/{id}:
+    patch:
+      summary: Update task
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                completed:
+                  type: boolean
+                dueDate:
+                  type: string
+                  format: date
+                priority:
+                  type: string
+                  enum: [low, medium, high]
+                assignedTo:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+    delete:
+      summary: Delete task
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Task deleted
+
+  # Photoshoots
+  /photoshoots:
+    get:
+      summary: List all photoshoots
+      tags: [Photoshoots]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, scheduled, completed]
+      responses:
+        '200':
+          description: List of photoshoots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Photoshoot'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      summary: Create a new photoshoot
+      tags: [Photoshoots]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                location:
+                  type: string
+                description:
+                  type: string
+                projectIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '201':
+          description: Photoshoot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+
+  /photoshoots/{id}:
+    get:
+      summary: Get photoshoot by ID
+      tags: [Photoshoots]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Photoshoot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+
+    patch:
+      summary: Update photoshoot
+      tags: [Photoshoots]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                location:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [planning, scheduled, completed]
+      responses:
+        '200':
+          description: Photoshoot updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Photoshoot'
+
+    delete:
+      summary: Delete photoshoot
+      tags: [Photoshoots]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Photoshoot deleted
+
+  # Teams
+  /teams:
+    get:
+      summary: List user's teams
+      tags: [Teams]
+      responses:
+        '200':
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+
+    post:
+      summary: Create a new team
+      tags: [Teams]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [private]
+                  default: private
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+
+  /teams/{id}/members:
+    get:
+      summary: List team members
+      tags: [Teams]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamMember'
+
+    post:
+      summary: Invite team member
+      tags: [Teams]
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [editor, viewer]
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamMember'
+
+  # Comments
+  /comments:
+    get:
+      summary: List comments for entity
+      tags: [Comments]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - name: entityType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [idea, project, resource, tool, photoshoot]
+        - name: entityId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+
+    post:
+      summary: Add a comment
+      tags: [Comments]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entityType
+                - entityId
+                - content
+              properties:
+                entityType:
+                  type: string
+                  enum: [idea, project, resource, tool, photoshoot]
+                entityId:
+                  type: string
+                  format: uuid
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /comments/{id}:
+    patch:
+      summary: Update comment
+      tags: [Comments]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+    delete:
+      summary: Delete comment
+      tags: [Comments]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Comment deleted
+
+  # Image Upload
+  /upload:
+    post:
+      summary: Upload image with automatic processing
+      description: |
+        Uploads an image file and automatically generates three versions:
+        - Thumbnail (200px width, max 100KB)
+        - Display (max 2MB, max 2000px width)
+        - Original (unmodified)
+      tags: [Images]
+      parameters:
+        - $ref: '#/components/parameters/teamId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (max 10MB)
+      responses:
+        '201':
+          description: Image uploaded and processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thumbnail:
+                    type: string
+                    format: uri
+                  display:
+                    type: string
+                    format: uri
+                  original:
+                    type: string
+                    format: uri
+                  metadata:
+                    type: object
+                    properties:
+                      originalSize:
+                        type: integer
+                      thumbnailSize:
+                        type: integer
+                      displaySize:
+                        type: integer
+                      dimensions:
+                        type: object
+                        properties:
+                          width:
+                            type: integer
+                          height:
+                            type: integer
+        '400':
+          description: Invalid file or size exceeds limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Ideas
+    description: Cosplay idea management
+  - name: Projects
+    description: Project management and tracking
+  - name: Resources
+    description: Resource library (props, fabrics, wigs, etc.)
+  - name: Tasks
+    description: Task tracking and assignment
+  - name: Photoshoots
+    description: Photoshoot planning and execution
+  - name: Teams
+    description: Team collaboration and membership
+  - name: Comments
+    description: Comments on entities
+  - name: Images
+    description: Image upload and processing
+
+
