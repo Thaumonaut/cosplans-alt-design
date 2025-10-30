@@ -96,6 +96,12 @@ export default defineConfig({
   webServer: {
     command: 'bun run dev',
     url: 'http://localhost:5173',
+    env: {
+      ...process.env,
+      // Ensure PUBLIC_ vars are present for SvelteKit build-time
+      PUBLIC_SUPABASE_URL: process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL || '',
+      PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_TEST_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || '',
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
