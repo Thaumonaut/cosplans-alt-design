@@ -8,3 +8,8 @@ playwright-report/
 .vscode/
 *.log
 *.min.js
+# lockfiles and generated
+pnpm-lock.yaml
+bun.lock
+package-lock.json
+yarn.lock

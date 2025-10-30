@@ -1,6 +1,9 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+// Read PUBLIC_ env from Vite/SvelteKit or fallback to process.env for tests
+const VITE_ENV: any = (import.meta as any)?.env || {};
+const PUBLIC_SUPABASE_URL = VITE_ENV.PUBLIC_SUPABASE_URL || process.env.PUBLIC_SUPABASE_URL;
+const PUBLIC_SUPABASE_ANON_KEY = VITE_ENV.PUBLIC_SUPABASE_ANON_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY;
 import type { Database } from '$lib/types/supabase';
 
 // Validate environment variables

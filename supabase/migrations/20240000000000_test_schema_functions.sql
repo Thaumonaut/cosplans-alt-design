@@ -1,3 +1,4 @@
+-- Moved earlier to avoid version collision
 -- Test Schema Management Functions
 -- These functions enable database schema isolation for parallel test execution
 -- Each test run creates its own schema namespace to prevent data conflicts
@@ -175,30 +176,4 @@ GRANT EXECUTE ON FUNCTION drop_test_schema(TEXT) TO PUBLIC;
 GRANT EXECUTE ON FUNCTION list_test_schemas() TO PUBLIC;
 GRANT EXECUTE ON FUNCTION cleanup_orphaned_test_schemas(INTEGER) TO PUBLIC;
 
--- ============================================================================
--- Usage Examples (for reference)
--- ============================================================================
 
--- Example 1: Create test schema for a test run
--- SELECT create_test_schema('test_1709123456789_abc123');
-
--- Example 2: Clone public schema structure to test schema
--- SELECT clone_schema_structure('public', 'test_1709123456789_abc123');
-
--- Example 3: List all test schemas
--- SELECT * FROM list_test_schemas();
-
--- Example 4: Drop a specific test schema after test completion
--- SELECT drop_test_schema('test_1709123456789_abc123');
-
--- Example 5: Cleanup orphaned test schemas older than 2 hours
--- SELECT cleanup_orphaned_test_schemas(2);
-
--- ============================================================================
--- Notes:
--- - Schema names MUST start with 'test_' prefix for safety
--- - Format: test_<timestamp>_<randomId> (e.g., test_1709123456789_abc123)
--- - Timestamp enables automatic cleanup of old schemas
--- - CASCADE in DROP ensures all tables, sequences, and views are removed
--- - SECURITY DEFINER allows function to execute with elevated privileges
--- ============================================================================
