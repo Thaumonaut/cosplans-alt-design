@@ -1,45 +1,102 @@
-import { defineConfig } from 'vitest/config'
-import { sveltekit } from '@sveltejs/kit/vite'
+import { defineConfig } from 'vitest/config';
+import { sveltekit } from '@sveltejs/kit/vite';
+import * as dotenv from 'dotenv';
 
+// Load test environment variables
+dotenv.config({ path: '.env.test' });
+
+/**
+ * Vitest Configuration for Unit and Integration Testing
+ * 
+ * Fast unit tests with jsdom environment
+ * 80%+ coverage requirements
+ * 8 parallel workers for optimal performance
+ * 5-second timeout per test (unit), 30s for integration
+ */
 export default defineConfig({
   plugins: [sveltekit()],
+  
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
-    exclude: ['node_modules', 'dist', '.svelte-kit'],
+    // Test environment
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    
+    // Include test files
+    include: ['tests/**/*.{test,spec}.{js,ts}'],
+    
+    // Exclude patterns
+    exclude: [
+      'node_modules',
+      'dist',
+      'build',
+      '.svelte-kit',
+      'tests/e2e/**', // E2E tests use Playwright
+    ],
+    
+    // Global test setup
+    setupFiles: ['tests/unit/setup.ts'],
+    
+    // Test timeout (5 seconds for unit tests)
+    testTimeout: 5000,
+    
+    // Hook timeout (10 seconds for setup/teardown)
+    hookTimeout: 10000,
+    
+    // Number of parallel workers
+    maxWorkers: 8,
+    minWorkers: 1,
+    
+    // Run tests in parallel
+    isolate: true,
+    
+    // Globals (describe, it, expect available without imports)
     globals: true,
+    
     // Coverage configuration
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'html', 'lcov', 'json'],
+      reportsDirectory: './coverage',
+      
+      // Coverage thresholds (80% overall)
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
+      
+      // Per-file thresholds for critical paths
+      perFile: true,
+      
+      // Exclude patterns from coverage
       exclude: [
         'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.config.*',
         'dist/',
+        'build/',
         '.svelte-kit/',
-        'src/app.html'
+        'tests/',
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/types/',
+        '**/*.d.ts',
+        '**/mocks/',
+        'playwright.config.ts',
+        'vitest.config.ts',
+        'svelte.config.js',
+        'tailwind.config.js',
+        'postcss.config.js',
       ],
-      thresholds: {
-        global: {
-          branches: 70,
-          functions: 70,
-          lines: 70,
-          statements: 70
-        }
-      }
     },
-    // Test timeout
-    testTimeout: 10000,
-    // Retry failed tests
-    retry: 1,
-    // Reporter configuration
-    reporter: ['verbose', 'json', 'html'],
-    outputFile: {
-      json: './test-results/results.json',
-      html: './test-results/index.html'
-    }
-  }
-})
+    
+    // Reporters
+    reporters: ['default', 'html'],
+    
+    // Mock utilities
+    mockReset: true,
+    clearMocks: true,
+    restoreMocks: true,
+    
+    // Timing warnings at 80% threshold
+    slowTestThreshold: 4000, // Warn if test approaches 5s timeout
+  },
+});

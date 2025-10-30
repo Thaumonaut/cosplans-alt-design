@@ -1,0 +1,245 @@
+# Test Configuration Schema
+# Defines the expected structure and behavior of test configuration files
+
+test_config:
+  description: "Master test configuration for all test types"
+  
+  # Playwright configuration for E2E tests
+  playwright:
+    timeout:
+      description: "Maximum time for a single test"
+      type: number
+      unit: milliseconds
+      default: 120000 # 2 minutes
+      
+    expect_timeout:
+      description: "Maximum time for a single assertion"
+      type: number
+      unit: milliseconds
+      default: 10000 # 10 seconds
+      
+    global_timeout:
+      description: "Maximum time for entire test suite"
+      type: number
+      unit: milliseconds
+      default: 600000 # 10 minutes
+      
+    retries:
+      description: "Number of retry attempts for failed tests"
+      type: number
+      default: 3
+      
+    workers:
+      description: "Number of parallel workers"
+      type: number
+      default: 4
+      
+    browsers:
+      description: "Browsers to test against"
+      type: array
+      items:
+        - chromium
+        - firefox
+        - webkit
+      default: [chromium, firefox, webkit]
+      
+    screenshot:
+      description: "When to capture screenshots"
+      type: string
+      enum: [only-on-failure, on, off]
+      default: only-on-failure
+      
+    video:
+      description: "When to record videos"
+      type: string
+      enum: [retain-on-failure, on, off]
+      default: retain-on-failure
+      
+    visual_regression:
+      threshold:
+        description: "Allowed pixel difference percentage for visual regression"
+        type: number
+        unit: percentage
+        default: 0.05 # 5% tolerance (95% similarity required)
+      
+  # Vitest configuration for unit and integration tests
+  vitest:
+    test_timeout:
+      description: "Maximum time for a single unit test"
+      type: number
+      unit: milliseconds
+      default: 5000 # 5 seconds
+      
+    hook_timeout:
+      description: "Maximum time for setup/teardown hooks"
+      type: number
+      unit: milliseconds
+      default: 10000 # 10 seconds
+      
+    global_timeout:
+      description: "Maximum time for entire unit test suite"
+      type: number
+      unit: milliseconds
+      default: 30000 # 30 seconds
+      
+    threads:
+      description: "Number of worker threads"
+      type: number
+      default: 8
+      
+    coverage:
+      provider:
+        type: string
+        enum: [c8, istanbul]
+        default: c8
+        
+      thresholds:
+        statements:
+          type: number
+          unit: percentage
+          default: 80
+        branches:
+          type: number
+          unit: percentage
+          default: 80
+        functions:
+          type: number
+          unit: percentage
+          default: 80
+        lines:
+          type: number
+          unit: percentage
+          default: 80
+          
+      per_file_thresholds:
+        - path: "src/lib/services/**"
+          statements: 90
+          branches: 85
+          functions: 90
+          lines: 90
+        - path: "src/lib/auth/**"
+          statements: 100
+          branches: 100
+          functions: 100
+          lines: 100
+        - path: "src/routes/(auth)/**"
+          statements: 100
+          branches: 100
+          functions: 100
+          lines: 100
+          
+  # Test environment configuration
+  environment:
+    test_supabase:
+      url:
+        description: "Test Supabase project URL"
+        type: string
+        env_var: SUPABASE_TEST_URL
+        required: true
+        
+      anon_key:
+        description: "Test Supabase anonymous key"
+        type: string
+        env_var: SUPABASE_TEST_KEY
+        required: true
+        
+    base_url:
+      description: "Base URL for E2E tests"
+      type: string
+      default: http://localhost:5173
+      env_var: TEST_BASE_URL
+      
+  # Database isolation configuration
+  database_isolation:
+    strategy:
+      type: string
+      enum: [schema_per_run, transaction_rollback, separate_database]
+      default: schema_per_run
+      description: "How to isolate test data between runs"
+      
+    schema_prefix:
+      type: string
+      default: test_
+      description: "Prefix for test schemas"
+      
+    cleanup_policy:
+      type: string
+      enum: [immediate, delayed, manual]
+      default: immediate
+      description: "When to cleanup test schemas"
+      
+    orphan_cleanup_age:
+      type: number
+      unit: hours
+      default: 1
+      description: "Delete test schemas older than this age"
+      
+  # Flaky test handling
+  flaky_detection:
+    enabled:
+      type: boolean
+      default: true
+      
+    max_retries:
+      type: number
+      default: 3
+      description: "Maximum retry attempts before flagging as flaky"
+      
+    quarantine_after:
+      type: number
+      default: 2
+      description: "Move to quarantine after N flaky occurrences"
+      
+    quarantine_directory:
+      type: string
+      default: tests/quarantine
+      
+  # CI/CD configuration
+  ci:
+    trigger_events:
+      unit_tests:
+        - push
+        - pull_request
+      e2e_tests:
+        - pull_request
+      integration_tests:
+        - pull_request
+        
+    parallelization:
+      unit_tests_workers: 8
+      e2e_tests_workers: 4
+      integration_tests_workers: 4
+      
+    caching:
+      enabled: true
+      cache_keys:
+        - node_modules
+        - playwright_browsers
+        - bun_cache
+        
+    failure_notifications:
+      enabled: true
+      channels:
+        - github_comments
+        - slack (optional)
+        
+  # Timeout warning configuration
+  timeouts:
+    warning_threshold:
+      description: "Warn when test reaches this percentage of timeout"
+      type: number
+      unit: percentage
+      default: 80
+      
+    tiers:
+      unit:
+        timeout: 5000
+        warning_at: 4000
+      integration:
+        timeout: 30000
+        warning_at: 24000
+      e2e:
+        timeout: 120000
+        warning_at: 96000
+
+

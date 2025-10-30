@@ -53,14 +53,84 @@ pnpm run preview
 # Type checking
 pnpm run check
 
-# Run tests
-pnpm run test          # Unit tests
-pnpm run test:e2e      # E2E tests
-pnpm run test:all      # All tests
-
 # Linting
 pnpm run lint
 ```
+
+## 🧪 Testing
+
+This project has comprehensive testing infrastructure with unit, integration, and E2E tests.
+
+### Quick Start
+
+```bash
+# Run all tests
+bun test
+
+# Run specific test types
+bun test:unit          # Unit tests (fast, <30s)
+bun test:integration   # Integration tests (~2 min)
+bun test:e2e          # E2E tests (~10 min)
+
+# Run with coverage
+bun test:coverage
+
+# Watch mode for development
+bun test:watch
+
+# Verify test environment setup
+bun test:verify
+```
+
+### Test Infrastructure
+
+- **Unit Tests (Vitest)**: Component and utility testing with 80%+ coverage target
+- **Integration Tests (Vitest)**: Service layer, database, and RLS policy tests
+- **E2E Tests (Playwright)**: Full user journey testing across 3 browsers
+- **Page Object Models**: Organized E2E test patterns
+- **Test Data Factories**: Realistic test data generation with Faker.js
+- **Schema Isolation**: Parallel test execution with database isolation
+- **Flaky Test Detection**: Auto-detection and quarantine system
+- **CI/CD Integration**: Automated testing on every commit and PR
+
+### Test Environment Setup
+
+First-time setup requires manual configuration of test environment:
+
+1. **Quick Setup** (30-45 minutes):
+   ```bash
+   # Follow the quick setup guide
+   cat docs/QUICK_SETUP_GUIDE.md
+   ```
+
+2. **Detailed Setup** (step-by-step):
+   ```bash
+   # See comprehensive setup guide
+   cat docs/TEST_ENVIRONMENT_SETUP.md
+   ```
+
+3. **Track Progress**:
+   ```bash
+   # Use the checklist to track completion
+   cat docs/MANUAL_SETUP_CHECKLIST.md
+   ```
+
+### Developer Guide
+
+For detailed testing practices, patterns, and troubleshooting:
+
+```bash
+# Complete testing guide
+cat TESTING.md
+```
+
+### Resources
+
+- 📖 **Developer Guide**: `TESTING.md`
+- 🚀 **Quick Setup**: `docs/QUICK_SETUP_GUIDE.md`
+- 📋 **Setup Checklist**: `docs/MANUAL_SETUP_CHECKLIST.md`
+- 🔧 **Detailed Setup**: `docs/TEST_ENVIRONMENT_SETUP.md`
+- 🔍 **Verification Script**: `bun test:verify`
 
 ## 📁 Project Structure
 
