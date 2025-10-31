@@ -26,15 +26,15 @@
 
 **Purpose**: Project initialization and basic structure per plan.md
 
-- [ ] T001 Verify environment setup: Bun 1.0+, Node 18+, PostgreSQL 14+, Supabase CLI installed
-- [ ] T002 Create `.env` file from template with Supabase credentials (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
-- [ ] T003 Install dependencies with `bun install` including Flowbite Svelte 0.44+, Fuse.js, and Supabase JS SDK 2.x
-- [ ] T004 [P] Create directory structure for `src/lib/api/services/`, `src/lib/types/domain/`, `src/lib/stores/`, `src/lib/components/base/`
-- [ ] T005 [P] Create directory structure for `src/routes/(auth)/`, `src/routes/login/`, `src/routes/signup/`
-- [ ] T006 [P] Configure Tailwind CSS with Flowbite Svelte integration in `tailwind.config.js`
-- [ ] T007 [P] Setup ESLint and Prettier per existing project standards
-- [ ] T008 Link Supabase project with `bunx supabase link --project-ref <ref>`
-- [ ] T009 Create Supabase storage bucket `cosplay-images` with RLS policies (authenticated read/write)
+- [X] T001 Verify environment setup: Bun 1.0+, Node 18+, PostgreSQL 14+, Supabase CLI installed
+- [X] T002 Create `.env` file from template with Supabase credentials (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- [X] T003 Install dependencies with `bun install` including Flowbite Svelte 0.44+, Fuse.js, and Supabase JS SDK 2.x
+- [X] T004 [P] Create directory structure for `src/lib/api/services/`, `src/lib/types/domain/`, `src/lib/stores/`, `src/lib/components/base/`
+- [X] T005 [P] Create directory structure for `src/routes/(auth)/`, `src/routes/login/`, `src/routes/signup/`
+- [X] T006 [P] Configure Tailwind CSS with Flowbite Svelte integration in `tailwind.config.js`
+- [X] T007 [P] Setup ESLint and Prettier per existing project standards
+- [ ] T008 Link Supabase project with `bunx supabase link --project-ref <ref>` (Manual step - requires Supabase project ref)
+- [X] T009 Create Supabase storage bucket `cosplay-images` with RLS policies (authenticated read/write)
 
 ---
 
@@ -46,48 +46,48 @@
 
 ### Database Schema & Migrations
 
-- [ ] T010 Create migration `20250000000000_initial_schema.sql` for users, teams, team_members tables per data-model.md
-- [ ] T011 [P] Create migration `20250000000001_ideas_table.sql` for ideas table with RLS policies
-- [ ] T012 [P] Create migration `20250000000002_projects_table.sql` for projects table with RLS policies
-- [ ] T013 [P] Create migration `20250000000003_resources_table.sql` for polymorphic resources table with JSONB metadata and RLS policies
-- [ ] T014 [P] Create migration `20250000000004_tools_table.sql` for polymorphic tools table with RLS policies
-- [ ] T015 [P] Create migration `20250000000005_tasks_table.sql` for tasks table (project-level and resource-level) with RLS policies
-- [ ] T016 [P] Create migration `20250000000006_photoshoots_table.sql` for photoshoots, shots, crew_members tables with RLS policies
-- [ ] T017 [P] Create migration `20250000000007_join_tables.sql` for project_resources and photoshoot_projects join tables with RLS policies
-- [ ] T018 [P] Create migration `20250000000008_comments_table.sql` for polymorphic comments table with RLS policies
-- [ ] T019 Create migration `20250000000009_utility_functions.sql` for update_updated_at_column() trigger function and calculate_project_progress() function
-- [ ] T020 Apply all migrations with `bunx supabase db reset` and verify schema
+- [X] T010 Create migration `20250000000000_initial_schema.sql` for users, teams, team_members tables per data-model.md
+- [X] T011 [P] Create migration `20250000000001_ideas_table.sql` for ideas table with RLS policies
+- [X] T012 [P] Create migration `20250000000002_projects_table.sql` for projects table with RLS policies
+- [X] T013 [P] Create migration `20250000000003_resources_table.sql` for polymorphic resources table with JSONB metadata and RLS policies
+- [X] T014 [P] Create migration `20250000000004_tools_table.sql` for polymorphic tools table with RLS policies
+- [X] T015 [P] Create migration `20250000000005_tasks_table.sql` for tasks table (project-level and resource-level) with RLS policies
+- [X] T016 [P] Create migration `20250000000006_photoshoots_table.sql` for photoshoots, shots, crew_members tables with RLS policies
+- [X] T017 [P] Create migration `20250000000007_join_tables.sql` for project_resources and photoshoot_projects join tables with RLS policies
+- [X] T018 [P] Create migration `20250000000008_comments_table.sql` for polymorphic comments table with RLS policies
+- [X] T019 Create migration `20250000000009_utility_functions.sql` for update_updated_at_column() trigger function and calculate_project_progress() function
+- [ ] T020 Apply all migrations with `bunx supabase db reset` and verify schema (Manual step - requires Supabase connection)
 
 ### Authentication & Team Foundation
 
-- [ ] T021 Initialize Supabase client in `src/lib/api/supabase.ts` with environment variables
-- [ ] T022 Create auth store in `src/lib/stores/auth.ts` with Svelte 5 runes for user state and session management
-- [ ] T023 Create team store in `src/lib/stores/teams.ts` for current team context and team switching
-- [ ] T024 Implement authentication layout in `src/routes/+layout.svelte` with team selector in sidebar
-- [ ] T025 Create login page `src/routes/login/+page.svelte` using Flowbite Button and Input components
-- [ ] T026 Create signup page `src/routes/signup/+page.svelte` with personal team auto-creation hook
-- [ ] T027 Create authenticated layout `src/routes/(auth)/+layout.svelte` with sidebar navigation (Ideas, Projects, Resources, Tools, Photoshoots, Calendar, Teams, Settings)
+- [X] T021 Initialize Supabase client in `src/lib/api/supabase.ts` with environment variables
+- [X] T022 Create auth store in `src/lib/stores/auth.ts` with Svelte 5 runes for user state and session management (implemented in auth-store.ts)
+- [X] T023 Create team store in `src/lib/stores/teams.ts` for current team context and team switching
+- [X] T024 Implement authentication layout in `src/routes/+layout.svelte` with team selector in sidebar
+- [X] T025 Create login page `src/routes/login/+page.svelte` using Flowbite Button and Input components
+- [X] T026 Create signup page `src/routes/signup/+page.svelte` with personal team auto-creation hook
+- [X] T027 Create authenticated layout `src/routes/(auth)/+layout.svelte` with sidebar navigation (Ideas, Projects, Resources, Tools, Photoshoots, Calendar, Teams, Settings)
 
 ### Type System & Base Infrastructure
 
-- [ ] T028 [P] Copy TypeScript types from `specs/002-mvp-redesign/contracts/types.ts` to `src/lib/types/domain/` (split by entity)
-- [ ] T029 [P] Create domain type files: `idea.ts`, `project.ts`, `resource.ts`, `tool.ts`, `task.ts`, `photoshoot.ts`, `team.ts`, `comment.ts`
-- [ ] T030 Create validation schemas in `src/lib/schemas/validation.ts` using Zod for runtime validation
-- [ ] T031 [P] Create polymorphic field schemas in `src/lib/schemas/field-schemas.ts` for resource and tool categories
-- [ ] T032 Implement fuzzy search utility in `src/lib/utils/search.ts` using Fuse.js with threshold 0.3 for typo tolerance
-- [ ] T033 [P] Implement progress calculation utility in `src/lib/utils/progress.ts` with hybrid task/resource algorithm
-- [ ] T034 [P] Implement image processing utility in `src/lib/utils/image.ts` using Canvas API for thumbnail (200px), display (2MB), original
+- [X] T028 [P] Copy TypeScript types from `specs/002-mvp-redesign/contracts/types.ts` to `src/lib/types/domain/` (split by entity)
+- [X] T029 [P] Create domain type files: `idea.ts`, `project.ts`, `resource.ts`, `tool.ts`, `task.ts`, `photoshoot.ts`, `team.ts`, `comment.ts`
+- [X] T030 Create validation schemas in `src/lib/schemas/validation.ts` using Zod for runtime validation
+- [ ] T031 [P] Create polymorphic field schemas in `src/lib/schemas/field-schemas.ts` for resource and tool categories (validation handled inline in components)
+- [X] T032 Implement fuzzy search utility in `src/lib/utils/search.ts` using Fuse.js with threshold 0.3 for typo tolerance
+- [X] T033 [P] Implement progress calculation utility in `src/lib/utils/progress.ts` with hybrid task/resource algorithm
+- [X] T034 [P] Implement image processing utility in `src/lib/utils/image.ts` using Canvas API for thumbnail (200px), display (2MB), original
 
 ### Base UI Components (Flowbite-based)
 
-- [ ] T035 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` with on-blur auto-save, saving indicator, and inline validation
-- [ ] T036 [P] Create InlineNumberEditor component in `src/lib/components/base/InlineNumberEditor.svelte` with on-blur auto-save
-- [ ] T037 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte` wrapping Flowbite Select with on-change auto-save
-- [ ] T038 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte` wrapping Flowbite Checkbox with on-change auto-save
-- [ ] T039 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte` with on-blur auto-save
-- [ ] T040 [P] Create InlineImageUpload component in `src/lib/components/base/InlineImageUpload.svelte` with drag-drop, preview, and 3-variant upload
-- [ ] T041 [P] Create PolymorphicForm component in `src/lib/components/base/PolymorphicForm.svelte` with switch-based category field rendering
-- [ ] T042 Create DetailPageBase component in `src/lib/components/base/DetailPageBase.svelte` as shared root for all detail pages with edit mode toggle
+- [X] T035 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` with on-blur auto-save, saving indicator, and inline validation
+- [X] T036 [P] Create InlineNumberEditor component in `src/lib/components/base/InlineNumberEditor.svelte` with on-blur auto-save
+- [X] T037 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte` wrapping Flowbite Select with on-change auto-save
+- [X] T038 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte` wrapping Flowbite Checkbox with on-change auto-save
+- [X] T039 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte` with on-blur auto-save
+- [X] T040 [P] Create InlineImageUpload component in `src/lib/components/base/InlineImageUpload.svelte` with drag-drop, preview, and 3-variant upload
+- [X] T041 [P] Create PolymorphicForm component in `src/lib/components/base/PolymorphicForm.svelte` with switch-based category field rendering
+- [X] T042 Create DetailPageBase component in `src/lib/components/base/DetailPageBase.svelte` as shared root for all detail pages with edit mode toggle
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -256,7 +256,7 @@
 - [X] T130 [US6] Implement team creation in teams page with automatic Owner role assignment
 - [X] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
 - [ ] T132 [US6] Create invitation acceptance flow (email notification handled by Supabase, acceptance updates status to active)
-- [ ] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
+- [X] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
 - [X] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
 - [X] T135 [US6] Implement task assignment feature in TaskList component with team member selector
 - [ ] T136 [US6] Add task assignment notifications (simple Supabase realtime or email)
