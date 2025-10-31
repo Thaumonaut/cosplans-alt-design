@@ -81,7 +81,7 @@
   const profile = $derived($userProfile)
 
   // Get user display info
-  const userName = $derived(() => {
+  const userName = $derived.by(() => {
     if (!profile) return 'User'
     if (profile.firstName && profile.lastName) {
       return `${profile.firstName} ${profile.lastName}`
@@ -91,7 +91,7 @@
   })
 
   const userEmail = $derived(profile?.email || '')
-  const userInitials = $derived(() => {
+  const userInitials = $derived.by(() => {
     if (profile?.firstName && profile?.lastName) {
       return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase()
     }
@@ -203,9 +203,7 @@
   <SidebarFooter class="border-t border-sidebar-border p-4">
     <DropdownMenu placement="top-start">
       {#snippet trigger()}
-        <button
-          class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent"
-        >
+        <span class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent">
           <Avatar class="size-8">
             <AvatarImage src={userAvatar} alt="avatar image" />
             <AvatarFallback>{userInitials}</AvatarFallback>
@@ -216,7 +214,7 @@
               <span class="text-xs text-muted-foreground truncate w-full">{userEmail}</span>
             {/if}
           </div>
-        </button>
+        </span>
       {/snippet}
 
       {#snippet children()}
