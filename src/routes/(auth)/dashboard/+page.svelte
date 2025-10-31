@@ -149,6 +149,7 @@
       <StatCard
         title="Active Projects"
         value={activeProjectsCount}
+        change={{ value: 15, trend: "up" }}
       >
         {#snippet icon()}
           <Folder class="size-6" />
@@ -162,6 +163,7 @@
       <StatCard
         title="Tasks Due Soon"
         value={tasksDueSoonCount}
+        change={{ value: 20, trend: "down" }}
       >
         {#snippet icon()}
           <CheckSquare class="size-6" />
@@ -180,9 +182,11 @@
       <div>
         <div class="mb-8 flex items-center justify-between">
           <h2 class="text-3xl font-semibold tracking-tight">Current Projects</h2>
-          <Button variant="ghost" size="sm" href="/projects">
-            View All
-          </Button>
+          <a href="/projects">
+            <Button variant="ghost" size="sm">
+              View All
+            </Button>
+          </a>
         </div>
         <div class="grid gap-8 sm:grid-cols-2">
           {#if loading}
