@@ -90,7 +90,7 @@
     return profile.email?.split('@')[0] || 'User'
   })
 
-  const userEmail = $derived(() => profile?.email || '')
+  const userEmail = $derived(profile?.email || '')
   const userInitials = $derived(() => {
     if (profile?.firstName && profile?.lastName) {
       return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase()
@@ -104,7 +104,7 @@
     return 'U'
   })
 
-  const userAvatar = $derived(() => profile?.avatarUrl || '/placeholder-user.jpg')
+  const userAvatar = $derived(profile?.avatarUrl || '/placeholder-user.jpg')
 
   async function handleSignOut() {
     try {
