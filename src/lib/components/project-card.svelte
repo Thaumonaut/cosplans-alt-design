@@ -3,7 +3,7 @@
   import { Calendar } from 'lucide-svelte';
   
   interface Props {
-    id: number;
+    id: string | number;
     title: string;
     character: string;
     series: string;

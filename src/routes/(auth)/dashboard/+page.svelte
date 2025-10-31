@@ -30,7 +30,7 @@
 
   // Map domain projects to ProjectCard format
   type ProjectCardProject = {
-    id: number;
+    id: string;
     title: string;
     character: string;
     series: string;
@@ -43,7 +43,7 @@
 
   const projects = $derived.by((): ProjectCardProject[] => {
     return dbProjects.map(p => ({
-      id: parseInt(p.id.replace(/-/g, '').substring(0, 8), 16) % 1000000 || 0, // Convert UUID to number
+      id: p.id, // Use UUID directly
       title: `${p.character} - ${p.series}`,
       character: p.character,
       series: p.series,
