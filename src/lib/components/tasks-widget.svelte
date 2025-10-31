@@ -6,16 +6,31 @@
   import DataLoader from '$lib/components/loading-states/data-loader.svelte';
   
   // Convert global tasks to widget format
-  const widgetTasks = $derived($tasks.slice(0, 5).map(task => ({
-    id: task.id,
-    title: task.title,
-    project: task.projectId ? `Project ${task.projectId}` : 'Personal',
-    priority: task.priority,
-    dueDate: task.dueDate ? 
-      (new Date(task.dueDate).toDateString() === new Date().toDateString() ? 'Today' : 
-       new Date(task.dueDate).toLocaleDateString()) : 'No due date',
-    completed: task.completed
-  })));
+  // Filter out duplicates and ensure unique keys
+  const widgetTasks = $derived.by(() => {
+    const seen = new Set<string | number>()
+    return $tasks
+      .filter(task => {
+        // Filter out duplicate IDs
+        if (seen.has(task.id)) {
+          return false
+        }
+        seen.add(task.id)
+        return true
+      })
+      .slice(0, 5)
+      .map((task, index) => ({
+        id: task.id,
+        uniqueKey: `${task.id}-${index}`, // Ensure unique key for rendering
+        title: task.title,
+        project: task.projectId ? `Project ${task.projectId}` : 'Personal',
+        priority: task.priority,
+        dueDate: task.dueDate ? 
+          (new Date(task.dueDate).toDateString() === new Date().toDateString() ? 'Today' : 
+           new Date(task.dueDate).toLocaleDateString()) : 'No due date',
+        completed: task.completed
+      }))
+  });
   
   const priorityColors = {
     high: 'bg-red-500/10 text-red-700 dark:text-red-300',
@@ -54,7 +69,7 @@
       emptyMessage="No tasks found"
       onRetry={handleRetry}
     >
-      {#each widgetTasks as task (task.id)}
+      {#each widgetTasks as task (task.uniqueKey)}
         <div class="flex items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
           <Checkbox 
             checked={task.completed} 

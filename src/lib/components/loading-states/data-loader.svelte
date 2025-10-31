@@ -37,7 +37,7 @@
     <AlertCircle class="mb-4 h-8 w-8 text-destructive" />
     <p class="mb-4 text-sm text-destructive">{error || errorMessage}</p>
     {#if showRetry && onRetry}
-      <Button variant="outline" size="sm" on:click={handleRetry}>
+      <Button variant="outline" size="sm" onclick={handleRetry}>
         <RefreshCw class="mr-2 h-4 w-4" />
         Try Again
       </Button>
