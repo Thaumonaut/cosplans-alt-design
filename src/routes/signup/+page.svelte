@@ -380,7 +380,7 @@
           type="submit"
           disabled={!isFormValid || isLoading}
           class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          title={!isFormValid ? validationMessages().join(', ') : ''}
+          title={!isFormValid ? validationMessages.join(', ') : ''}
         >
           {#if isLoading}
             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -394,7 +394,7 @@
         </button>
         {#if !isFormValid && (email || firstName || lastName || password || confirmPassword)}
           <p class="text-xs text-gray-500 text-center">
-            {validationMessages().join(', ')}
+            {validationMessages.join(', ')}
           </p>
         {/if}
       </div>
