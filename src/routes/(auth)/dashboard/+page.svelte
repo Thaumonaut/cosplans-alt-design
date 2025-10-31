@@ -42,20 +42,33 @@
   };
 
   const projects = $derived.by((): ProjectCardProject[] => {
-    return dbProjects.map(p => ({
-      id: p.id, // Use UUID directly
-      title: `${p.character} - ${p.series}`,
-      character: p.character,
-      series: p.series,
-      image: p.coverImage || '/placeholder.svg',
-      progress: p.progress,
-      budget: {
-        spent: (p.spentBudget || 0) / 100, // Convert from cents
-        total: (p.estimatedBudget || 0) / 100 // Convert from cents
-      },
-      deadline: p.deadline || undefined,
-      status: p.status === 'archived' ? 'completed' : (p.status as 'idea' | 'planning' | 'in-progress' | 'completed')
-    }));
+    return dbProjects.map(p => {
+      // Format deadline like React version: "Oct 15, 2025"
+      let formattedDeadline: string | undefined = undefined;
+      if (p.deadline) {
+        try {
+          const date = new Date(p.deadline);
+          formattedDeadline = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch (e) {
+          // If date parsing fails, leave undefined
+        }
+      }
+      
+      return {
+        id: p.id, // Use UUID directly
+        title: `${p.character} - ${p.series}`,
+        character: p.character,
+        series: p.series,
+        image: p.coverImage || '/placeholder.svg',
+        progress: p.progress,
+        budget: {
+          spent: (p.spentBudget || 0) / 100, // Convert from cents
+          total: (p.estimatedBudget || 0) / 100 // Convert from cents
+        },
+        deadline: formattedDeadline,
+        status: p.status === 'archived' ? 'completed' : (p.status as 'idea' | 'planning' | 'in-progress' | 'completed')
+      };
+    });
   });
 
   // Calculate stats from real data
