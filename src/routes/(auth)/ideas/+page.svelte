@@ -133,25 +133,6 @@
           New Idea
         </Button>
         <div class="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-[3px]">
-        <button
-          onclick={() => (activeTab = 'grid')}
-          class="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium transition-all {activeTab ===
-          'grid'
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border-gray-200 dark:border-gray-600'
-            : 'text-gray-700 dark:text-gray-400'}"
-        >
-          <Grid3x3 class="size-4" />
-        </button>
-        <button
-          onclick={() => (activeTab = 'list')}
-          class="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium transition-all {activeTab ===
-          'list'
-            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border-gray-200 dark:border-gray-600'
-            : 'text-gray-700 dark:text-gray-400'}"
-        >
-          <List class="size-4" />
-        </button>
-        <div class="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-[3px]">
           <button
             onclick={() => (activeTab = 'grid')}
             class="inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium transition-all {activeTab ===
