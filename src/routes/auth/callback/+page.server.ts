@@ -8,10 +8,16 @@ export const load: PageServerLoad = async ({ url, locals: { supabase } }) => {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      throw redirect(303, next);
+      // Ensure we redirect to the correct origin (handle relative paths)
+      const redirectPath = next.startsWith('/') ? next : `/${next}`
+      throw redirect(303, redirectPath);
     }
   }
 
-  // Return to login page if there was an error
+  // Return to login page if there was an error, but preserve redirectTo if it exists
+  const redirectTo = url.searchParams.get('next')
+  if (redirectTo) {
+    throw redirect(303, `/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
   throw redirect(303, '/login');
 };

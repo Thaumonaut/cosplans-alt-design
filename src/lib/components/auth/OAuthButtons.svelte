@@ -1,22 +1,29 @@
 <script lang="ts">
+  import { page } from '$app/stores'
   import { authService } from '$lib/auth/auth-service';
   
-  let { mode = 'login', redirectTo = '/dashboard' }: { 
+  let { mode = 'login' }: { 
     mode?: 'login' | 'signup'; 
-    redirectTo?: string; 
   } = $props();
   
-  let loading = false;
-  let error: string | null = null;
+  let loading = $state(false);
+  let error = $state<string | null>(null);
   
   type OAuthProvider = 'google' | 'facebook' | 'twitter';
+  
+  // Get redirect destination from URL or default to dashboard
+  const redirectTo = $derived(() => {
+    const redirectParam = $page.url.searchParams.get('redirectTo')
+    return redirectParam ? decodeURIComponent(redirectParam) : '/dashboard'
+  })
   
   async function handleOAuthLogin(provider: OAuthProvider) {
     loading = true;
     error = null;
     
     try {
-      const result = await authService.signInWithOAuth(provider);
+      // Pass the redirect destination through OAuth flow
+      const result = await authService.signInWithOAuth(provider, redirectTo());
       
       if (result.error) {
         console.error(`${provider} OAuth error:`, result.error);
@@ -51,7 +58,7 @@
     <button
       type="button"
       class="oauth-button google"
-      on:click={() => handleOAuthLogin('google')}
+      onclick={() => handleOAuthLogin('google')}
       disabled={loading}
       aria-label="Sign in with Google"
     >
@@ -68,7 +75,7 @@
     <button
       type="button"
       class="oauth-button facebook"
-      on:click={() => handleOAuthLogin('facebook')}
+      onclick={() => handleOAuthLogin('facebook')}
       disabled={loading}
       aria-label="Sign in with Facebook"
     >
@@ -82,7 +89,7 @@
     <button
       type="button"
       class="oauth-button twitter"
-      on:click={() => handleOAuthLogin('twitter')}
+      onclick={() => handleOAuthLogin('twitter')}
       disabled={loading}
       aria-label="Sign in with X (Twitter)"
     >

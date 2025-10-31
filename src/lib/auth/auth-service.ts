@@ -92,12 +92,21 @@ class SupabaseAuthService implements AuthenticationService {
     }
   }
 
-  async signInWithOAuth(provider: OAuthProvider): Promise<AuthResult> {
+  async signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<AuthResult> {
     try {
+      // Build callback URL with next parameter to preserve redirect destination
+      const callbackUrl = new URL(`${window.location.origin}/auth/callback`)
+      if (redirectTo) {
+        callbackUrl.searchParams.set('next', redirectTo)
+      } else {
+        // Default to dashboard if no redirect specified
+        callbackUrl.searchParams.set('next', '/dashboard')
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl.toString(),
         },
       });
 
