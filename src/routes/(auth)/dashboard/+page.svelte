@@ -1,5 +1,7 @@
 <script lang="ts">
+  import type { PageData } from './$types';
   import CreationFlyout from "$lib/components/creation-flyout.svelte";
+  import PageHeader from "$lib/components/page-header.svelte";
   import { Button } from "$lib/components/ui";
   import {
     Plus,
@@ -15,77 +17,99 @@
   import UpcomingEventsWidget from "$lib/components/upcoming-events-widget.svelte";
   import RecentActivityWidget from "$lib/components/recent-activity-widget.svelte";
   import ProjectCreationForm from "$lib/components/project-creation-form.svelte";
+  import { projectService } from '$lib/api/services/projectService';
+  import { onMount } from 'svelte';
+
+  let { data }: { data: PageData } = $props();
 
   // Dashboard state using Svelte 5 runes
   let creationOpen = $state(false);
+  let projects = $state(data.projects || []);
+  let loading = $state(false);
 
-  // Mock data matching the React design
-  const projects = [
-    {
-      id: 1,
-      title: "Elden Ring Cosplay",
-      character: "Malenia, Blade of Miquella",
-      series: "Elden Ring",
-      image: "/fantasy-warrior-armor-red-hair.jpg",
-      progress: 65,
-      budget: { spent: 450, total: 800 },
-      deadline: "Oct 15, 2025",
-      status: "in-progress" as const,
-    },
-    {
-      id: 2,
-      title: "Genshin Impact",
-      character: "Raiden Shogun",
-      series: "Genshin Impact",
-      image: "/anime-character-purple-kimono.jpg",
-      progress: 30,
-      budget: { spent: 200, total: 600 },
-      deadline: "Nov 20, 2025",
-      status: "planning" as const,
-    },
-    {
-      id: 3,
-      title: "Cyberpunk 2077",
-      character: "V (Female)",
-      series: "Cyberpunk 2077",
-      image: "/cyberpunk-character-neon-jacket.jpg",
-      progress: 10,
-      budget: { spent: 50, total: 500 },
-      status: "idea" as const,
-    },
-  ];
+  // Calculate stats from real data
+  const activeProjectsCount = $derived(projects.filter(p => p.status !== 'completed' && p.status !== 'archived').length);
+  const upcomingEventsCount = $derived(data.events?.length || 0);
+  const tasksDueSoonCount = $derived(data.tasks?.filter(t => {
+    if (!t.dueDate) return false;
+    const dueDate = new Date(t.dueDate);
+    const today = new Date();
+    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 7;
+  }).length || 0);
+  
+  // Calculate total budget from projects
+  const totalBudget = $derived.by(() => {
+    const total = projects.reduce((sum, p) => {
+      const budget = typeof p.budget === 'object' && p.budget !== null 
+        ? (p.budget as any).total || 0
+        : 0;
+      return sum + budget;
+    }, 0);
+    return `$${total.toLocaleString()}`;
+  });
 
-  const notifications = [
-    {
-      title: "Convention in 2 weeks",
-      description: "Anime Expo 2025 - Don't forget to pack!",
-    },
-    {
-      title: "Budget alert",
-      description: "Malenia project is 80% of budget",
-    },
-  ];
+  // Notifications from events and projects
+  const notifications = $derived.by(() => {
+    const notifs: Array<{ title: string; description: string }> = [];
+    
+    // Add event notifications
+    data.events?.slice(0, 2).forEach(event => {
+      notifs.push({
+        title: event.title || 'Upcoming Event',
+        description: event.description || `Event on ${new Date(event.date).toLocaleDateString()}`
+      });
+    });
+
+    // Add budget alerts
+    projects.forEach(project => {
+      const budget = typeof project.budget === 'object' && project.budget !== null 
+        ? project.budget as { spent?: number; total?: number }
+        : null;
+      if (budget?.total && budget?.spent) {
+        const percentage = (budget.spent / budget.total) * 100;
+        if (percentage >= 80) {
+          notifs.push({
+            title: "Budget alert",
+            description: `${project.title || 'Project'} is ${Math.round(percentage)}% of budget`
+          });
+        }
+      }
+    });
+
+    return notifs.slice(0, 2); // Limit to 2 notifications
+  });
+
+  // Load projects from database if not loaded
+  onMount(async () => {
+    if (projects.length === 0 && !loading) {
+      try {
+        loading = true;
+        const dbProjects = await projectService.list({ status: undefined });
+        projects = dbProjects.slice(0, 6); // Show top 6 projects
+      } catch (error) {
+        console.error('Failed to load projects:', error);
+      } finally {
+        loading = false;
+      }
+    }
+  });
 </script>
 
 <svelte:head>
   <title>Dashboard - Cosplay Tracker</title>
 </svelte:head>
 
-
-
-<!-- Page-specific header with action button -->
-<div class="border-b bg-background px-6 py-4">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold">Dashboard</h1>
-      <p class="text-muted-foreground">Manage your cosplay projects and track progress</p>
-    </div>
-    <Button onclick={() => (creationOpen = true)}>
-      <Plus class="mr-2 size-4" />
-      New Project
+<PageHeader 
+  searchPlaceholder="Search projects, characters, events..."
+  {notifications}
+>
+  {#snippet children()}
+    <Button size="icon" onclick={() => (creationOpen = true)}>
+      <Plus class="size-5" />
     </Button>
-  </div>
-</div>
+  {/snippet}
+</PageHeader>
 
 <div class="p-10">
   <div class="mb-12 space-y-10">
@@ -101,28 +125,26 @@
     <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Active Projects"
-        value={3}
-        change={{ value: 15, trend: "up" }}
+        value={activeProjectsCount}
       >
         {#snippet icon()}
           <Folder class="size-6" />
         {/snippet}
       </StatCard>
-      <StatCard title="Upcoming Events" value={3}>
+      <StatCard title="Upcoming Events" value={upcomingEventsCount}>
         {#snippet icon()}
           <Calendar class="size-6" />
         {/snippet}
       </StatCard>
       <StatCard
         title="Tasks Due Soon"
-        value={5}
-        change={{ value: 20, trend: "down" }}
+        value={tasksDueSoonCount}
       >
         {#snippet icon()}
           <CheckSquare class="size-6" />
         {/snippet}
       </StatCard>
-      <StatCard title="Total Budget" value="$1,900">
+      <StatCard title="Total Budget" value={totalBudget}>
         {#snippet icon()}
           <DollarSign class="size-6" />
         {/snippet}
@@ -140,9 +162,15 @@
           </Button>
         </div>
         <div class="grid gap-8 sm:grid-cols-2">
-          {#each projects as project (project.id)}
-            <ProjectCard {...project} />
-          {/each}
+          {#if loading}
+            <div class="col-span-2 text-center py-8 text-muted-foreground">Loading projects...</div>
+          {:else if projects.length === 0}
+            <div class="col-span-2 text-center py-8 text-muted-foreground">No projects yet. Create your first project to get started!</div>
+          {:else}
+            {#each projects.slice(0, 4) as project (project.id)}
+              <ProjectCard {...project} />
+            {/each}
+          {/if}
         </div>
       </div>
 
