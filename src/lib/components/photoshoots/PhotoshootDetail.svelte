@@ -11,6 +11,7 @@
   import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
+  import CommentBox from '$lib/components/base/CommentBox.svelte'
   import ShotListEditor from '$lib/components/domain/ShotListEditor.svelte'
   import type {
     Photoshoot,
@@ -641,6 +642,13 @@
         {/if}
       </div>
     </div>
+
+    <!-- Comments Section -->
+    {#if photoshoot}
+      <div class="border-t px-8 py-6">
+        <CommentBox entityType="photoshoot" entityId={photoshoot.id} editable={!isReadOnly()} />
+      </div>
+    {/if}
 
     <!-- Create Button -->
     {#if currentMode() === 'create' && !isFlyout}

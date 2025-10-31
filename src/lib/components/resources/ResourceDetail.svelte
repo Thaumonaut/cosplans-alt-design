@@ -11,6 +11,7 @@
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
+  import CommentBox from '$lib/components/base/CommentBox.svelte'
   import UsedInProjectsSection from './UsedInProjectsSection.svelte'
   import type { Resource, ResourceCreate, ResourceCategory } from '$lib/types/domain/resource'
   import { get } from 'svelte/store'
@@ -1134,6 +1135,13 @@
         {/if}
       </div>
     </div>
+
+    <!-- Comments Section -->
+    {#if resource}
+      <div class="border-t px-8 py-6">
+        <CommentBox entityType="resource" entityId={resource.id} editable={!isReadOnly()} />
+      </div>
+    {/if}
 
     <!-- Create Mode Actions -->
     {#if currentMode() === 'create'}

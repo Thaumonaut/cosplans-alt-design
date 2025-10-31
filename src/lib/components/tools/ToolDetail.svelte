@@ -13,6 +13,7 @@
   import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
+  import CommentBox from '$lib/components/base/CommentBox.svelte'
   import type { Tool, ToolCreate, ToolCategory, ToolCondition } from '$lib/types/domain/tool'
   import { get } from 'svelte/store'
 
@@ -701,6 +702,13 @@
             {saving ? 'Creating...' : 'Create Tool'}
           </Button>
         </div>
+      </div>
+    {/if}
+
+    <!-- Comments Section -->
+    {#if tool}
+      <div class="border-t px-8 py-6">
+        <CommentBox entityType="tool" entityId={tool.id} editable={!isReadOnly()} />
       </div>
     {/if}
   </div>

@@ -13,6 +13,7 @@
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import DifficultySelector from '$lib/components/base/DifficultySelector.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
+  import CommentBox from '$lib/components/base/CommentBox.svelte'
   import type { Idea, IdeaCreate } from '$lib/types/domain/idea'
 
   interface Props {
@@ -607,6 +608,13 @@
             <ArrowRight class="ml-2 size-4" />
           {/if}
         </Button>
+      </div>
+    {/if}
+
+    <!-- Comments Section -->
+    {#if idea}
+      <div class="border-t px-8 py-6">
+        <CommentBox entityType="idea" entityId={idea.id} editable={!isReadOnly} />
       </div>
     {/if}
   </div>

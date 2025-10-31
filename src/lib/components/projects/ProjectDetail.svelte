@@ -15,6 +15,7 @@
   import ResourcesTab from './tabs/ResourcesTab.svelte'
   import TasksTab from './tabs/TasksTab.svelte'
   import GalleryTab from './tabs/GalleryTab.svelte'
+  import CommentBox from '$lib/components/base/CommentBox.svelte'
   import type { Project, ProjectCreate } from '$lib/types/domain/project'
   import { get } from 'svelte/store'
 
@@ -723,6 +724,13 @@
             Cancel
           </Button>
         </div>
+      </div>
+    {/if}
+
+    <!-- Comments Section -->
+    {#if project}
+      <div class="border-t px-8 py-6">
+        <CommentBox entityType="project" entityId={project.id} editable={!isReadOnly} />
       </div>
     {/if}
   </div>

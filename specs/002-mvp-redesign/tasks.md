@@ -257,13 +257,13 @@
 - [X] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
 - [ ] T132 [US6] Create invitation acceptance flow (email notification handled by Supabase, acceptance updates status to active)
 - [ ] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
-- [ ] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
-- [ ] T135 [US6] Implement task assignment feature in TaskList component with team member selector
+- [X] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
+- [X] T135 [US6] Implement task assignment feature in TaskList component with team member selector
 - [ ] T136 [US6] Add task assignment notifications (simple Supabase realtime or email)
-- [ ] T137 [US6] Create CommentBox component in `src/lib/components/base/CommentBox.svelte` with textarea and submit button
-- [ ] T138 [US6] Add CommentBox to all detail pages (ideas, projects, resources, tools, photoshoots) at bottom
-- [ ] T139 [US6] Implement comment creation accessible to all roles (Owner, Editor, Viewer)
-- [ ] T140 [US6] Display comment list with author name, avatar, timestamp, and own-comment edit/delete
+- [X] T137 [US6] Create CommentBox component in `src/lib/components/base/CommentBox.svelte` with textarea and submit button
+- [X] T138 [US6] Add CommentBox to all detail pages (ideas, projects, resources, tools, photoshoots) at bottom
+- [X] T139 [US6] Implement comment creation accessible to all roles (Owner, Editor, Viewer)
+- [X] T140 [US6] Display comment list with author name, avatar, timestamp, and own-comment edit/delete
 - [ ] T141 [US6] Add personal team auto-creation on user signup (triggered in signup page)
 - [ ] T142 [US6] Verify RLS policies enforce team-based access across all tables
 

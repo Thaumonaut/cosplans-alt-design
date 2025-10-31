@@ -4,7 +4,11 @@
   import { Button, Card, Checkbox } from 'flowbite-svelte'
   import { Plus, CheckSquare } from 'lucide-svelte'
   import { taskService } from '$lib/api/services/taskService'
+  import { teamService } from '$lib/api/services/teamService'
+  import { currentTeam } from '$lib/stores/teams'
+  import { get } from 'svelte/store'
   import type { Task, TaskCreate } from '$lib/types/domain/task'
+  import type { TeamMember } from '$lib/api/services/teamService'
 
   interface Props {
     projectId: string
@@ -21,11 +25,24 @@
   let newTaskTitle = $state('')
   let newTaskDescription = $state('')
   let newTaskPriority = $state<Task['priority']>('medium')
+  let newTaskAssignedTo = $state<string | undefined>(undefined)
   let creating = $state(false)
+  let teamMembers = $state<TeamMember[]>([])
 
   onMount(async () => {
-    await loadTasks()
+    await Promise.all([loadTasks(), loadTeamMembers()])
   })
+
+  async function loadTeamMembers() {
+    const team = get(currentTeam)
+    if (team) {
+      try {
+        teamMembers = await teamService.getMembers(team.id)
+      } catch (err) {
+        console.error('Failed to load team members:', err)
+      }
+    }
+  }
 
   async function loadTasks() {
     try {
@@ -67,12 +84,14 @@
         title: newTaskTitle.trim(),
         description: newTaskDescription.trim() || undefined,
         priority: newTaskPriority,
+        assignedTo: newTaskAssignedTo,
       }
 
       await taskService.create(taskData)
       newTaskTitle = ''
       newTaskDescription = ''
       newTaskPriority = 'medium'
+      newTaskAssignedTo = undefined
       showCreateForm = false
       await loadTasks()
       onTaskChange?.()
@@ -132,6 +151,20 @@
             class="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
           ></textarea>
         </div>
+        {#if teamMembers.length > 0}
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Assign To</div>
+            <select
+              bind:value={newTaskAssignedTo}
+              class="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
+            >
+              <option value="">Unassigned</option>
+              {#each teamMembers as member}
+                <option value={member.userId}>{member.user?.name || member.user?.email || 'Unknown'}</option>
+              {/each}
+            </select>
+          </div>
+        {/if}
         <div class="flex gap-2">
           <Button color="primary" size="sm" onclick={createTask} disabled={creating || !newTaskTitle.trim()}>
             {creating ? 'Creating...' : 'Create'}
@@ -188,6 +221,12 @@
                 <span class="{getPriorityColor(task.priority)} font-medium capitalize">
                   {task.priority}
                 </span>
+                {#if task.assignedTo}
+                  {@const assignedMember = teamMembers.find((m) => m.userId === task.assignedTo)}
+                  <span class="text-muted-foreground">
+                    Assigned to: {assignedMember?.user?.name || assignedMember?.user?.email || 'Unknown'}
+                  </span>
+                {/if}
                 {#if task.dueDate}
                   <span class="text-muted-foreground">
                     Due {new Date(task.dueDate).toLocaleDateString('en-US', {
