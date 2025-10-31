@@ -10,6 +10,9 @@
   import { CRITICAL_ROUTES, CRITICAL_RESOURCES } from '$lib/config/preload.js';
   import { preloadRoute } from '$lib/utils/performance.js';
   import { authActions } from '$lib/stores/auth-store.js';
+  import { teams } from '$lib/stores/teams.js';
+  import { user } from '$lib/stores/auth-store.js';
+  import { get } from 'svelte/store';
   import type { LayoutData } from './$types';
 
   let { data }: { data: LayoutData } = $props();
@@ -18,8 +21,18 @@
   
   // Initialize auth state in stores using $effect
   $effect(() => {
-    if (session) {
+    if (session?.user) {
       authActions.initialize(session.user, session);
+    }
+  });
+
+  // Load teams when user is available
+  $effect(() => {
+    const currentUser = $user;
+    if (currentUser && session) {
+      teams.load(currentUser.id).catch((err) => {
+        console.error('Failed to load teams:', err);
+      });
     }
   });
 

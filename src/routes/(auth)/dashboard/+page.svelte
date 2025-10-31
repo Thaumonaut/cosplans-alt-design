@@ -19,16 +19,47 @@
   import ProjectCreationForm from "$lib/components/project-creation-form.svelte";
   import { projectService } from '$lib/api/services/projectService';
   import { onMount } from 'svelte';
+  import type { Project as DomainProject } from '$lib/types/domain/project';
 
   let { data }: { data: PageData } = $props();
 
   // Dashboard state using Svelte 5 runes
   let creationOpen = $state(false);
-  let projects = $state(data.projects || []);
+  let dbProjects: DomainProject[] = $state([]);
   let loading = $state(false);
 
+  // Map domain projects to ProjectCard format
+  type ProjectCardProject = {
+    id: number;
+    title: string;
+    character: string;
+    series: string;
+    image: string;
+    progress: number;
+    budget: { spent: number; total: number };
+    deadline?: string;
+    status: 'idea' | 'planning' | 'in-progress' | 'completed';
+  };
+
+  const projects = $derived.by((): ProjectCardProject[] => {
+    return dbProjects.map(p => ({
+      id: parseInt(p.id.replace(/-/g, '').substring(0, 8), 16) % 1000000 || 0, // Convert UUID to number
+      title: `${p.character} - ${p.series}`,
+      character: p.character,
+      series: p.series,
+      image: p.coverImage || '/placeholder.svg',
+      progress: p.progress,
+      budget: {
+        spent: (p.spentBudget || 0) / 100, // Convert from cents
+        total: (p.estimatedBudget || 0) / 100 // Convert from cents
+      },
+      deadline: p.deadline || undefined,
+      status: p.status === 'archived' ? 'completed' : (p.status as 'idea' | 'planning' | 'in-progress' | 'completed')
+    }));
+  });
+
   // Calculate stats from real data
-  const activeProjectsCount = $derived(projects.filter(p => p.status !== 'completed' && p.status !== 'archived').length);
+  const activeProjectsCount = $derived(dbProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').length);
   const upcomingEventsCount = $derived(data.events?.length || 0);
   const tasksDueSoonCount = $derived(data.tasks?.filter(t => {
     if (!t.dueDate) return false;
@@ -40,11 +71,8 @@
   
   // Calculate total budget from projects
   const totalBudget = $derived.by(() => {
-    const total = projects.reduce((sum, p) => {
-      const budget = typeof p.budget === 'object' && p.budget !== null 
-        ? (p.budget as any).total || 0
-        : 0;
-      return sum + budget;
+    const total = dbProjects.reduce((sum, p) => {
+      return sum + ((p.estimatedBudget || 0) / 100); // Convert from cents to dollars
     }, 0);
     return `$${total.toLocaleString()}`;
   });
@@ -62,16 +90,13 @@
     });
 
     // Add budget alerts
-    projects.forEach(project => {
-      const budget = typeof project.budget === 'object' && project.budget !== null 
-        ? project.budget as { spent?: number; total?: number }
-        : null;
-      if (budget?.total && budget?.spent) {
-        const percentage = (budget.spent / budget.total) * 100;
+    dbProjects.forEach(project => {
+      if (project.estimatedBudget && project.spentBudget) {
+        const percentage = (project.spentBudget / project.estimatedBudget) * 100;
         if (percentage >= 80) {
           notifs.push({
             title: "Budget alert",
-            description: `${project.title || 'Project'} is ${Math.round(percentage)}% of budget`
+            description: `${project.character} project is ${Math.round(percentage)}% of budget`
           });
         }
       }
@@ -80,18 +105,16 @@
     return notifs.slice(0, 2); // Limit to 2 notifications
   });
 
-  // Load projects from database if not loaded
+  // Load projects from database
   onMount(async () => {
-    if (projects.length === 0 && !loading) {
-      try {
-        loading = true;
-        const dbProjects = await projectService.list({ status: undefined });
-        projects = dbProjects.slice(0, 6); // Show top 6 projects
-      } catch (error) {
-        console.error('Failed to load projects:', error);
-      } finally {
-        loading = false;
-      }
+    try {
+      loading = true;
+      const loadedProjects = await projectService.list({ status: undefined });
+      dbProjects = loadedProjects.slice(0, 6); // Show top 6 projects
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    } finally {
+      loading = false;
     }
   });
 </script>
