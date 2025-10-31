@@ -1,182 +1,198 @@
 import { writable, derived } from 'svelte/store'
-import { browser } from '$app/environment'
-import { apiClient } from '$lib/api/client.js'
-import type { Project } from '$types'
+import { projectService } from '$lib/api/services/projectService'
+import type { Project, ProjectCreate, ProjectUpdate } from '$lib/types/domain/project'
 
-// Main projects store
-export const projects = writable<Project[]>([])
+interface ProjectsState {
+  items: Project[]
+  loading: boolean
+  error: string | null
+}
 
-// Loading and error states
-export const projectsLoading = writable(false)
-export const projectsError = writable<string | null>(null)
+interface ProjectsFilter {
+  status?: 'planning' | 'in-progress' | 'completed' | 'archived'
+  search?: string
+}
+
+function createProjectsStore() {
+  const { subscribe, set, update } = writable<ProjectsState>({
+    items: [],
+    loading: false,
+    error: null,
+  })
+
+  return {
+    subscribe,
+    reset: () => set({ items: [], loading: false, error: null }),
+
+    load: async (filters?: ProjectsFilter) => {
+      update((state) => ({ ...state, loading: true, error: null }))
+      try {
+        const items = await projectService.list(filters)
+        set({ items, loading: false, error: null })
+      } catch (err: any) {
+        set({ items: [], loading: false, error: err?.message || 'Failed to load projects' })
+      }
+    },
+
+    loadOne: async (id: string): Promise<Project | null> => {
+      try {
+        const project = await projectService.get(id)
+        if (project) {
+          update((state) => {
+            const index = state.items.findIndex((p) => p.id === id)
+            if (index >= 0) {
+              state.items[index] = project
+            } else {
+              state.items.push(project)
+            }
+            return state
+          })
+        }
+        return project
+      } catch (err: any) {
+        update((state) => ({ ...state, error: err?.message || 'Failed to load project' }))
+        return null
+      }
+    },
+
+    create: async (project: ProjectCreate) => {
+      update((state) => ({ ...state, loading: true, error: null }))
+      try {
+        const created = await projectService.create(project)
+        update((state) => ({
+          ...state,
+          items: [created, ...state.items],
+          loading: false,
+          error: null,
+        }))
+        return created
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          loading: false,
+          error: err?.message || 'Failed to create project',
+        }))
+        throw err
+      }
+    },
+
+    update: async (id: string, updates: ProjectUpdate) => {
+      update((state) => ({ ...state, loading: true, error: null }))
+      try {
+        const updated = await projectService.update(id, updates)
+        if (updated) {
+          update((state) => ({
+            ...state,
+            items: state.items.map((p) => (p.id === id ? updated : p)),
+            loading: false,
+            error: null,
+          }))
+          return updated
+        }
+        update((state) => ({ ...state, loading: false }))
+        return null
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          loading: false,
+          error: err?.message || 'Failed to update project',
+        }))
+        throw err
+      }
+    },
+
+    delete: async (id: string) => {
+      update((state) => ({ ...state, loading: true, error: null }))
+      try {
+        await projectService.delete(id)
+        update((state) => ({
+          ...state,
+          items: state.items.filter((p) => p.id !== id),
+          loading: false,
+          error: null,
+        }))
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          loading: false,
+          error: err?.message || 'Failed to delete project',
+        }))
+        throw err
+      }
+    },
+
+    linkResource: async (projectId: string, resourceId: string, quantity: number = 1) => {
+      try {
+        await projectService.linkResource(projectId, resourceId, quantity)
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          error: err?.message || 'Failed to link resource',
+        }))
+        throw err
+      }
+    },
+
+    unlinkResource: async (projectId: string, resourceId: string) => {
+      try {
+        await projectService.unlinkResource(projectId, resourceId)
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          error: err?.message || 'Failed to unlink resource',
+        }))
+        throw err
+      }
+    },
+
+    calculateProgress: async (projectId: string): Promise<number> => {
+      try {
+        return await projectService.calculateProgress(projectId)
+      } catch (err: any) {
+        update((state) => ({
+          ...state,
+          error: err?.message || 'Failed to calculate progress',
+        }))
+        return 0
+      }
+    },
+  }
+}
+
+export const projects = createProjectsStore()
 
 // Derived stores for filtered project views
-export const activeProjects = derived(
-  projects,
-  $projects => $projects.filter(p => p.status === 'in-progress')
+export const planningProjects = derived(projects, ($projects) =>
+  $projects.items.filter((p) => p.status === 'planning')
 )
 
-export const completedProjects = derived(
-  projects,
-  $projects => $projects.filter(p => p.status === 'completed')
+export const activeProjects = derived(projects, ($projects) =>
+  $projects.items.filter((p) => p.status === 'in-progress')
 )
 
-export const archivedProjects = derived(
-  projects,
-  $projects => $projects.filter(p => p.status === 'archived')
+export const completedProjects = derived(projects, ($projects) =>
+  $projects.items.filter((p) => p.status === 'completed')
 )
 
-export const ideaProjects = derived(
-  projects,
-  $projects => $projects.filter(p => p.status === 'idea')
-)
-
-export const planningProjects = derived(
-  projects,
-  $projects => $projects.filter(p => p.status === 'planning')
+export const archivedProjects = derived(projects, ($projects) =>
+  $projects.items.filter((p) => p.status === 'archived')
 )
 
 // Project statistics
-export const projectStats = derived(
-  projects,
-  $projects => {
-    const total = $projects.length
-    const completed = $projects.filter(p => p.status === 'completed').length
-    const inProgress = $projects.filter(p => p.status === 'in-progress').length
-    const overdue = $projects.filter(p => 
-      p.deadline && new Date(p.deadline) < new Date() && p.status !== 'completed'
-    ).length
+export const projectStats = derived(projects, ($projects) => {
+  const items = $projects.items
+  const total = items.length
+  const completed = items.filter((p) => p.status === 'completed').length
+  const inProgress = items.filter((p) => p.status === 'in-progress').length
+  const overdue = items.filter(
+    (p) => p.deadline && new Date(p.deadline) < new Date() && p.status !== 'completed'
+  ).length
 
-    return {
-      total,
-      completed,
-      inProgress,
-      overdue,
-      completionRate: total > 0 ? Math.round((completed / total) * 100) : 0
-    }
+  return {
+    total,
+    completed,
+    inProgress,
+    overdue,
+    completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
   }
-)
-
-// API-integrated actions for managing projects
-export async function loadProjects(params?: { status?: string; forceRefresh?: boolean }) {
-  if (!browser) return
-
-  projectsLoading.set(true)
-  projectsError.set(null)
-
-  try {
-    const response = await apiClient.getProjects(params)
-    if (response.success) {
-      projects.set(response.data)
-    } else {
-      throw new Error(response.message || 'Failed to load projects')
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to load projects'
-    projectsError.set(errorMessage)
-    console.error('Failed to load projects:', error)
-  } finally {
-    projectsLoading.set(false)
-  }
-}
-
-export async function addProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) {
-  if (!browser) return
-
-  try {
-    const response = await apiClient.createProject(project)
-    if (response.success) {
-      // Add to local store
-      projects.update(currentProjects => [...currentProjects, response.data])
-      return response.data
-    } else {
-      throw new Error(response.message || 'Failed to create project')
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create project'
-    projectsError.set(errorMessage)
-    console.error('Failed to create project:', error)
-    throw error
-  }
-}
-
-export async function updateProject(id: number, updates: Partial<Project>) {
-  if (!browser) return
-
-  try {
-    const response = await apiClient.updateProject(id, updates)
-    if (response.success) {
-      // Update local store
-      projects.update(currentProjects =>
-        currentProjects.map(project =>
-          project.id === id ? response.data : project
-        )
-      )
-      return response.data
-    } else {
-      throw new Error(response.message || 'Failed to update project')
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update project'
-    projectsError.set(errorMessage)
-    console.error('Failed to update project:', error)
-    throw error
-  }
-}
-
-export async function deleteProject(id: number) {
-  if (!browser) return
-
-  try {
-    const response = await apiClient.deleteProject(id)
-    if (response.success) {
-      // Remove from local store
-      projects.update(currentProjects =>
-        currentProjects.filter(project => project.id !== id)
-      )
-    } else {
-      throw new Error(response.message || 'Failed to delete project')
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete project'
-    projectsError.set(errorMessage)
-    console.error('Failed to delete project:', error)
-    throw error
-  }
-}
-
-export function getProjectById(id: number) {
-  return derived(
-    projects,
-    $projects => $projects.find(p => p.id === id)
-  )
-}
-
-// Legacy functions for backward compatibility (now use local data only)
-export function addProjectLocal(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) {
-  projects.update(currentProjects => {
-    const newProject: Project = {
-      ...project,
-      id: Date.now(), // Simple ID generation for now
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    return [...currentProjects, newProject]
-  })
-}
-
-export function updateProjectLocal(id: number, updates: Partial<Project>) {
-  projects.update(currentProjects =>
-    currentProjects.map(project =>
-      project.id === id
-        ? { ...project, ...updates, updatedAt: new Date() }
-        : project
-    )
-  )
-}
-
-export function deleteProjectLocal(id: number) {
-  projects.update(currentProjects =>
-    currentProjects.filter(project => project.id !== id)
-  )
-}
+})

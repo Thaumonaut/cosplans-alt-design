@@ -37,6 +37,7 @@
     "dotenv": "^17.2.3",
     "flowbite": "^3.1.2",
     "flowbite-svelte": "^1.19.0",
+    "fuse.js": "^7.1.0",
     "lucide-svelte": "^0.454.0",
     "supabase": "^2.54.11",
     "tailwind-merge": "^2.5.5",

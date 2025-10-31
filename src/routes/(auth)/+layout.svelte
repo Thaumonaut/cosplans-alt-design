@@ -80,7 +80,7 @@
   <div class="flex min-h-screen w-full">
     <AppSidebar />
     <main class="max-w-full flex-1 overflow-x-hidden">
-      <PageHeader />
+      <PageHeader showBackButton={$page.route.id === '(auth)/ideas/[id]' || $page.route.id === '(auth)/ideas/new'} backUrl="/ideas" />
       <slot />
     </main>
   </div>

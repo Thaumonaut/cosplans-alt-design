@@ -1,22 +1,11 @@
 // Re-export all stores for easy importing
 export { 
-  projects, 
-  projectsLoading,
-  projectsError,
-  loadProjects,
-  addProject, 
-  updateProject, 
-  deleteProject,
-  addProjectLocal,
-  updateProjectLocal,
-  deleteProjectLocal,
+  projects,
   activeProjects,
   completedProjects,
   archivedProjects,
-  ideaProjects,
   planningProjects,
-  projectStats,
-  getProjectById
+  projectStats
 } from './projects.js'
 export { user, setUser, clearUser, updateUser } from './user.js'
 export { 

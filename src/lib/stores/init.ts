@@ -1,7 +1,7 @@
 import { browser } from '$app/environment'
 import { theme } from './theme.js'
 import { appSettings } from './settings.js'
-import { projects, addProjectLocal, loadProjects } from './projects.js'
+import { projects } from './projects.js'
 import { tasks, addTaskLocal, loadTasks } from './tasks.js'
 import { events, addEventLocal, loadEvents } from './events.js'
 import { user, setUser } from './user.js'
@@ -26,13 +26,13 @@ export async function initializeStores() {
   // Try to load data from API first
   try {
     await Promise.all([
-      loadProjects(),
+      projects.load(),
       loadTasks(),
       loadEvents()
     ])
     
     // If API data is loaded successfully, we're done
-    if (get(projects).length > 0) {
+    if (get(projects).items.length > 0) {
       return
     }
   } catch (error) {
@@ -43,7 +43,7 @@ export async function initializeStores() {
   loadPersistedData()
   
   // Load sample data if stores are still empty (first time users)
-  if (get(projects).length === 0) {
+  if (get(projects).items.length === 0) {
     loadSampleData()
   }
 }
@@ -93,7 +93,9 @@ export function loadSampleData() {
     }
   ]
 
-  sampleProjects.forEach(project => addProjectLocal(project))
+  // Note: Sample data loading is disabled for the new projects store
+  // This should be handled through the database seed instead
+  // sampleProjects.forEach(project => addProjectLocal(project))
 
   // Add sample tasks using local functions
   const sampleTasks = [

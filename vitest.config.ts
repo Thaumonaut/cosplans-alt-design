@@ -18,6 +18,7 @@ export default defineConfig({
   plugins: [sveltekit()],
   resolve: {
     alias: {
+      '$env/static/public': path.resolve(__dirname, 'tests/mocks/env-public.ts'),
       '$lib/env/public': path.resolve(__dirname, 'tests/mocks/env-public.ts'),
     },
   },

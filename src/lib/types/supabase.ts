@@ -152,12 +152,222 @@ export interface Database {
           updated_at?: string;
         };
       };
+      // Ideas (MVP Redesign)
+      ideas: {
+        Row: {
+          id: string;
+          team_id: string;
+          character: string;
+          series: string;
+          description: string | null;
+          difficulty: 'beginner' | 'intermediate' | 'advanced';
+          estimated_cost: number | null;
+          images: string[];
+          tags: string[];
+          notes: string | null;
+          status: 'saved' | 'converted';
+          converted_project_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          character: string;
+          series: string;
+          description?: string | null;
+          difficulty: 'beginner' | 'intermediate' | 'advanced';
+          estimated_cost?: number | null;
+          images?: string[];
+          tags?: string[];
+          notes?: string | null;
+          status?: 'saved' | 'converted';
+          converted_project_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          character?: string;
+          series?: string;
+          description?: string | null;
+          difficulty?: 'beginner' | 'intermediate' | 'advanced';
+          estimated_cost?: number | null;
+          images?: string[];
+          tags?: string[];
+          notes?: string | null;
+          status?: 'saved' | 'converted';
+          converted_project_id?: string | null;
+          updated_at?: string;
+        };
+      };
+      // Projects (MVP Redesign)
+      projects: {
+        Row: {
+          id: string;
+          team_id: string;
+          from_idea_id: string | null;
+          character: string;
+          series: string;
+          status: 'planning' | 'in-progress' | 'completed' | 'archived';
+          progress: number;
+          estimated_budget: number | null;
+          spent_budget: number;
+          deadline: string | null;
+          description: string | null;
+          cover_image: string | null;
+          reference_images: string[];
+          tags: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          from_idea_id?: string | null;
+          character: string;
+          series: string;
+          status?: 'planning' | 'in-progress' | 'completed' | 'archived';
+          progress?: number;
+          estimated_budget?: number | null;
+          spent_budget?: number;
+          deadline?: string | null;
+          description?: string | null;
+          cover_image?: string | null;
+          reference_images?: string[];
+          tags?: string[];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          from_idea_id?: string | null;
+          character?: string;
+          series?: string;
+          status?: 'planning' | 'in-progress' | 'completed' | 'archived';
+          progress?: number;
+          estimated_budget?: number | null;
+          spent_budget?: number;
+          deadline?: string | null;
+          description?: string | null;
+          cover_image?: string | null;
+          reference_images?: string[];
+          tags?: string[];
+          updated_at?: string;
+        };
+      };
+      // Resources (MVP Redesign)
+      resources: {
+        Row: {
+          id: string;
+          team_id: string;
+          name: string;
+          description: string | null;
+          images: string[];
+          cost: number | null;
+          tags: string[];
+          notes: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          name: string;
+          description?: string | null;
+          images?: string[];
+          cost?: number | null;
+          tags?: string[];
+          notes?: string | null;
+          metadata: Record<string, unknown>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          images?: string[];
+          cost?: number | null;
+          tags?: string[];
+          notes?: string | null;
+          metadata?: Record<string, unknown>;
+          updated_at?: string;
+        };
+      };
+      // Project Resources (MVP Redesign)
+      project_resources: {
+        Row: {
+          id: string;
+          project_id: string;
+          resource_id: string;
+          quantity: number;
+          status: 'needed' | 'acquired' | 'in-progress' | 'completed';
+          notes: string | null;
+          added_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          resource_id: string;
+          quantity?: number;
+          status?: 'needed' | 'acquired' | 'in-progress' | 'completed';
+          notes?: string | null;
+          added_at?: string;
+        };
+        Update: {
+          quantity?: number;
+          status?: 'needed' | 'acquired' | 'in-progress' | 'completed';
+          notes?: string | null;
+        };
+      };
+      // Tasks (MVP Redesign)
+      tasks: {
+        Row: {
+          id: string;
+          project_id: string;
+          resource_id: string | null;
+          title: string;
+          description: string | null;
+          completed: boolean;
+          due_date: string | null;
+          priority: 'low' | 'medium' | 'high';
+          assigned_to: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          resource_id?: string | null;
+          title: string;
+          description?: string | null;
+          completed?: boolean;
+          due_date?: string | null;
+          priority?: 'low' | 'medium' | 'high';
+          assigned_to?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          description?: string | null;
+          completed?: boolean;
+          due_date?: string | null;
+          priority?: 'low' | 'medium' | 'high';
+          assigned_to?: string | null;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       // Add views here as needed
     };
     Functions: {
-      // Add functions here as needed
+      calculate_project_progress: {
+        Args: {
+          project_uuid: string;
+        };
+        Returns: number;
+      };
     };
   };
 }

@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { Bell } from "lucide-svelte";
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { Bell, ArrowLeft } from "lucide-svelte";
   import {
     Button,
     DropdownMenu,
@@ -15,20 +17,44 @@
       title: string;
       description: string;
     }>;
+    showBackButton?: boolean;
+    backUrl?: string;
     children?: any;
   }
 
   let {
     searchPlaceholder = "Search...",
     notifications = [],
+    showBackButton = false,
+    backUrl,
     children,
   }: Props = $props();
+
+  function handleBack() {
+    if (backUrl) {
+      goto(backUrl);
+    } else {
+      // Use browser back navigation
+      window.history.back();
+    }
+  }
 </script>
 
 <header
   class="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 >
   <div class="flex items-center gap-3">
+    {#if showBackButton}
+      <Button
+        variant="ghost"
+        size="sm"
+        onclick={handleBack}
+        class="gap-2"
+      >
+        <ArrowLeft class="size-4" />
+        <span>Back</span>
+      </Button>
+    {/if}
     <SidebarTrigger />
     <SearchDialog placeholder={searchPlaceholder} />
   </div>

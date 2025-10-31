@@ -1,239 +1,178 @@
 <script lang="ts">
-  import { Upload, Grid3x3, List, Camera, MapPin, User, Image } from 'lucide-svelte';
-  import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Progress } from '$lib/components/ui';
+  import { onMount } from 'svelte'
+  import { goto } from '$app/navigation'
+  import { photoshootService } from '$lib/api/services/photoshootService'
+  import { currentTeam } from '$lib/stores/teams'
+  import { Button, Input } from '$lib/components/ui'
+  import { Plus, Search, Camera, Filter } from 'lucide-svelte'
+  import PhotoshootCard from '$lib/components/cards/PhotoshootCard.svelte'
+  import Fuse from 'fuse.js'
+  import type { Photoshoot, PhotoshootStatus } from '$lib/types/domain/photoshoot'
 
-  interface Photoshoot {
-    id: number;
-    title: string;
-    character: string;
-    series: string;
-    date: string;
-    location: string;
-    photographer: string;
-    photos: {
-      total: number;
-      edited: number;
-      favorites: number;
-    };
-    coverImage: string;
-    status: 'editing' | 'completed';
+  let photoshoots = $state<Photoshoot[]>([])
+  let loading = $state(true)
+  let searchQuery = $state('')
+  let statusFilter = $state<PhotoshootStatus | 'all'>('all')
+
+  const statusOptions: { value: PhotoshootStatus | 'all'; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'planning', label: 'Planning' },
+    { value: 'scheduled', label: 'Scheduled' },
+    { value: 'completed', label: 'Completed' },
+  ]
+
+  // Load photoshoots on mount
+  onMount(async () => {
+    await loadPhotoshoots()
+  })
+
+  async function loadPhotoshoots() {
+    try {
+      loading = true
+      const filters = statusFilter !== 'all' ? { status: statusFilter } : undefined
+      photoshoots = await photoshootService.list(filters)
+    } catch (err: any) {
+      console.error('Failed to load photoshoots:', err)
+    } finally {
+      loading = false
+    }
   }
 
-  const photoshoots: Photoshoot[] = [
-    {
-      id: 1,
-      title: "Elden Ring Forest Shoot",
-      character: "Malenia, Blade of Miquella",
-      series: "Elden Ring",
-      date: "2025-01-20",
-      location: "Redwood Forest Park",
-      photographer: "Jane Photography",
-      photos: {
-        total: 120,
-        edited: 45,
-        favorites: 12,
-      },
-      coverImage: "/fantasy-warrior-armor-red-hair.jpg",
-      status: "editing",
-    },
-    {
-      id: 2,
-      title: "Witcher Castle Photoshoot",
-      character: "Ciri",
-      series: "The Witcher 3",
-      date: "2024-12-15",
-      location: "Historic Castle Ruins",
-      photographer: "Epic Cosplay Photos",
-      photos: {
-        total: 85,
-        edited: 85,
-        favorites: 20,
-      },
-      coverImage: "/fantasy-warrior-white-hair-sword.jpg",
-      status: "completed",
-    },
-  ];
+  // Reload when filter changes
+  $effect(() => {
+    if ($currentTeam) {
+      loadPhotoshoots()
+    }
+  })
 
-  const statusColors = {
-    editing: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-    completed: "bg-green-500/10 text-green-700 dark:text-green-400",
-  };
+  // Reactive filtered photoshoots
+  const filtered = $derived.by(() => {
+    let items = photoshoots
 
-  let viewMode = $state<"grid" | "list">("grid");
-  let activeFilter = $state("all");
+    // Fuzzy search if query present
+    if (searchQuery.trim()) {
+      const fuse = new Fuse(items, {
+        keys: ['title', 'location', 'description'],
+        threshold: 0.3,
+      })
+      const results = fuse.search(searchQuery)
+      return results.map((r: { item: typeof items[0] }) => r.item)
+    }
+
+    return items
+  })
+
+  // Sort by date (most recent first, null dates last)
+  const sorted = $derived(() => {
+    return [...filtered].sort((a, b) => {
+      if (!a.date && !b.date) return 0
+      if (!a.date) return 1
+      if (!b.date) return -1
+      return new Date(b.date).getTime() - new Date(a.date).getTime()
+    })
+  })
+
+  function handleNewPhotoshoot() {
+    goto('/photoshoots/new')
+  }
+
+  function handlePhotoshootClick(photoshootId: string) {
+    goto(`/photoshoots/${photoshootId}`)
+  }
+
+  const statusCounts = $derived({
+    all: photoshoots.length,
+    planning: photoshoots.filter((p) => p.status === 'planning').length,
+    scheduled: photoshoots.filter((p) => p.status === 'scheduled').length,
+    completed: photoshoots.filter((p) => p.status === 'completed').length,
+  })
 </script>
 
 <svelte:head>
   <title>Photoshoots - Cosplay Tracker</title>
 </svelte:head>
 
-<!-- Page Header Actions -->
-<div class="flex items-center justify-between border-b bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-  <div class="flex items-center gap-4">
-    <h1 class="font-semibold">Photoshoots</h1>
-  </div>
-  
-  <div class="flex items-center gap-2">
-    <Button variant="outline" size="icon">
-      <Upload class="size-5" />
-    </Button>
-  </div>
-</div>
-
 <div class="p-6">
+  <!-- Header -->
   <div class="mb-8">
     <h1 class="text-balance text-3xl font-bold leading-tight">Photoshoots</h1>
-    <p class="text-pretty text-muted-foreground">
-      Manage your cosplay photography sessions and photo galleries
+    <p class="text-pretty text-gray-600 dark:text-gray-400">
+      Plan and track your cosplay photoshoots • {statusCounts.all} total
     </p>
   </div>
 
-  <div class="space-y-6">
+  <!-- Filters & Actions -->
+  <div class="mb-6 space-y-4">
+    <!-- Status Filter & Actions -->
     <div class="flex items-center justify-between">
-      <div class="flex gap-2">
-        <Button 
-          variant={activeFilter === "all" ? "outline" : "ghost"} 
-          size="sm"
-          onclick={() => activeFilter = "all"}
-        >
-          All Shoots
-        </Button>
-        <Button 
-          variant={activeFilter === "editing" ? "outline" : "ghost"} 
-          size="sm"
-          onclick={() => activeFilter = "editing"}
-        >
-          Editing
-        </Button>
-        <Button 
-          variant={activeFilter === "completed" ? "outline" : "ghost"} 
-          size="sm"
-          onclick={() => activeFilter = "completed"}
-        >
-          Completed
-        </Button>
+      <div class="flex gap-2 overflow-x-auto pb-2">
+        {#each statusOptions as option}
+          <Button
+            variant={statusFilter === option.value ? 'default' : 'ghost'}
+            size="sm"
+            onclick={() => {
+              statusFilter = option.value
+            }}
+          >
+            {option.label}
+            {#if statusCounts[option.value as keyof typeof statusCounts] > 0}
+              <span class="ml-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-xs">
+                {statusCounts[option.value as keyof typeof statusCounts]}
+              </span>
+            {/if}
+          </Button>
+        {/each}
       </div>
-      <div class="flex gap-2">
-        <Button 
-          variant={viewMode === "grid" ? "default" : "outline"} 
-          size="sm"
-          onclick={() => viewMode = "grid"}
-        >
-          <Grid3x3 class="size-4" />
-        </Button>
-        <Button 
-          variant={viewMode === "list" ? "default" : "outline"} 
-          size="sm"
-          onclick={() => viewMode = "list"}
-        >
-          <List class="size-4" />
-        </Button>
-      </div>
+
+      <Button onclick={handleNewPhotoshoot}>
+        <Plus class="mr-2 size-4" />
+        New Photoshoot
+      </Button>
     </div>
 
-    {#if viewMode === "grid"}
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {#each photoshoots as shoot (shoot.id)}
-          <Card class="group overflow-hidden transition-all hover:shadow-lg">
-            <div class="relative aspect-video overflow-hidden bg-muted">
-              <img
-                src={shoot.coverImage || "/placeholder.svg"}
-                alt={shoot.title}
-                class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div class="absolute right-2 top-2">
-                <Badge class={statusColors[shoot.status]} variant="secondary">
-                  {shoot.status}
-                </Badge>
-              </div>
-            </div>
-            <CardContent class="p-4">
-              <h3 class="mb-1 line-clamp-1 font-semibold leading-snug">{shoot.title}</h3>
-              <p class="mb-2 text-sm text-muted-foreground">{shoot.character}</p>
-              <p class="mb-3 text-xs text-muted-foreground">{shoot.series}</p>
-              
-              <div class="mb-3 space-y-2">
-                <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin class="size-3" />
-                  <span>{shoot.location}</span>
-                </div>
-                <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                  <User class="size-3" />
-                  <span>{shoot.photographer}</span>
-                </div>
-                <div class="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Camera class="size-3" />
-                  <span>{new Date(shoot.date).toLocaleDateString()}</span>
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-muted-foreground">Editing Progress</span>
-                  <span class="font-medium">{shoot.photos.edited} / {shoot.photos.total}</span>
-                </div>
-                <Progress value={(shoot.photos.edited / shoot.photos.total) * 100} class="h-2" />
-                <div class="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{shoot.photos.favorites} favorites</span>
-                  <span>{Math.round((shoot.photos.edited / shoot.photos.total) * 100)}% complete</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        {/each}
-      </div>
-    {:else}
-      <div class="space-y-4">
-        {#each photoshoots as shoot (shoot.id)}
-          <Card class="transition-all hover:shadow-lg">
-            <CardContent class="flex gap-4 p-4">
-              <div class="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
-                <img
-                  src={shoot.coverImage || "/placeholder.svg"}
-                  alt={shoot.title}
-                  class="size-full object-cover"
-                />
-              </div>
-              <div class="flex flex-1 flex-col gap-2">
-                <div class="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 class="font-semibold leading-snug">{shoot.title}</h3>
-                    <p class="text-sm text-muted-foreground">{shoot.character} - {shoot.series}</p>
-                  </div>
-                  <Badge class={statusColors[shoot.status]} variant="secondary">
-                    {shoot.status}
-                  </Badge>
-                </div>
-                
-                <div class="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3">
-                  <div class="flex items-center gap-1">
-                    <MapPin class="size-3" />
-                    <span>{shoot.location}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <User class="size-3" />
-                    <span>{shoot.photographer}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <Camera class="size-3" />
-                    <span>{new Date(shoot.date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between text-sm">
-                    <span class="text-muted-foreground">
-                      {shoot.photos.edited} / {shoot.photos.total} edited • {shoot.photos.favorites} favorites
-                    </span>
-                    <span class="font-medium">{Math.round((shoot.photos.edited / shoot.photos.total) * 100)}%</span>
-                  </div>
-                  <Progress value={(shoot.photos.edited / shoot.photos.total) * 100} class="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        {/each}
-      </div>
-    {/if}
+    <!-- Search -->
+    <div class="relative">
+      <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        bind:value={searchQuery}
+        placeholder="Search photoshoots by title, location, or description..."
+        class="w-full pl-9"
+      />
+    </div>
   </div>
+
+  <!-- Photoshoots List -->
+  {#if loading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p class="text-sm text-muted-foreground">Loading photoshoots...</p>
+      </div>
+    </div>
+  {:else if sorted.length === 0}
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+      <Camera class="mb-4 size-12 text-muted-foreground opacity-50" />
+      <h3 class="mb-2 text-lg font-semibold">No photoshoots found</h3>
+      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
+        {#if searchQuery.trim() || statusFilter !== 'all'}
+          Try adjusting your search or filters to find what you're looking for.
+        {:else}
+          Get started by creating your first photoshoot. Plan shots, manage crew, and track your cosplay photography.
+        {/if}
+      </p>
+      <Button onclick={handleNewPhotoshoot}>
+        <Plus class="mr-2 size-4" />
+        Create First Photoshoot
+      </Button>
+    </div>
+  {:else}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {#each sorted as photoshoot (photoshoot.id)}
+        <PhotoshootCard
+          {photoshoot}
+          onclick={() => handlePhotoshootClick(photoshoot.id)}
+        />
+      {/each}
+    </div>
+  {/if}
 </div>

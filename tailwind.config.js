@@ -53,5 +53,11 @@ export default {
       }
     }
   },
-  plugins: [require('flowbite/plugin')]
+  plugins: [require('flowbite/plugin')],
+  safelist: [
+    'sm:w-[600px]',
+    'lg:w-[800px]',
+    'sm:!w-[600px]',
+    'lg:!w-[800px]'
+  ]
 }
