@@ -16,20 +16,7 @@
   let error = $state('');
   let success = $state('');
 
-  // Debounced password for validation (only update every 300ms)
-  let debouncedPassword = '';
-  let debounceTimer: ReturnType<typeof setTimeout>;
-  
-  $effect(() => {
-    // Debounce password validation
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      debouncedPassword = password;
-    }, 300);
-  });
-
-  // Password strength validation (using actual password, not debounced, for form validation)
-  // Debounced is only for UI display
+  // Password strength validation - use actual password for immediate feedback
   const hasMinLength = $derived(password.length >= 8);
   const hasLowercase = $derived(/[a-z]/.test(password));
   const hasUppercase = $derived(/[A-Z]/.test(password));
@@ -38,15 +25,8 @@
   const isPasswordValid = $derived(hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecial);
   const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
   
-  // For UI display, use debounced password
-  const debouncedHasMinLength = $derived(debouncedPassword.length >= 8);
-  const debouncedHasLowercase = $derived(/[a-z]/.test(debouncedPassword));
-  const debouncedHasUppercase = $derived(/[A-Z]/.test(debouncedPassword));
-  const debouncedHasNumber = $derived(/[0-9]/.test(debouncedPassword));
-  const debouncedHasSpecial = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(debouncedPassword));
-  
-  // Calculate password strength (0-5 requirements met) - for UI display use debounced
-  const requirementsMet = $derived([debouncedHasMinLength, debouncedHasLowercase, debouncedHasUppercase, debouncedHasNumber, debouncedHasSpecial].filter(Boolean).length);
+  // Calculate password strength (0-5 requirements met)
+  const requirementsMet = $derived([hasMinLength, hasLowercase, hasUppercase, hasNumber, hasSpecial].filter(Boolean).length);
   const strengthPercentage = $derived((requirementsMet / 5) * 100);
   const strengthColor = $derived(requirementsMet <= 2 ? 'bg-red-500' : requirementsMet <= 3 ? 'bg-yellow-500' : requirementsMet === 4 ? 'bg-blue-500' : 'bg-green-500');
   const strengthLabel = $derived(requirementsMet <= 2 ? 'Weak' : requirementsMet <= 3 ? 'Fair' : requirementsMet === 4 ? 'Good' : 'Strong');
@@ -265,7 +245,7 @@
                 <p class="font-medium text-gray-700 mb-2">Requirements ({requirementsMet}/5):</p>
                 <div class="space-y-1.5">
                 <div class="flex items-center gap-2">
-                  {#if debouncedHasMinLength}
+                  {#if hasMinLength}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -274,12 +254,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={debouncedHasMinLength} class:text-gray-600={!debouncedHasMinLength}>
+                  <span class:text-green-600={hasMinLength} class:text-gray-600={!hasMinLength}>
                     At least 8 characters
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if debouncedHasLowercase}
+                  {#if hasLowercase}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -288,12 +268,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={debouncedHasLowercase} class:text-gray-600={!debouncedHasLowercase}>
+                  <span class:text-green-600={hasLowercase} class:text-gray-600={!hasLowercase}>
                     One lowercase letter (a-z)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if debouncedHasUppercase}
+                  {#if hasUppercase}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -302,12 +282,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={debouncedHasUppercase} class:text-gray-600={!debouncedHasUppercase}>
+                  <span class:text-green-600={hasUppercase} class:text-gray-600={!hasUppercase}>
                     One uppercase letter (A-Z)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if debouncedHasNumber}
+                  {#if hasNumber}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -316,12 +296,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={debouncedHasNumber} class:text-gray-600={!debouncedHasNumber}>
+                  <span class:text-green-600={hasNumber} class:text-gray-600={!hasNumber}>
                     One number (0-9)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if debouncedHasSpecial}
+                  {#if hasSpecial}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -330,7 +310,7 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={debouncedHasSpecial} class:text-gray-600={!debouncedHasSpecial}>
+                  <span class:text-green-600={hasSpecial} class:text-gray-600={!hasSpecial}>
                     One special character (!@#$%^&*...)
                   </span>
                 </div>
