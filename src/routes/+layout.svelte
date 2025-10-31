@@ -19,22 +19,31 @@
   });
 
   onMount(() => {
-    // Only set up auth listener if supabase client is available
+    // Only set up auth listener if supabase client is available and in browser
+    if (typeof window === 'undefined') return;
     if (!supabase) {
       console.warn('Supabase client not available in layout');
       return;
     }
 
     // Set up Supabase auth state listener for the entire app
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, _session) => {
-      if (_session?.expires_at !== session?.expires_at) {
-        invalidate("supabase:auth");
-      }
-    });
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const result = supabase.auth.onAuthStateChange((event, _session) => {
+        if (_session?.expires_at !== session?.expires_at) {
+          invalidate("supabase:auth");
+        }
+      });
+      subscription = result.data.subscription;
+    } catch (err) {
+      console.error('Failed to set up auth state listener:', err);
+    }
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   });
 </script>
 
