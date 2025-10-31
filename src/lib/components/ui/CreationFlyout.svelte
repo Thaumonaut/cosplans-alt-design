@@ -32,9 +32,12 @@
   <div
     role="button"
     tabindex="0"
-    onclick={() => {
-      open = false
-      onOpenChange?.(false)
+    onclick={(e) => {
+      // Only close if clicking directly on backdrop, not children
+      if (e.target === e.currentTarget) {
+        open = false
+        onOpenChange?.(false)
+      }
     }}
     onkeydown={(e) => {
       if (e.key === 'Enter' || e.key === 'Escape') {
@@ -55,6 +58,10 @@
       open ? 'translate-x-0' : 'translate-x-full'
     )}
     style="top: {HEADER_HEIGHT}px; height: calc(100vh - {HEADER_HEIGHT}px);"
+    onclick={(e) => {
+      // Prevent backdrop click from closing when clicking inside panel
+      e.stopPropagation()
+    }}
   >
     <!-- Header - Minimal, functional -->
     <header class="flex items-center justify-between border-b px-10 py-8">

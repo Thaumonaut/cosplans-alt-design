@@ -69,7 +69,12 @@
         open ? 'translate-x-0' : 'translate-x-full',
         className
       )}
-      onclick={(e) => e.stopPropagation()}
+      onclick={(e) => {
+        // Only stop propagation if clicking on the panel itself, not children
+        if (e.target === e.currentTarget) {
+          e.stopPropagation();
+        }
+      }}
       onkeydown={(e) => e.stopPropagation()}
       role="document"
     >
