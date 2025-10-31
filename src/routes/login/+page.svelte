@@ -4,12 +4,12 @@
   import { authService } from '$lib/auth/auth-service';
   import OAuthButtons from '$lib/components/auth/OAuthButtons.svelte';
 
-  let isLoading = false;
-  let showPassword = false;
-  let email = '';
-  let password = '';
-  let rememberMe = false;
-  let error = '';
+  let isLoading = $state(false);
+  let showPassword = $state(false);
+  let email = $state('');
+  let password = $state('');
+  let rememberMe = $state(false);
+  let error = $state('');
 
   const isFormValid = $derived(email && password);
 
@@ -80,7 +80,7 @@
       </p>
     </div>
 
-    <form class="mt-8 space-y-6" on:submit|preventDefault={handleLogin}>
+    <form class="mt-8 space-y-6" onsubmit={(e) => { e.preventDefault(); handleLogin(); }}>
       {#if error}
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
           <div class="flex">
@@ -126,7 +126,7 @@
             <button
               type="button"
               class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              on:click={togglePasswordVisibility}
+              onclick={togglePasswordVisibility}
             >
               {#if showPassword}
                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

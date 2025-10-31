@@ -19,6 +19,12 @@
   });
 
   onMount(() => {
+    // Only set up auth listener if supabase client is available
+    if (!supabase) {
+      console.warn('Supabase client not available in layout');
+      return;
+    }
+
     // Set up Supabase auth state listener for the entire app
     const {
       data: { subscription },
