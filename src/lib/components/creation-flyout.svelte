@@ -70,10 +70,8 @@
         className
       )}
       onclick={(e) => {
-        // Only stop propagation if clicking on the panel itself, not children
-        if (e.target === e.currentTarget) {
-          e.stopPropagation();
-        }
+        // Always stop propagation to prevent backdrop from closing
+        e.stopPropagation();
       }}
       onkeydown={(e) => e.stopPropagation()}
       role="document"
