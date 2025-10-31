@@ -56,67 +56,28 @@
   } from "$lib/components/ui";
   import TeamSelector from "./team-selector.svelte";
 
+  // MVP Navigation - Only show implemented features
   const mainNav = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, ready: true },
-    { title: "Planning", url: "/ideas", icon: ClipboardList, ready: true },
+    { title: "Ideas", url: "/ideas", icon: Sparkles, ready: true },
     { title: "Projects", url: "/projects", icon: Folder, ready: true },
     { title: "Resources", url: "/resources", icon: Package, ready: true },
-    { title: "Post-Production", url: "/post-production", icon: Edit3, ready: false },
-    { title: "Archive", url: "/archived", icon: Archive, ready: false },
+    { title: "Tools", url: "/tools", icon: Hammer, ready: true },
+    { title: "Photoshoots", url: "/photoshoots", icon: Clapperboard, ready: true },
   ];
 
-  const trackingNav = [
+  const collaborationNav = [
+    { title: "Teams", url: "/teams", icon: Users, ready: true },
     { title: "Calendar", url: "/calendar", icon: Calendar, ready: false },
-    { title: "Timeline", url: "/timeline", icon: Clock, ready: false },
-    { title: "Tasks", url: "/tasks", icon: CheckSquare, ready: false },
-    { title: "Budget", url: "/budget", icon: DollarSign, ready: false },
-    { title: "Notes", url: "/notes", icon: FileText, ready: false },
   ];
 
-  const socialNav = [
-    { title: "Marketplace", url: "/marketplace", icon: Store, ready: false },
-    { title: "Profile", url: "/profile", icon: User, ready: false },
-    { title: "Messages", url: "/messages", icon: MessageSquare, ready: false },
-    { title: "Tutorials", url: "/tutorials", icon: BookOpen, ready: false },
-    { title: "Patterns", url: "/patterns", icon: Scissors, ready: false },
-  ];
-
-  const eventsNav = [
-    { title: "Photoshoots", url: "/photoshoots", icon: Clapperboard, ready: false },
-    { title: "Conventions", url: "/conventions", icon: PartyPopper, ready: false },
-    { title: "Meetups", url: "/meetups", icon: Coffee, ready: false },
-  ];
-
-  const resourcesNav = [
-    { title: "Photo Gallery", url: "/gallery", icon: ImagePlay, ready: false },
-    { title: "Characters", url: "/characters", icon: Sparkles, ready: false },
-    { title: "Moodboards", url: "/moodboards", icon: LayoutGrid, ready: false },
-  ];
-
-  const characterResources = [
-    { title: "Outfits", url: "/outfits", icon: Shirt, ready: false },
-    { title: "Accessories & Makeup", url: "/accessories", icon: Palette, ready: false },
-    { title: "Props", url: "/props", icon: Package, ready: false },
-    { title: "Materials", url: "/materials", icon: Wrench, ready: false },
-    { title: "Tools", url: "/tools", icon: Hammer, ready: false },
-  ];
-
-  const photographyResources = [
-    { title: "Equipment", url: "/equipment", icon: Camera, ready: false },
-    { title: "Crew", url: "/crew", icon: UserCircle, ready: false },
-    { title: "Locations", url: "/locations", icon: MapPin, ready: false },
-    { title: "Poses", url: "/poses", icon: Users, ready: false },
-    { title: "Shots", url: "/shots", icon: Film, ready: false },
-    { title: "Sets", url: "/sets", icon: Sofa, ready: false },
+  const settingsNav = [
+    { title: "Settings", url: "/settings", icon: Settings, ready: false },
   ];
 
   // Collapsible state using proper Svelte 5 runes
-  let trackingOpen = $state(true);
-  let socialOpen = $state(true);
-  let eventsOpen = $state(true);
-  let resourcesOpen = $state(true);
-  let characterOpen = $state(true);
-  let photographyOpen = $state(true);
+  let collaborationOpen = $state(true);
+  let settingsOpen = $state(false);
 </script>
 
 <Sidebar>
@@ -160,25 +121,25 @@
       </SidebarGroupContent>
     </SidebarGroup>
 
-    <!-- Tracking Section -->
+    <!-- Collaboration Section -->
     <SidebarGroup>
       <SidebarGroupLabel>
         <button
           class="flex w-full items-center justify-between"
-          onclick={() => (trackingOpen = !trackingOpen)}
+          onclick={() => (collaborationOpen = !collaborationOpen)}
         >
-          Tracking
+          Collaboration
           <ChevronDown
-            class="ml-auto size-4 transition-transform {trackingOpen
+            class="ml-auto size-4 transition-transform {collaborationOpen
               ? ''
               : '-rotate-90'}"
           />
         </button>
       </SidebarGroupLabel>
-      {#if trackingOpen}
+      {#if collaborationOpen}
         <SidebarGroupContent>
           <SidebarMenu>
-            {#each trackingNav as item}
+            {#each collaborationNav as item}
               <SidebarMenuItem>
                 {#if item.ready}
                   <SidebarMenuButton href={item.url}>
@@ -186,7 +147,7 @@
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 {:else}
-                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
+                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="Coming soon">
                     <item.icon class="size-4" />
                     <span>{item.title}</span>
                   </div>
@@ -198,25 +159,25 @@
       {/if}
     </SidebarGroup>
 
-    <!-- Social Section -->
+    <!-- Settings Section -->
     <SidebarGroup>
       <SidebarGroupLabel>
         <button
           class="flex w-full items-center justify-between"
-          onclick={() => (socialOpen = !socialOpen)}
+          onclick={() => (settingsOpen = !settingsOpen)}
         >
-          Social
+          Settings
           <ChevronDown
-            class="ml-auto size-4 transition-transform {socialOpen
+            class="ml-auto size-4 transition-transform {settingsOpen
               ? ''
               : '-rotate-90'}"
           />
         </button>
       </SidebarGroupLabel>
-      {#if socialOpen}
+      {#if settingsOpen}
         <SidebarGroupContent>
           <SidebarMenu>
-            {#each socialNav as item}
+            {#each settingsNav as item}
               <SidebarMenuItem>
                 {#if item.ready}
                   <SidebarMenuButton href={item.url}>
@@ -224,159 +185,13 @@
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 {:else}
-                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
+                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="Coming soon">
                     <item.icon class="size-4" />
                     <span>{item.title}</span>
                   </div>
                 {/if}
               </SidebarMenuItem>
             {/each}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      {/if}
-    </SidebarGroup>
-
-    <!-- Events Section -->
-    <SidebarGroup>
-      <SidebarGroupLabel>
-        <button
-          class="flex w-full items-center justify-between"
-          onclick={() => (eventsOpen = !eventsOpen)}
-        >
-          Events
-          <ChevronDown
-            class="ml-auto size-4 transition-transform {eventsOpen
-              ? ''
-              : '-rotate-90'}"
-          />
-        </button>
-      </SidebarGroupLabel>
-      {#if eventsOpen}
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {#each eventsNav as item}
-              <SidebarMenuItem>
-                {#if item.ready}
-                  <SidebarMenuButton href={item.url}>
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                {:else}
-                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </div>
-                {/if}
-              </SidebarMenuItem>
-            {/each}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      {/if}
-    </SidebarGroup>
-
-    <!-- Resources Section -->
-    <SidebarGroup>
-      <SidebarGroupLabel>
-        <button
-          class="flex w-full items-center justify-between"
-          onclick={() => (resourcesOpen = !resourcesOpen)}
-        >
-          Resources
-          <ChevronDown
-            class="ml-auto size-4 transition-transform {resourcesOpen
-              ? ''
-              : '-rotate-90'}"
-          />
-        </button>
-      </SidebarGroupLabel>
-      {#if resourcesOpen}
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {#each resourcesNav as item}
-              <SidebarMenuItem>
-                {#if item.ready}
-                  <SidebarMenuButton href={item.url}>
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                {:else}
-                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </div>
-                {/if}
-              </SidebarMenuItem>
-            {/each}
-
-            <!-- Character Subsection -->
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onclick={() => (characterOpen = !characterOpen)}
-                class="data-[state=open]:bg-sidebar-accent"
-              >
-                <Shirt class="size-4" />
-                <span>Character</span>
-                <ChevronDown
-                  class="ml-auto size-4 transition-transform {characterOpen
-                    ? ''
-                    : '-rotate-90'}"
-                />
-              </SidebarMenuButton>
-              {#if characterOpen}
-                <div class="border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
-                  {#each characterResources as item}
-                    <SidebarMenuItem>
-                      {#if item.ready}
-                        <SidebarMenuButton href={item.url} class="h-7 text-sm">
-                          <item.icon class="size-4" />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      {:else}
-                        <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
-                          <item.icon class="size-4" />
-                          <span>{item.title}</span>
-                        </div>
-                      {/if}
-                    </SidebarMenuItem>
-                  {/each}
-                </div>
-              {/if}
-            </SidebarMenuItem>
-
-            <!-- Photography Subsection -->
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onclick={() => (photographyOpen = !photographyOpen)}
-                class="data-[state=open]:bg-sidebar-accent"
-              >
-                <Camera class="size-4" />
-                <span>Photography</span>
-                <ChevronDown
-                  class="ml-auto size-4 transition-transform {photographyOpen
-                    ? ''
-                    : '-rotate-90'}"
-                />
-              </SidebarMenuButton>
-              {#if photographyOpen}
-                <div class="border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5">
-                  {#each photographyResources as item}
-                    <SidebarMenuItem>
-                      {#if item.ready}
-                        <SidebarMenuButton href={item.url} class="h-7 text-sm">
-                          <item.icon class="size-4" />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      {:else}
-                        <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="coming soon">
-                          <item.icon class="size-4" />
-                          <span>{item.title}</span>
-                        </div>
-                      {/if}
-                    </SidebarMenuItem>
-                  {/each}
-                </div>
-              {/if}
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       {/if}

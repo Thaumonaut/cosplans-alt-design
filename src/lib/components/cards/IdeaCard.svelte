@@ -1,32 +1,25 @@
 <script lang="ts">
   import { Card, Badge, Button } from 'flowbite-svelte'
   import { Calendar, DollarSign, Clock, ArrowRight, Star } from 'lucide-svelte'
+  import type { Idea } from '$lib/types/domain/idea'
 
   interface Props {
-    character: string
-    series: string
-    image: string
-    difficulty: 'easy' | 'medium' | 'hard'
-    estimatedCost: number
-    estimatedTime: string
-    tags: string[]
-    notes: string
-    dateAdded: string
+    idea: Idea
     variant?: 'grid' | 'list'
+    onclick?: () => void
   }
 
-  let {
-    character,
-    series,
-    image,
-    difficulty,
-    estimatedCost,
-    estimatedTime,
-    tags,
-    notes,
-    dateAdded,
-    variant = 'grid',
-  }: Props = $props()
+  let { idea, variant = 'grid', onclick }: Props = $props()
+
+  const character = $derived(idea.character)
+  const series = $derived(idea.series)
+  const image = $derived(idea.images?.[0] || '')
+  const difficulty = $derived(idea.difficulty === 'beginner' ? 'easy' : idea.difficulty === 'intermediate' ? 'medium' : 'hard')
+  const estimatedCost = $derived(idea.estimatedCost || 0)
+  const estimatedTime = $derived('') // Not in Idea type
+  const tags = $derived(idea.tags || [])
+  const notes = $derived(idea.description || idea.notes || '')
+  const dateAdded = $derived(idea.createdAt)
 
   const difficultyColors = {
     easy: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
@@ -59,7 +52,7 @@
           <p class="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{notes}</p>
           <div class="flex flex-wrap gap-1.5">
             {#each tags.slice(0, 3) as tag}
-              <Badge variant="outline" class="text-xs">{tag}</Badge>
+              <Badge color="gray" class="text-xs">{tag}</Badge>
             {/each}
           </div>
         </div>
@@ -127,7 +120,7 @@
 
         <div class="flex flex-wrap gap-1.5">
           {#each tags.slice(0, 3) as tag}
-            <Badge variant="outline" class="text-xs">{tag}</Badge>
+            <Badge color="gray" class="text-xs">{tag}</Badge>
           {/each}
         </div>
       </div>
@@ -143,7 +136,7 @@
           <span>{estimatedTime}</span>
         </div>
       </div>
-      <Button class="w-full" size="sm">
+            <Button class="w-full" size="sm" onclick={onclick}>
         Start Planning
         <ArrowRight class="ml-2 size-4" />
       </Button>
