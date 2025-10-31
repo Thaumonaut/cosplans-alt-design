@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
+  import { authService } from '$lib/auth/auth-service'
+  import { user, userProfile } from '$lib/stores/auth-store'
   import {
     Sparkles,
     LayoutDashboard,
@@ -71,13 +74,50 @@
     { title: "Calendar", url: "/calendar", icon: Calendar, ready: false },
   ];
 
-  const settingsNav = [
-    { title: "Settings", url: "/settings", icon: Settings, ready: false },
-  ];
-
   // Collapsible state using proper Svelte 5 runes
   let collaborationOpen = $state(true);
-  let settingsOpen = $state(false);
+
+  // Get user info from auth store
+  const currentUser = $derived($user)
+  const profile = $derived($userProfile)
+
+  // Get user display info
+  const userName = $derived(() => {
+    if (!profile) return 'User'
+    if (profile.firstName && profile.lastName) {
+      return `${profile.firstName} ${profile.lastName}`
+    }
+    if (profile.firstName) return profile.firstName
+    return profile.email?.split('@')[0] || 'User'
+  })
+
+  const userEmail = $derived(() => profile?.email || '')
+  const userInitials = $derived(() => {
+    if (profile?.firstName && profile?.lastName) {
+      return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase()
+    }
+    if (profile?.firstName) {
+      return profile.firstName[0].toUpperCase()
+    }
+    if (userEmail) {
+      return userEmail[0].toUpperCase()
+    }
+    return 'U'
+  })
+
+  const userAvatar = $derived(() => profile?.avatarUrl || '/placeholder-user.jpg')
+
+  async function handleSignOut() {
+    try {
+      await authService.signOut()
+      // Redirect will happen via auth state change listener
+      await goto('/login')
+    } catch (error) {
+      console.error('Failed to sign out:', error)
+      // Still redirect to login even if signOut fails
+      await goto('/login')
+    }
+  }
 </script>
 
 <Sidebar>
@@ -159,43 +199,6 @@
       {/if}
     </SidebarGroup>
 
-    <!-- Settings Section -->
-    <SidebarGroup>
-      <SidebarGroupLabel>
-        <button
-          class="flex w-full items-center justify-between"
-          onclick={() => (settingsOpen = !settingsOpen)}
-        >
-          Settings
-          <ChevronDown
-            class="ml-auto size-4 transition-transform {settingsOpen
-              ? ''
-              : '-rotate-90'}"
-          />
-        </button>
-      </SidebarGroupLabel>
-      {#if settingsOpen}
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {#each settingsNav as item}
-              <SidebarMenuItem>
-                {#if item.ready}
-                  <SidebarMenuButton href={item.url}>
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                {:else}
-                  <div class="flex items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground opacity-60 pointer-events-none" title="Coming soon">
-                    <item.icon class="size-4" />
-                    <span>{item.title}</span>
-                  </div>
-                {/if}
-              </SidebarMenuItem>
-            {/each}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      {/if}
-    </SidebarGroup>
   </SidebarContent>
 
   <SidebarFooter class="border-t border-sidebar-border p-4">
@@ -205,14 +208,14 @@
           class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent"
         >
           <Avatar class="size-8">
-            <AvatarImage src="/placeholder-user.jpg" alt="avatar image" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage src={userAvatar} alt="avatar image" />
+            <AvatarFallback>{userInitials}</AvatarFallback>
           </Avatar>
-          <div class="flex flex-col items-start text-sm">
-            <span class="font-medium">John Doe</span>
-            <span class="text-xs text-muted-foreground"
-              >johndoe@example.com</span
-            >
+          <div class="flex flex-col items-start text-sm min-w-0 flex-1">
+            <span class="font-medium truncate w-full">{userName}</span>
+            {#if userEmail}
+              <span class="text-xs text-muted-foreground truncate w-full">{userEmail}</span>
+            {/if}
           </div>
         </button>
       {/snippet}
@@ -237,10 +240,13 @@
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem class="text-destructive">
-          <div class="flex cursor-pointer items-center w-full">
+          <button
+            onclick={handleSignOut}
+            class="flex cursor-pointer items-center w-full"
+          >
             <LogOut class="mr-2 size-4" />
             Sign Out
-          </div>
+          </button>
         </DropdownMenuItem>
       {/snippet}
     </DropdownMenu>
