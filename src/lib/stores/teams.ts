@@ -1,9 +1,11 @@
 import { writable, derived } from 'svelte/store'
-import { teamService, type Team } from '$lib/api/services/teamService'
+import { teamService, type Team, type TeamRole } from '$lib/api/services/teamService'
+import { supabase } from '$lib/supabase'
 
 type TeamsState = {
   items: Team[]
   current: Team | null
+  currentUserRole: TeamRole | null
   loading: boolean
   error: string | null
 }
@@ -11,6 +13,7 @@ type TeamsState = {
 const initialState: TeamsState = {
   items: [],
   current: null,
+  currentUserRole: null,
   loading: false,
   error: null,
 }
@@ -26,19 +29,43 @@ function createTeamsStore() {
       unsub()
       return value
     },
-    async load(userId: string) {
+    async load(userId?: string) {
       update((s) => ({ ...s, loading: true, error: null }))
       try {
         const items = await teamService.list(userId)
-        set({ items, current: items[0] ?? null, loading: false, error: null })
+        const current = items[0] ?? null
+        
+        // Load user role for current team
+        let currentUserRole: TeamRole | null = null
+        if (current) {
+          currentUserRole = await teamService.getUserRole(current.id)
+        }
+        
+        set({ items, current, currentUserRole, loading: false, error: null })
       } catch (e: any) {
         update((s) => ({ ...s, loading: false, error: e?.message || 'Failed to load teams' }))
       }
     },
-    setCurrent(teamId: string) {
+    async setCurrent(teamId: string) {
+      update((s) => {
+        const team = s.items.find((t) => t.id === teamId)
+        return {
+          ...s,
+          current: team || s.current,
+        }
+      })
+      
+      // Load user role for the team
+      const role = await teamService.getUserRole(teamId)
       update((s) => ({
         ...s,
-        current: s.items.find((t) => t.id === teamId) || s.current,
+        currentUserRole: role,
+      }))
+    },
+    setCurrentUserRole(role: TeamRole | null) {
+      update((s) => ({
+        ...s,
+        currentUserRole: role,
       }))
     },
     reset() {
@@ -58,6 +85,18 @@ export const currentTeam = {
   },
   get: (): Team | null => {
     return teams.get().current
+  },
+}
+
+// Derived store for current user role
+export const currentUserRole = {
+  subscribe: (fn: (value: TeamRole | null) => void) => {
+    return teams.subscribe((state) => {
+      fn(state.currentUserRole)
+    })
+  },
+  get: (): TeamRole | null => {
+    return teams.get().currentUserRole
   },
 }
 

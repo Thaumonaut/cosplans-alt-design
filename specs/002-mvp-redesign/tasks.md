@@ -245,16 +245,16 @@
 
 ### Implementation for User Story 6
 
-- [ ] T122 [P] [US6] Expand teamService in `src/lib/api/services/teamService.ts` with create(), invite(), acceptInvite(), updateMemberRole(), removeMember() methods
-- [ ] T123 [P] [US6] Create commentService in `src/lib/api/services/commentService.ts` for polymorphic comments on ideas/projects/resources/tools/photoshoots
-- [ ] T124 [P] [US6] Create comments store in `src/lib/stores/comments.ts` with filtering by entityType and entityId
-- [ ] T125 [US6] Expand team store to track current user's role in selected team (owner/editor/viewer)
-- [ ] T126 [US6] Create permissions utility in `src/lib/utils/permissions.ts` with can(role, action) function implementing Owner/Editor/Viewer rules
-- [ ] T127 [US6] Create team selector component in sidebar (part of auth layout) with dropdown for switching teams
-- [ ] T128 [US6] Implement team context switching that updates all stores to filter by teamId
-- [ ] T129 [US6] Create teams management page `src/routes/(auth)/teams/+page.svelte` with team list, member management, invite form
-- [ ] T130 [US6] Implement team creation in teams page with automatic Owner role assignment
-- [ ] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
+- [X] T122 [P] [US6] Expand teamService in `src/lib/api/services/teamService.ts` with create(), invite(), acceptInvite(), updateMemberRole(), removeMember() methods
+- [X] T123 [P] [US6] Create commentService in `src/lib/api/services/commentService.ts` for polymorphic comments on ideas/projects/resources/tools/photoshoots
+- [X] T124 [P] [US6] Create comments store in `src/lib/stores/comments.ts` with filtering by entityType and entityId
+- [X] T125 [US6] Expand team store to track current user's role in selected team (owner/editor/viewer)
+- [X] T126 [US6] Create permissions utility in `src/lib/utils/permissions.ts` with can(role, action) function implementing Owner/Editor/Viewer rules
+- [X] T127 [US6] Create team selector component in sidebar (part of auth layout) with dropdown for switching teams
+- [X] T128 [US6] Implement team context switching that updates all stores to filter by teamId
+- [X] T129 [US6] Create teams management page `src/routes/(auth)/teams/+page.svelte` with team list, member management, invite form
+- [X] T130 [US6] Implement team creation in teams page with automatic Owner role assignment
+- [X] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
 - [ ] T132 [US6] Create invitation acceptance flow (email notification handled by Supabase, acceptance updates status to active)
 - [ ] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
 - [ ] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
