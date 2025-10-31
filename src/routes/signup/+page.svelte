@@ -1,19 +1,20 @@
 <script lang="ts">
   import { authService } from '$lib/auth/auth-service';
   import OAuthButtons from '$lib/components/auth/OAuthButtons.svelte';
+  import { Eye, EyeOff } from 'lucide-svelte';
 
-  let isLoading = false;
-  let showPassword = false;
-  let showConfirmPassword = false;
+  let isLoading = $state(false);
+  let showPassword = $state(false);
+  let showConfirmPassword = $state(false);
 
   // Form data
-  let email = '';
-  let password = '';
-  let confirmPassword = '';
-  let firstName = '';
-  let lastName = '';
-  let error = '';
-  let success = '';
+  let email = $state('');
+  let password = $state('');
+  let confirmPassword = $state('');
+  let firstName = $state('');
+  let lastName = $state('');
+  let error = $state('');
+  let success = $state('');
 
   // Debounced password for validation (only update every 300ms)
   let debouncedPassword = '';
@@ -27,20 +28,45 @@
     }, 300);
   });
 
-  // Password strength validation (using debounced password)
-  const hasMinLength = $derived(debouncedPassword.length >= 8);
-  const hasLowercase = $derived(/[a-z]/.test(debouncedPassword));
-  const hasUppercase = $derived(/[A-Z]/.test(debouncedPassword));
-  const hasNumber = $derived(/[0-9]/.test(debouncedPassword));
-  const hasSpecial = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(debouncedPassword));
+  // Password strength validation (using actual password, not debounced, for form validation)
+  // Debounced is only for UI display
+  const hasMinLength = $derived(password.length >= 8);
+  const hasLowercase = $derived(/[a-z]/.test(password));
+  const hasUppercase = $derived(/[A-Z]/.test(password));
+  const hasNumber = $derived(/[0-9]/.test(password));
+  const hasSpecial = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password));
   const isPasswordValid = $derived(hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecial);
   const passwordsMatch = $derived(password === confirmPassword && confirmPassword.length > 0);
   
-  // Calculate password strength (0-5 requirements met)
-  const requirementsMet = $derived([hasMinLength, hasLowercase, hasUppercase, hasNumber, hasSpecial].filter(Boolean).length);
+  // For UI display, use debounced password
+  const debouncedHasMinLength = $derived(debouncedPassword.length >= 8);
+  const debouncedHasLowercase = $derived(/[a-z]/.test(debouncedPassword));
+  const debouncedHasUppercase = $derived(/[A-Z]/.test(debouncedPassword));
+  const debouncedHasNumber = $derived(/[0-9]/.test(debouncedPassword));
+  const debouncedHasSpecial = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(debouncedPassword));
+  
+  // Calculate password strength (0-5 requirements met) - for UI display use debounced
+  const requirementsMet = $derived([debouncedHasMinLength, debouncedHasLowercase, debouncedHasUppercase, debouncedHasNumber, debouncedHasSpecial].filter(Boolean).length);
   const strengthPercentage = $derived((requirementsMet / 5) * 100);
   const strengthColor = $derived(requirementsMet <= 2 ? 'bg-red-500' : requirementsMet <= 3 ? 'bg-yellow-500' : requirementsMet === 4 ? 'bg-blue-500' : 'bg-green-500');
   const strengthLabel = $derived(requirementsMet <= 2 ? 'Weak' : requirementsMet <= 3 ? 'Fair' : requirementsMet === 4 ? 'Good' : 'Strong');
+  
+  // Validation messages for button tooltip
+  const validationMessages = $derived.by(() => {
+    const messages: string[] = [];
+    if (!email.trim()) messages.push('Email is required');
+    if (!firstName.trim()) messages.push('First name is required');
+    if (!lastName.trim()) messages.push('Last name is required');
+    if (!isPasswordValid) {
+      if (!hasMinLength) messages.push('Password must be at least 8 characters');
+      if (!hasLowercase) messages.push('Password must contain a lowercase letter');
+      if (!hasUppercase) messages.push('Password must contain an uppercase letter');
+      if (!hasNumber) messages.push('Password must contain a number');
+      if (!hasSpecial) messages.push('Password must contain a special character');
+    }
+    if (!passwordsMatch) messages.push('Passwords must match');
+    return messages;
+  });
   
   // Form validation
   const isFormValid = $derived(email && firstName && lastName && isPasswordValid && passwordsMatch);
@@ -115,7 +141,7 @@
       </p>
     </div>
 
-    <form class="mt-8 space-y-6" on:submit|preventDefault={handleSubmit}>
+    <form class="mt-8 space-y-6" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
       {#if error}
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
           <div class="flex">
@@ -204,18 +230,14 @@
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              on:click={() => togglePasswordVisibility('password')}
+              class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
+              onclick={() => togglePasswordVisibility('password')}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {#if showPassword}
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+                <EyeOff class="h-5 w-5 text-gray-400" />
               {:else}
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                </svg>
+                <Eye class="h-5 w-5 text-gray-400" />
               {/if}
             </button>
           </div>
@@ -243,7 +265,7 @@
                 <p class="font-medium text-gray-700 mb-2">Requirements ({requirementsMet}/5):</p>
                 <div class="space-y-1.5">
                 <div class="flex items-center gap-2">
-                  {#if hasMinLength}
+                  {#if debouncedHasMinLength}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -252,12 +274,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={hasMinLength} class:text-gray-600={!hasMinLength}>
+                  <span class:text-green-600={debouncedHasMinLength} class:text-gray-600={!debouncedHasMinLength}>
                     At least 8 characters
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if hasLowercase}
+                  {#if debouncedHasLowercase}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -266,12 +288,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={hasLowercase} class:text-gray-600={!hasLowercase}>
+                  <span class:text-green-600={debouncedHasLowercase} class:text-gray-600={!debouncedHasLowercase}>
                     One lowercase letter (a-z)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if hasUppercase}
+                  {#if debouncedHasUppercase}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -280,12 +302,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={hasUppercase} class:text-gray-600={!hasUppercase}>
+                  <span class:text-green-600={debouncedHasUppercase} class:text-gray-600={!debouncedHasUppercase}>
                     One uppercase letter (A-Z)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if hasNumber}
+                  {#if debouncedHasNumber}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -294,12 +316,12 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={hasNumber} class:text-gray-600={!hasNumber}>
+                  <span class:text-green-600={debouncedHasNumber} class:text-gray-600={!debouncedHasNumber}>
                     One number (0-9)
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
-                  {#if hasSpecial}
+                  {#if debouncedHasSpecial}
                     <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -308,7 +330,7 @@
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                     </svg>
                   {/if}
-                  <span class:text-green-600={hasSpecial} class:text-gray-600={!hasSpecial}>
+                  <span class:text-green-600={debouncedHasSpecial} class:text-gray-600={!debouncedHasSpecial}>
                     One special character (!@#$%^&*...)
                   </span>
                 </div>
@@ -335,18 +357,14 @@
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              on:click={() => togglePasswordVisibility('confirm')}
+              class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600 transition-colors"
+              onclick={() => togglePasswordVisibility('confirm')}
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
             >
               {#if showConfirmPassword}
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+                <EyeOff class="h-5 w-5 text-gray-400" />
               {:else}
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                </svg>
+                <Eye class="h-5 w-5 text-gray-400" />
               {/if}
             </button>
           </div>
@@ -357,11 +375,12 @@
         </div>
       </div>
 
-      <div>
+      <div class="space-y-2">
         <button
           type="submit"
           disabled={!isFormValid || isLoading}
           class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={!isFormValid ? validationMessages().join(', ') : ''}
         >
           {#if isLoading}
             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -373,6 +392,11 @@
             Create Account
           {/if}
         </button>
+        {#if !isFormValid && (email || firstName || lastName || password || confirmPassword)}
+          <p class="text-xs text-gray-500 text-center">
+            {validationMessages().join(', ')}
+          </p>
+        {/if}
       </div>
 
       <!-- OAuth Social Login -->
