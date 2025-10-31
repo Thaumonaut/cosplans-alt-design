@@ -70,7 +70,6 @@
   ];
 
   const collaborationNav = [
-    { title: "Teams", url: "/teams", icon: Users, ready: true },
     { title: "Calendar", url: "/calendar", icon: Calendar, ready: false },
   ];
 
