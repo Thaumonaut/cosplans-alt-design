@@ -46,6 +46,7 @@ jobs:
 
       - name: Run E2E tests
         run: bunx playwright test
+        timeout-minutes: 25
         env:
           CI: true
           SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}

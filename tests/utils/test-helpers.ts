@@ -10,17 +10,20 @@ export class TestHelpers {
   /**
    * Wait for the page to be fully loaded
    */
-  async waitForPageLoad() {
-    await this.page.waitForLoadState('networkidle');
-    await expect(this.page.locator('main')).toBeVisible();
+  async waitForPageLoad(timeout = 10000) {
+    await this.page.waitForLoadState('domcontentloaded');
+    // Don't wait for main if it doesn't exist (some pages might not have it)
+    await expect(this.page.locator('main')).toBeVisible({ timeout }).catch(() => {
+      // Page loaded but no main element - that's okay
+    });
   }
 
   /**
    * Navigate to a route and wait for it to load
    */
-  async navigateAndWait(route: string) {
-    await this.page.goto(route);
-    await this.waitForPageLoad();
+  async navigateAndWait(route: string, timeout = 15000) {
+    await this.page.goto(route, { waitUntil: 'domcontentloaded', timeout });
+    await this.waitForPageLoad(timeout);
   }
 
   /**

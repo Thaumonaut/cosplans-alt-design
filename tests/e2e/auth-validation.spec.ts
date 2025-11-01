@@ -6,7 +6,7 @@ import { loginIfNeeded } from './support/auth';
  */
 test('should successfully authenticate using credentials from .env.test', async ({ page }) => {
   // Go to a protected route (will redirect to login if not authenticated)
-  await page.goto('/dashboard', { waitUntil: 'networkidle' });
+  await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
   
   // loginIfNeeded should detect we need auth and log us in
   const loggedIn = await loginIfNeeded(page);

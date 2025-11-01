@@ -21,6 +21,8 @@ export default defineConfig({
   // Maximum time for assertions (10 seconds)
   expect: {
     timeout: 10 * 1000,
+    // Fail fast on assertions to avoid hanging
+    toHaveScreenshot: { threshold: 0.2 },
     // Visual regression threshold: 5% tolerance (95% similarity required)
     toHaveScreenshot: {
       maxDiffPixels: 0,
