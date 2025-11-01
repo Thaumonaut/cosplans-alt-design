@@ -103,7 +103,7 @@
               <h3 class="text-balance font-semibold leading-tight">{character}</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">{series}</p>
             </div>
-            <Badge class={difficultyColors[difficulty]}>{difficulty}</Badge>
+            <Badge class={difficultyColors[difficulty]} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
           </div>
           <p class="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{notes}</p>
           <div class="flex flex-wrap gap-1.5">
