@@ -120,7 +120,7 @@
 </script>
 
 <Sidebar>
-  <SidebarHeader class="border-b border-sidebar-border px-6 py-4">
+  <SidebarHeader class="border-b border-[var(--theme-sidebar-border)] px-6 py-4">
     <div class="flex items-center gap-3">
       <div
         class="flex size-10 items-center justify-center rounded-xl bg-primary"
@@ -200,7 +200,7 @@
 
   </SidebarContent>
 
-  <SidebarFooter class="border-t border-sidebar-border p-4">
+  <SidebarFooter class="border-t border-[var(--theme-sidebar-border)] p-4">
     <DropdownMenu placement="top-start">
       {#snippet trigger()}
         <span class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent">

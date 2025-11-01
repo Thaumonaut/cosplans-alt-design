@@ -677,7 +677,7 @@
                           await updateMetadataField('fragile', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Fragile</span>
                     </div>
@@ -689,7 +689,7 @@
                           await updateMetadataField('requiresAssembly', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Requires Assembly</span>
                     </div>
@@ -787,7 +787,7 @@
                           await updateMetadataField('stretch', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Stretch</span>
                     </div>
@@ -799,7 +799,7 @@
                           await updateMetadataField('washable', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Washable</span>
                     </div>
@@ -872,7 +872,7 @@
                           await updateMetadataField('needsStyling', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Needs Styling</span>
                     </div>
@@ -884,7 +884,7 @@
                           await updateMetadataField('heatResistant', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Heat Resistant</span>
                     </div>

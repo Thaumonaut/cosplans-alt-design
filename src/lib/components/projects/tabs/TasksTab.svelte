@@ -109,9 +109,9 @@
   function getPriorityColor(priority: Task['priority']) {
     switch (priority) {
       case 'high':
-        return 'text-red-600'
+        return 'text-[var(--theme-error)]'
       case 'medium':
-        return 'text-yellow-600'
+        return 'text-[var(--theme-warning)]'
       case 'low':
         return 'text-[var(--theme-success)]'
       default:
