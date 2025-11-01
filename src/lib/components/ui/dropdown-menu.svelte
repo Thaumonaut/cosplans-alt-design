@@ -42,24 +42,47 @@
     if (!triggerElement || !isOpen) return;
     
     const rect = triggerElement.getBoundingClientRect();
-    const dropdownRect = { top: 0, left: 0, right: 0, bottom: 0, width: dropdownWidth ?? 280 };
+    const spacing = 6; // 1.5rem = 6px
     
+    let top = 0;
+    let left = 0;
+    let right = 0;
+    let bottom = 0;
+    
+    // Vertical placement
     if (placement.includes('bottom')) {
-      dropdownRect.top = rect.bottom + 6; // 1.5 * 4px = 6px (mt-1.5)
+      top = rect.bottom + spacing;
     } else if (placement.includes('top')) {
-      dropdownRect.bottom = window.innerHeight - rect.top + 6;
-    }
-    
-    if (placement.includes('end') || placement === 'bottom-end' || placement === 'top-end') {
-      dropdownRect.right = window.innerWidth - rect.right;
-    } else if (placement.includes('start') || placement === 'bottom-start' || placement === 'top-start') {
-      dropdownRect.left = rect.left;
+      bottom = window.innerHeight - rect.top + spacing;
     } else {
-      // center or default
-      dropdownRect.left = rect.left;
+      // Default to bottom
+      top = rect.bottom + spacing;
     }
     
-    dropdownPosition = dropdownRect;
+    // Horizontal placement
+    if (placement.includes('end') || placement === 'bottom-end' || placement === 'top-end') {
+      right = window.innerWidth - rect.right;
+      left = 0;
+    } else if (placement.includes('start') || placement === 'bottom-start' || placement === 'top-start') {
+      left = rect.left;
+      right = 0;
+    } else if (placement.includes('left')) {
+      right = window.innerWidth - rect.left + spacing;
+      left = 0;
+      top = rect.top;
+      bottom = 0;
+    } else if (placement.includes('right')) {
+      left = rect.right + spacing;
+      right = 0;
+      top = rect.top;
+      bottom = 0;
+    } else {
+      // Default: bottom-start
+      left = rect.left;
+      right = 0;
+    }
+    
+    dropdownPosition = { top, left, right, bottom, width: dropdownWidth ?? 280 };
   }
 
   $effect(() => {
