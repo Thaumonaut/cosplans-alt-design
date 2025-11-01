@@ -43,15 +43,15 @@
   <div
     role="button"
     tabindex="0"
-    class="group relative aspect-[3/4] max-h-64 w-full overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/30 transition-colors hover:border-blue-500/50 hover:bg-gray-50/50 dark:border-gray-600 dark:bg-gray-800/30 dark:hover:border-blue-400/50 dark:hover:bg-gray-800/50"
+    class="group relative aspect-[3/4] max-h-64 w-full overflow-hidden rounded-xl border-2 border-dashed border-[var(--theme-border)] bg-[var(--theme-section-bg)] transition-colors hover:border-[var(--theme-primary)]/50 hover:bg-[var(--theme-card-bg)]"
   >
     <button
-      class="flex size-full flex-col items-center justify-center gap-3 text-gray-500 transition-colors group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-100"
+      class="flex size-full flex-col items-center justify-center gap-3 text-[var(--theme-sidebar-muted)] transition-colors group-hover:text-[var(--theme-foreground)]"
     >
       <Upload class="size-8" />
       <div class="text-center">
         <p class="text-sm font-medium">Upload character reference</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Click or drag image here</p>
+        <p class="text-xs text-[var(--theme-sidebar-muted)]">Click or drag image here</p>
       </div>
     </button>
   </div>

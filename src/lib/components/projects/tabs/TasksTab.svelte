@@ -113,9 +113,9 @@
       case 'medium':
         return 'text-yellow-600'
       case 'low':
-        return 'text-green-600'
+        return 'text-[var(--theme-success)]'
       default:
-        return 'text-gray-600'
+        return 'text-[var(--theme-sidebar-muted)]'
     }
   }
 
