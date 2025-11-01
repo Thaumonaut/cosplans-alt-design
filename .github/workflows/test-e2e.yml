@@ -53,6 +53,9 @@ jobs:
           TEST_BASE_URL: http://localhost:5173
           PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_KEY }}
+          # E2E test user credentials (use test user from factory)
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL || 'alice@test.com' }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD || 'AliceTest123!' }}
 
       - name: Upload test results
         if: always()
