@@ -81,8 +81,14 @@
     outline-color: hsl(var(--ring) / 0.5);
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    /* Use new theme system variables if available, fallback to old HSL variables */
+    background-color: var(--theme-background, hsl(var(--background)));
+    background-image: var(--theme-background-pattern, none);
+    background-size: var(--theme-background-size, auto);
+    background-position: var(--theme-background-position, 0 0);
+    background-repeat: var(--theme-background-repeat, repeat);
+    background-blend-mode: var(--theme-background-blend, normal);
+    color: var(--theme-foreground, hsl(var(--foreground)));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

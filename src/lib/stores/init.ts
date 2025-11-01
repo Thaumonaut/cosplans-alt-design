@@ -17,7 +17,7 @@ export async function initializeStores() {
   if (!browser) return
 
   // Initialize theme and settings
-  theme.init()
+  theme.initialize()
   appSettings.init()
   
   // Set up automatic persistence for local data
