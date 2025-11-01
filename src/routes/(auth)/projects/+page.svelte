@@ -2,13 +2,15 @@
   import { onMount } from 'svelte'
   import { goto } from '$app/navigation'
   import { projects } from '$lib/stores/projects'
-  import { currentTeam } from '$lib/stores/teams'
+  import { currentTeam, teams } from '$lib/stores/teams'
+  import { user } from '$lib/stores/auth-store'
   import { Button, Input } from '$lib/components/ui'
   import { Plus, Search } from 'lucide-svelte'
   import ProjectCard from '$lib/components/cards/ProjectCard.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import ProjectDetail from '$lib/components/projects/ProjectDetail.svelte'
   import Fuse from 'fuse.js'
+  import { get } from 'svelte/store'
 
   let searchQuery = $state('')
   let statusFilter = $state<'all' | 'planning' | 'in-progress' | 'completed' | 'archived'>('all')
@@ -16,10 +18,42 @@
   let selectedProjectId = $state<string | null>(null)
   let showProjectDetailFlyout = $state(false)
 
-  // Load projects on mount
-  onMount(() => {
-    if ($currentTeam) {
-      projects.load()
+  import type { PageData } from './$types'
+  let { data }: { data: PageData } = $props()
+  
+  // If we got projects from load function, use them
+  $effect(() => {
+    if (data?.projects && data.projects.length > 0) {
+      // Projects were loaded in +page.ts, ensure store has them
+      const currentProjects = get(projects)
+      if (currentProjects.items.length === 0) {
+        projects.load()
+      }
+    }
+  })
+
+  // Load projects on mount as fallback if not loaded from +page.ts
+  onMount(async () => {
+    // Only load if we don't already have data from load function
+    if (!data?.projects || data.projects.length === 0) {
+      try {
+        const currentUser = get(user)
+        if (currentUser) {
+          const currentTeamValue = get(currentTeam)
+          if (!currentTeamValue) {
+            // No team selected, try to load teams
+            await teams.load(currentUser.id)
+          }
+        }
+        
+        // Only load projects if we have a team
+        const team = get(currentTeam)
+        if (team) {
+          await projects.load()
+        }
+      } catch (error) {
+        console.error('Failed to load projects:', error)
+      }
     }
   })
 
@@ -217,9 +251,25 @@
     mode={selectedProjectId ? 'edit' : 'create'}
     isFlyout={true}
     onSuccess={(id) => {
-      selectedProjectId = id
-      showNewProjectFlyout = false
-      showProjectDetailFlyout = true
+      // If id is empty, project was deleted or converted - close flyout
+      if (!id || id === '') {
+        showProjectDetailFlyout = false
+        showNewProjectFlyout = false
+        selectedProjectId = null
+        // Reload projects list
+        projects.load()
+        return
+      }
+      
+      // If creating a new project, show it in the detail view
+      if (!selectedProjectId) {
+        selectedProjectId = id
+        showNewProjectFlyout = false
+        showProjectDetailFlyout = true
+      } else {
+        // Project was updated, reload projects list
+        projects.load()
+      }
     }}
   />
   </CreationFlyout>

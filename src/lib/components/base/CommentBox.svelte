@@ -3,7 +3,7 @@
   import { comments } from '$lib/stores/comments'
   import { Button } from '$lib/components/ui'
   import { Badge } from 'flowbite-svelte'
-  import { Send, Edit, Trash2, User } from 'lucide-svelte'
+  import { Send, Edit, Trash2, User, ChevronDown, ChevronUp, MessageSquare } from 'lucide-svelte'
   import { supabase } from '$lib/supabase'
   import type { Comment, CommentCreate } from '$lib/types/domain/comment'
   import type { CommentEntityType } from '$lib/types/domain/comment'
@@ -12,14 +12,16 @@
     entityType: CommentEntityType
     entityId: string
     editable?: boolean
+    defaultCollapsed?: boolean
   }
 
-  let { entityType, entityId, editable = true }: Props = $props()
+  let { entityType, entityId, editable = true, defaultCollapsed = true }: Props = $props()
 
   let commentText = $state('')
   let submitting = $state(false)
   let editingCommentId = $state<string | null>(null)
   let editingCommentText = $state('')
+  let isCollapsed = $state(defaultCollapsed)
 
   let currentUser = $state<{ id: string; name?: string; avatarUrl?: string } | null>(null)
 
@@ -119,113 +121,132 @@
 </script>
 
 <div class="space-y-4">
-  <h3 class="text-lg font-semibold">Comments</h3>
+  <!-- Collapsible Header -->
+  <button
+    onclick={() => isCollapsed = !isCollapsed}
+    class="flex w-full items-center justify-between rounded-md p-2 text-left hover:bg-muted/50 transition-colors"
+  >
+    <div class="flex items-center gap-2">
+      <MessageSquare class="size-5 text-muted-foreground" />
+      <h3 class="text-lg font-semibold">Comments</h3>
+      {#if $comments.items.length > 0}
+        <Badge class="bg-muted text-muted-foreground text-xs">{$comments.items.length}</Badge>
+      {/if}
+    </div>
+    {#if isCollapsed}
+      <ChevronDown class="size-5 text-muted-foreground" />
+    {:else}
+      <ChevronUp class="size-5 text-muted-foreground" />
+    {/if}
+  </button>
 
-  <!-- Comment Input -->
-  {#if editable}
-    <div class="space-y-2">
-      <textarea
-        bind:value={commentText}
-        placeholder="Add a comment..."
-        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-        rows="3"
-        onkeydown={(e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            handleSubmit()
-          }
-        }}
-      ></textarea>
-      <div class="flex justify-end">
-        <Button onclick={handleSubmit} disabled={!commentText.trim() || submitting} size="sm">
-          <Send class="mr-2 size-4" />
-          {submitting ? 'Posting...' : 'Post Comment'}
-        </Button>
+  {#if !isCollapsed}
+    <!-- Comment Input -->
+    {#if editable}
+      <div class="space-y-2">
+        <textarea
+          bind:value={commentText}
+          placeholder="Add a comment..."
+          class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+          rows="3"
+          onkeydown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              handleSubmit()
+            }
+          }}
+        ></textarea>
+        <div class="flex justify-end">
+          <Button onclick={handleSubmit} disabled={!commentText.trim() || submitting} size="sm">
+            <Send class="mr-2 size-4" />
+            {submitting ? 'Posting...' : 'Post Comment'}
+          </Button>
+        </div>
       </div>
-    </div>
-  {/if}
+    {/if}
 
-  <!-- Comments List -->
-  {#if $comments.loading}
-    <div class="flex items-center justify-center py-8">
-      <div class="text-sm text-muted-foreground">Loading comments...</div>
-    </div>
-  {:else if $comments.items.length === 0}
-    <div class="rounded-lg border border-dashed bg-muted/30 py-8 text-center">
-      <p class="text-sm text-muted-foreground">No comments yet. Be the first to comment!</p>
-    </div>
-  {:else}
-    <div class="space-y-4">
-      {#each $comments.items as comment (comment.id)}
-        <div class="rounded-lg border bg-card p-4">
-          {#if editingCommentId === comment.id}
-            <!-- Edit Mode -->
-            <div class="space-y-2">
-              <textarea
-                bind:value={editingCommentText}
-                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-                rows="3"
-              ></textarea>
-              <div class="flex gap-2">
-                <Button onclick={handleUpdate} disabled={!editingCommentText.trim() || submitting} size="sm">
-                  Save
-                </Button>
-                <Button variant="outline" onclick={cancelEdit} size="sm">Cancel</Button>
+    <!-- Comments List -->
+    {#if $comments.loading}
+      <div class="flex items-center justify-center py-8">
+        <div class="text-sm text-muted-foreground">Loading comments...</div>
+      </div>
+    {:else if $comments.items.length === 0}
+      <div class="rounded-lg border border-dashed bg-muted/30 py-8 text-center">
+        <p class="text-sm text-muted-foreground">No comments yet. Be the first to comment!</p>
+      </div>
+    {:else}
+      <div class="space-y-4">
+        {#each $comments.items as comment (comment.id)}
+          <div class="rounded-lg border bg-card p-4">
+            {#if editingCommentId === comment.id}
+              <!-- Edit Mode -->
+              <div class="space-y-2">
+                <textarea
+                  bind:value={editingCommentText}
+                  class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                  rows="3"
+                ></textarea>
+                <div class="flex gap-2">
+                  <Button onclick={handleUpdate} disabled={!editingCommentText.trim() || submitting} size="sm">
+                    Save
+                  </Button>
+                  <Button variant="outline" onclick={cancelEdit} size="sm">Cancel</Button>
+                </div>
               </div>
-            </div>
-          {:else}
-            <!-- Display Mode -->
-            <div class="flex items-start gap-3">
-              <!-- Avatar -->
-              <div class="flex size-8 items-center justify-center rounded-full bg-muted">
-                {#if comment.author?.avatarUrl}
-                  <img src={comment.author.avatarUrl} alt={comment.author.name || 'User'} class="size-8 rounded-full" />
-                {:else}
-                  <User class="size-4 text-muted-foreground" />
-                {/if}
-              </div>
-
-              <!-- Content -->
-              <div class="flex-1 space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium">
-                    {comment.author?.name || 'Unknown User'}
-                  </span>
-                  <span class="text-xs text-muted-foreground">
-                    {formatDate(comment.createdAt)}
-                  </span>
-                  {#if comment.updatedAt !== comment.createdAt}
-                    <Badge class="bg-muted text-muted-foreground text-xs">edited</Badge>
+            {:else}
+              <!-- Display Mode -->
+              <div class="flex items-start gap-3">
+                <!-- Avatar -->
+                <div class="flex size-8 items-center justify-center rounded-full bg-muted">
+                  {#if comment.author?.avatarUrl}
+                    <img src={comment.author.avatarUrl} alt={comment.author.name || 'User'} class="size-8 rounded-full" />
+                  {:else}
+                    <User class="size-4 text-muted-foreground" />
                   {/if}
                 </div>
-                <p class="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
-              </div>
 
-              <!-- Actions -->
-              {#if currentUser && comment.userId === currentUser.id && editable}
-                <div class="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={() => startEdit(comment)}
-                    class="text-muted-foreground hover:text-foreground"
-                  >
-                    <Edit class="size-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={() => handleDelete(comment.id)}
-                    class="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 class="size-3" />
-                  </Button>
+                <!-- Content -->
+                <div class="flex-1 space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium">
+                      {comment.author?.name || 'Unknown User'}
+                    </span>
+                    <span class="text-xs text-muted-foreground">
+                      {formatDate(comment.createdAt)}
+                    </span>
+                    {#if comment.updatedAt !== comment.createdAt}
+                      <Badge class="bg-muted text-muted-foreground text-xs">edited</Badge>
+                    {/if}
+                  </div>
+                  <p class="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
                 </div>
-              {/if}
-            </div>
-          {/if}
-        </div>
-      {/each}
-    </div>
+
+                <!-- Actions -->
+                {#if currentUser && comment.userId === currentUser.id && editable}
+                  <div class="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onclick={() => startEdit(comment)}
+                      class="text-muted-foreground hover:text-foreground"
+                    >
+                      <Edit class="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onclick={() => handleDelete(comment.id)}
+                      class="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 class="size-3" />
+                    </Button>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    {/if}
   {/if}
 </div>
 

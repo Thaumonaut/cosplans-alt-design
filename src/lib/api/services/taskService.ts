@@ -22,7 +22,7 @@ export const taskService = {
     const { data, error } = await query
 
     if (error) throw error
-    return data as Task[]
+    return (data || []).map(mapTaskFromDb)
   },
 
   /**
@@ -40,36 +40,85 @@ export const taskService = {
       throw error
     }
 
-    return data as Task
+    return mapTaskFromDb(data)
   },
 
   /**
    * Create a new task
    */
   async create(task: TaskCreate): Promise<Task> {
+    // Map camelCase to snake_case for database
+    const insertData: Record<string, unknown> = {
+      project_id: task.projectId,
+      title: task.title,
+      description: task.description || null,
+      priority: task.priority || 'medium',
+    }
+
+    // Only include optional fields if they have values
+    if (task.resourceId !== undefined && task.resourceId !== null) {
+      insertData.resource_id = task.resourceId
+    }
+    if (task.dueDate !== undefined && task.dueDate !== null) {
+      insertData.due_date = task.dueDate
+    }
+    if (task.assignedTo !== undefined && task.assignedTo !== null) {
+      insertData.assigned_to = task.assignedTo
+    }
+
     const { data, error } = await supabase
       .from('tasks')
-      .insert(task as any)
+      .insert(insertData)
       .select()
       .single()
 
-    if (error) throw error
-    return data as Task
+    if (error) {
+      // Provide helpful error message for schema cache issues
+      if (error.message?.includes('schema cache') || error.code === 'PGRST204' || error.code === 'PGRST205') {
+        throw new Error(
+          `Failed to create task: ${error.message}. ` +
+          `This is a PostgREST schema cache issue. Please try refreshing the page and creating the task again.`
+        )
+      }
+      throw error
+    }
+
+    return mapTaskFromDb(data)
   },
 
   /**
    * Update an existing task
    */
   async update(id: string, updates: TaskUpdate): Promise<Task> {
+    // Map camelCase to snake_case for database
+    const updateData: Record<string, unknown> = {}
+
+    if (updates.title !== undefined) updateData.title = updates.title
+    if (updates.description !== undefined) updateData.description = updates.description || null
+    if (updates.completed !== undefined) updateData.completed = updates.completed
+    if (updates.priority !== undefined) updateData.priority = updates.priority
+    if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate
+    if (updates.assignedTo !== undefined) updateData.assigned_to = updates.assignedTo
+
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
 
-    if (error) throw error
-    return data as Task
+    if (error) {
+      // Provide helpful error message for schema cache issues
+      if (error.message?.includes('schema cache') || error.code === 'PGRST204' || error.code === 'PGRST205') {
+        throw new Error(
+          `Failed to update task: ${error.message}. ` +
+          `This is a PostgREST schema cache issue. Please try refreshing the page and updating the task again.`
+        )
+      }
+      throw error
+    }
+
+    return mapTaskFromDb(data)
   },
 
   /**
@@ -92,5 +141,24 @@ export const taskService = {
     // Toggle completion
     return await this.update(id, { completed: !task.completed })
   },
+}
+
+/**
+ * Map database row (snake_case) to Task type (camelCase)
+ */
+function mapTaskFromDb(row: any): Task {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    resourceId: row.resource_id ?? undefined,
+    title: row.title,
+    description: row.description ?? undefined,
+    completed: row.completed ?? false,
+    dueDate: row.due_date ?? undefined,
+    priority: row.priority || 'medium',
+    assignedTo: row.assigned_to ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
 }
 

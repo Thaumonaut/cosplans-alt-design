@@ -20,21 +20,16 @@ export const CRITICAL_RESOURCES = [
 ] as const;
 
 // Lazy-loaded route modules for code splitting (updated for (auth) structure)
+// Only MVP Core routes are included here
 export const LAZY_ROUTES = {
-	accessories: () => import('../../routes/(auth)/accessories/+page.svelte'),
 	archived: () => import('../../routes/(auth)/archived/+page.svelte'),
 	budget: () => import('../../routes/(auth)/budget/+page.svelte'),
 	calendar: () => import('../../routes/(auth)/calendar/+page.svelte'),
-	equipment: () => import('../../routes/(auth)/equipment/+page.svelte'),
 	events: () => import('../../routes/(auth)/events/+page.svelte'),
 	ideas: () => import('../../routes/(auth)/ideas/+page.svelte'),
-	marketplace: () => import('../../routes/(auth)/marketplace/+page.svelte'),
-	materials: () => import('../../routes/(auth)/materials/+page.svelte'),
-	messages: () => import('../../routes/(auth)/messages/+page.svelte'),
 	photoshoots: () => import('../../routes/(auth)/photoshoots/+page.svelte'),
 	'post-production': () => import('../../routes/(auth)/post-production/+page.svelte'),
-	profile: () => import('../../routes/(auth)/profile/+page.svelte'),
-	props: () => import('../../routes/(auth)/props/+page.svelte'),
+	resources: () => import('../../routes/(auth)/resources/+page.svelte'),
 	tasks: () => import('../../routes/(auth)/tasks/+page.svelte'),
 	timeline: () => import('../../routes/(auth)/timeline/+page.svelte'),
 	tools: () => import('../../routes/(auth)/tools/+page.svelte')

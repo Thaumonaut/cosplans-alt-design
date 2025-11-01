@@ -17,7 +17,9 @@ class ApiClient {
     customFetch?: typeof fetch
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`
-    const fetchFn = customFetch || fetch
+    // Use customFetch if provided (from SvelteKit load function), otherwise fall back to global fetch
+    // In browser, this will be window.fetch. In server load functions, this must be event.fetch
+    const fetchFn = customFetch || (typeof globalThis !== 'undefined' ? globalThis.fetch : fetch)
     
     try {
       const response = await fetchFn(url, {
@@ -88,7 +90,7 @@ class ApiClient {
     projectId?: number
     completed?: boolean
     priority?: string
-  }): Promise<ApiResponse<Task[]>> {
+  }, customFetch?: typeof fetch): Promise<ApiResponse<Task[]>> {
     const searchParams = new URLSearchParams()
     
     if (params?.projectId) searchParams.set('projectId', params.projectId.toString())
@@ -98,7 +100,7 @@ class ApiClient {
     const query = searchParams.toString()
     const endpoint = `/tasks${query ? `?${query}` : ''}`
     
-    return this.request<Task[]>(endpoint)
+    return this.request<Task[]>(endpoint, {}, customFetch)
   }
 
   async createTask(task: Omit<Task, 'id'>): Promise<ApiResponse<Task>> {
@@ -113,7 +115,7 @@ class ApiClient {
     projectId?: number
     type?: string
     upcoming?: boolean
-  }): Promise<ApiResponse<Event[]>> {
+  }, customFetch?: typeof fetch): Promise<ApiResponse<Event[]>> {
     const searchParams = new URLSearchParams()
     
     if (params?.projectId) searchParams.set('projectId', params.projectId.toString())
@@ -123,7 +125,7 @@ class ApiClient {
     const query = searchParams.toString()
     const endpoint = `/events${query ? `?${query}` : ''}`
     
-    return this.request<Event[]>(endpoint)
+    return this.request<Event[]>(endpoint, {}, customFetch)
   }
 
   async createEvent(event: Omit<Event, 'id'>): Promise<ApiResponse<Event>> {

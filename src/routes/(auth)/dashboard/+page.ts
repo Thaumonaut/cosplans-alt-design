@@ -8,9 +8,9 @@ export const load: PageLoad = async ({ fetch }) => {
   try {
     // Load dashboard data in parallel
     const [projectsResponse, tasksResponse, eventsResponse] = await Promise.all([
-      apiClient.getProjects({ limit: 10 }),
-      apiClient.getTasks({ completed: false }),
-      apiClient.getEvents({ upcoming: true })
+      apiClient.getProjects({ limit: 10 }, fetch),
+      apiClient.getTasks({ completed: false }, fetch),
+      apiClient.getEvents({ upcoming: true }, fetch)
     ])
 
     // Return data with success/error handling

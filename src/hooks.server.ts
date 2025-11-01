@@ -18,7 +18,13 @@ const supabase: Handle = async ({ event, resolve }) => {
       getAll: () => event.cookies.getAll(),
       setAll: (cookiesToSet) => {
         cookiesToSet.forEach(({ name, value, options }) => {
-          event.cookies.set(name, value, { ...options, path: '/' });
+          event.cookies.set(name, value, {
+            ...options,
+            path: '/',
+            sameSite: 'lax' as const,
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: false, // Auth cookies need to be accessible to JavaScript
+          });
         });
       },
     },
@@ -82,6 +88,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 
   // Protected routes that require authentication
   // These should match the routes inside the (auth) group
+  // Note: All resource types (props, accessories, materials, outfits, equipment) are handled via unified /resources route
   const protectedRoutes = [
     '/dashboard', 
     '/timeline', 
@@ -90,21 +97,15 @@ const authGuard: Handle = async ({ event, resolve }) => {
     '/budget', 
     '/teams',
     '/characters',
-    '/outfits',
-    '/props',
-    '/equipment',
-    '/accessories',
-    '/materials',
+    '/resources',  // Unified route for all resource types
     '/photoshoots',
     '/events',
     '/settings',
     '/planning',
     '/tasks',
     '/calendar',
-    '/marketplace',
-    '/messages',
-    '/profile',
     '/ideas',
+    '/projects',
     '/archived',
     '/in-progress',
     '/post-production',

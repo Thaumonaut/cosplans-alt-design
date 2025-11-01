@@ -5,7 +5,7 @@ export interface Project {
   teamId: string
   fromIdeaId?: string | null
   character: string
-  series: string
+  series?: string | null
   status: ProjectStatus
   progress: number // 0-100, calculated via hybrid algorithm
   estimatedBudget?: number // stored in cents
@@ -21,7 +21,7 @@ export interface Project {
 
 export interface ProjectCreate {
   character: string
-  series: string
+  series?: string | null
   fromIdeaId?: string
   status?: ProjectStatus
   estimatedBudget?: number // in cents

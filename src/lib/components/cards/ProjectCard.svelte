@@ -2,7 +2,7 @@
   import type { Project } from '$lib/types/domain/project'
   import { Badge } from 'flowbite-svelte'
   import { Calendar, DollarSign, Target } from 'lucide-svelte'
-  import { cn } from '$lib/utils'
+  import { cn, formatCurrencyFromCents } from '$lib/utils'
 
   interface Props {
     project: Project
@@ -25,10 +25,6 @@
     archived: 'Archived',
   }
 
-  function formatCurrency(cents: number): string {
-    const dollars = cents / 100
-    return `$${dollars.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
 
   function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -118,7 +114,7 @@
         <div class="flex items-center gap-1" class:text-red-600={isOverBudget}>
           <DollarSign class="size-3" />
           <span>
-            {formatCurrency(project.spentBudget)} / {formatCurrency(project.estimatedBudget)}
+            {formatCurrencyFromCents(project.spentBudget)} / {formatCurrencyFromCents(project.estimatedBudget)}
           </span>
         </div>
       {/if}

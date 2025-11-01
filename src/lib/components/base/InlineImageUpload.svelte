@@ -1,37 +1,66 @@
 <script lang="ts">
+  import { get } from 'svelte/store'
   import { processImage } from '$lib/utils/image'
+  import { uploadImageToStorage } from '$lib/utils/storage'
+  import { currentTeam } from '$lib/stores/teams'
 
   interface Props {
     images: string[]
     editable?: boolean
     onSave: (images: string[]) => Promise<void>
     multiple?: boolean
+    folder?: string // Optional folder path in storage (defaults to 'ideas')
   }
 
-  let { images = $bindable([]), editable = true, onSave, multiple = false }: Props = $props()
+  let { images = $bindable([]), editable = true, onSave, multiple = false, folder = 'ideas' }: Props = $props()
 
   let isUploading = $state(false)
   let error = $state<string | null>(null)
   let dragActive = $state(false)
+  let uploadProgress = $state<number>(0)
 
   async function handleFileSelect(files: FileList | null) {
     if (!files || !editable) return
+    
+    // Get current team ID
+    const team = get(currentTeam)
+    if (!team) {
+      error = 'No team selected. Please select a team first.'
+      return
+    }
+
     isUploading = true
     error = null
+    uploadProgress = 0
     try {
       const newUrls: string[] = []
-      for (const file of Array.from(files)) {
+      const filesArray = Array.from(files)
+      const totalFiles = filesArray.length
+
+      for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i]
+        
+        // Process the image (compress/resize)
         const processed = await processImage(file)
-        // TODO: upload to Supabase Storage and get URLs
-        // For now, just store placeholder
-        newUrls.push(URL.createObjectURL(file))
+        
+        // Upload the display version to Supabase Storage with team ID
+        const result = await uploadImageToStorage(processed.display, folder, team.id)
+        
+        // Use the public URL from Supabase Storage
+        newUrls.push(result.url)
+        
+        // Update progress
+        uploadProgress = ((i + 1) / totalFiles) * 100
       }
+
       const updated = multiple ? [...images, ...newUrls] : newUrls
       await onSave(updated)
     } catch (err: any) {
       error = err?.message || 'Upload failed'
+      console.error('Upload error:', err)
     } finally {
       isUploading = false
+      uploadProgress = 0
     }
   }
 
@@ -74,7 +103,12 @@
   />
   <label for="image-upload" class="cursor-pointer block">
     {#if isUploading}
-      Uploading...
+      <div class="space-y-2">
+        <div>Uploading... {Math.round(uploadProgress)}%</div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+          <div class="bg-blue-600 h-2 rounded-full transition-all" style="width: {uploadProgress}%"></div>
+        </div>
+      </div>
     {:else}
       {images.length ? `Edit images (${images.length})` : 'Upload images'}
     {/if}

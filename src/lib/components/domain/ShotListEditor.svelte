@@ -272,6 +272,7 @@
                     <InlineImageUpload
                       images={shot.referenceImage ? [shot.referenceImage] : []}
                       editable={true}
+                      folder="shots"
                       onSave={async (v: string[]) => {
                         await handleUpdateShot(shot.id, 'referenceImage', v[0] || undefined)
                       }}

@@ -57,12 +57,20 @@
     disabled = false,
     type = 'button',
     href,
+    onclick,
     children,
     ...restProps
   }: ButtonProps & { children?: any } = $props()
 
   // Determine the element type based on props
   const elementType = $derived(href ? 'a' : element)
+  
+      // Wrap onclick handler
+      function handleClick(e: MouseEvent) {
+        if (!disabled && onclick) {
+          onclick(e)
+        }
+      }
 </script>
 
 {#if elementType === 'a'}
@@ -70,6 +78,7 @@
     {href}
     data-slot="button"
     class={cn(buttonVariants({ variant, size, class: className }))}
+    onclick={handleClick}
     {...restProps}
   >
     {@render children?.()}
@@ -80,6 +89,7 @@
     {disabled}
     data-slot="button"
     class={cn(buttonVariants({ variant, size, class: className }))}
+    onclick={handleClick}
     {...restProps}
   >
     {@render children?.()}

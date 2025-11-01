@@ -13,26 +13,42 @@
   import { teams } from '$lib/stores/teams.js';
   import { user } from '$lib/stores/auth-store.js';
   import { get } from 'svelte/store';
+  import Toast from '$lib/components/ui/toast.svelte';
   import type { LayoutData } from './$types';
 
-  let { data }: { data: LayoutData } = $props();
+  let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
   const { supabase, session } = data;
   
   // Initialize auth state in stores using $effect
   $effect(() => {
     if (session?.user) {
-      authActions.initialize(session.user, session);
+      // session might be a full Session or just { user }
+      const fullSession = 'access_token' in session ? session : null;
+      authActions.initialize(session.user, fullSession);
     }
   });
 
-  // Load teams when user is available
+  // Load teams when user is available - with retry logic
   $effect(() => {
     const currentUser = $user;
     if (currentUser && session) {
-      teams.load(currentUser.id).catch((err) => {
-        console.error('Failed to load teams:', err);
-      });
+      // Only load if not already loaded
+      const teamState = teams.get();
+      if (!teamState.loading && teamState.items.length === 0) {
+        teams.load(currentUser.id).catch((err) => {
+          console.error('Failed to load teams:', err);
+          // Retry once after a short delay
+          setTimeout(() => {
+            const retryState = teams.get();
+            if (!retryState.loading && retryState.items.length === 0) {
+              teams.load(currentUser.id).catch((retryErr) => {
+                console.error('Failed to load teams on retry:', retryErr);
+              });
+            }
+          }, 1000);
+        });
+      }
     }
   });
 
@@ -48,37 +64,43 @@
     initializeStores();
     
     // Set up Supabase auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, _session) => {
-      if (event === 'SIGNED_OUT') {
-        // User signed out, redirect to login
-        goto('/login');
-      } else if (_session?.expires_at !== session?.expires_at) {
-        // Session changed, invalidate and reload
-        invalidate('supabase:auth');
-      }
-    });
-    
-    // Preload critical routes for better navigation performance
-    CRITICAL_ROUTES.forEach(route => {
-      if (route !== $page.route.id) {
-        preloadRoute(route);
-        // Use SvelteKit's preloadData for even better performance
-        preloadData(route).catch(() => {
-          // Silently fail if preloading fails
-        });
-      }
-    });
-    
-    // Preload critical resources
-    CRITICAL_RESOURCES.forEach(resource => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = resource.endsWith('.svg') ? 'image' : 'image';
-      link.href = resource;
-      document.head.appendChild(link);
-    });
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, _session) => {
+        if (event === 'SIGNED_OUT') {
+          // User signed out, redirect to login
+          goto('/login');
+        } else {
+          const currentExpiresAt = session && 'access_token' in session ? session.expires_at : null;
+          const newExpiresAt = _session?.expires_at;
+          if (newExpiresAt !== currentExpiresAt) {
+            // Session changed, invalidate and reload
+            invalidate('supabase:auth');
+          }
+        }
+      });
+      
+      // Preload critical routes for better navigation performance
+      CRITICAL_ROUTES.forEach(route => {
+        if (route !== $page.route.id) {
+          preloadRoute(route);
+          // Use SvelteKit's preloadData for even better performance
+          preloadData(route).catch(() => {
+            // Silently fail if preloading fails
+          });
+        }
+      });
+      
+      // Preload critical resources
+      CRITICAL_RESOURCES.forEach(resource => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = resource.endsWith('.svg') ? 'image' : 'image';
+        link.href = resource;
+        document.head.appendChild(link);
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   });
 </script>
 
@@ -93,7 +115,8 @@
   <div class="flex min-h-screen w-full">
     <AppSidebar />
     <main class="max-w-full flex-1 overflow-x-hidden">
-      <slot />
+      {@render children()}
     </main>
   </div>
+  <Toast />
 </div>

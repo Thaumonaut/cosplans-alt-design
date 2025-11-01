@@ -53,12 +53,13 @@
   {#snippet trigger()}
     {#if $currentTeam}
       {@const IconComponent = getIcon($currentTeam.type)}
+      {@const Icon = IconComponent}
       <button
         class="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-sidebar-accent"
         disabled={$teams.loading}
       >
         <div class="flex flex-1 items-center gap-2 overflow-hidden">
-          <svelte:component this={IconComponent} class="size-4 shrink-0 text-muted-foreground" />
+          <Icon class="size-4 shrink-0 text-muted-foreground" />
           <span class="truncate text-sm font-medium">
             {$currentTeam.name}
           </span>
@@ -88,8 +89,9 @@
     {:else}
       {#each Object.entries(groupedTeams) as [type, teamList]}
         {@const TypeIcon = typeIcons[type as keyof typeof typeIcons] || Users}
+        {@const Icon = TypeIcon}
         <DropdownMenuLabel class="flex items-center gap-2 text-xs text-muted-foreground">
-          <svelte:component this={TypeIcon} class="size-3" />
+          <Icon class="size-3" />
           {typeLabels[type as keyof typeof typeLabels] || type}
         </DropdownMenuLabel>
         

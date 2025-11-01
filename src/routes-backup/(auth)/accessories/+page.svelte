@@ -1,46 +1,23 @@
 <script lang="ts">
   import { Plus, Filter, Grid3x3, List } from 'lucide-svelte';
   import { Button, Badge, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '$lib/components/ui';
+  import { onMount } from 'svelte';
+  import { resourceService } from '$lib/api/services/resourceService';
+  import { currentTeam } from '$lib/stores/teams';
+  import { get } from 'svelte/store';
 
   interface Accessory {
-    id: number;
+    id: string;
     name: string;
     character: string;
     image: string;
-    type: 'headwear' | 'jewelry' | 'eyewear' | 'other';
+    type: string;
     status: 'planning' | 'in-progress' | 'completed';
     materials: string[];
   }
 
-  const accessories: Accessory[] = [
-    {
-      id: 1,
-      name: "Malenia's Helmet",
-      character: "Malenia, Blade of Miquella",
-      image: "/armor-chest-plate.jpg",
-      type: "headwear",
-      status: "in-progress",
-      materials: ["Worbla", "EVA foam", "Gold paint"],
-    },
-    {
-      id: 2,
-      name: "Raiden's Hair Ornament",
-      character: "Raiden Shogun",
-      image: "/purple-japanese-hair-ornament.jpg",
-      type: "jewelry",
-      status: "planning",
-      materials: ["Resin", "Wire", "Paint"],
-    },
-    {
-      id: 3,
-      name: "Cyberpunk Goggles",
-      character: "V (Female)",
-      image: "/futuristic-goggles-neon.jpg",
-      type: "eyewear",
-      status: "completed",
-      materials: ["3D print", "Tinted plastic", "LED"],
-    },
-  ];
+  let accessories = $state<Accessory[]>([]);
+  let loading = $state(true);
 
   const statusColors = {
     planning: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
@@ -61,6 +38,47 @@
     status: [] as string[],
   });
 
+  async function loadAccessories() {
+    try {
+      loading = true;
+      const team = get(currentTeam);
+      if (!team) {
+        accessories = [];
+        return;
+      }
+
+      const resources = await resourceService.list({ category: 'accessory' });
+      
+      accessories = resources.map(resource => {
+        const metadata = resource.metadata as any;
+        const material = metadata?.material || '';
+        const materials = material ? [material] : [];
+        
+        let status: 'planning' | 'in-progress' | 'completed' = 'planning';
+        if (resource.metadata && 'status' in resource.metadata) {
+          const resourceStatus = (resource.metadata as any).status;
+          if (resourceStatus === 'completed') status = 'completed';
+          else if (resourceStatus === 'in-progress' || resourceStatus === 'acquired') status = 'in-progress';
+        }
+
+        return {
+          id: resource.id,
+          name: resource.name,
+          character: 'Unknown',
+          image: resource.images[0] || '/placeholder.svg',
+          type: metadata?.accessoryType || 'other',
+          status,
+          materials,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to load accessories:', error);
+      accessories = [];
+    } finally {
+      loading = false;
+    }
+  }
+
   function toggleFilter(category: keyof typeof filters, value: string) {
     const currentFilters = filters[category];
     if (currentFilters.includes(value)) {
@@ -69,6 +87,25 @@
       filters[category] = [...currentFilters, value];
     }
   }
+
+  const filteredAccessories = $derived(() => {
+    let filtered = accessories;
+    if (filters.type.length > 0) {
+      filtered = filtered.filter(a => filters.type.includes(a.type));
+    }
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(a => filters.status.includes(a.status));
+    }
+    return filtered;
+  });
+
+  onMount(() => {
+    loadAccessories();
+    const unsubscribe = currentTeam.subscribe(() => {
+      loadAccessories();
+    });
+    return unsubscribe;
+  });
 </script>
 
 <svelte:head>
@@ -80,7 +117,13 @@
   <div class="mb-8 flex items-center justify-between">
     <div>
       <h1 class="text-balance text-3xl font-bold leading-tight">Accessories</h1>
-      <p class="text-pretty text-muted-foreground">{accessories.length} accessories across all projects</p>
+      <p class="text-pretty text-muted-foreground">
+        {#if loading}
+          Loading accessories...
+        {:else}
+          {filteredAccessories.length} {filteredAccessories.length === 1 ? 'accessory' : 'accessories'} across all projects
+        {/if}
+      </p>
     </div>
     
     <div class="flex items-center gap-2">
@@ -141,9 +184,23 @@
   </div>
 
   <!-- Accessories Grid/List View -->
-  {#if viewMode === "grid"}
+  {#if loading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p class="text-sm text-muted-foreground">Loading accessories...</p>
+      </div>
+    </div>
+  {:else if filteredAccessories.length === 0}
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+      <p class="mb-2 text-lg font-medium text-muted-foreground">No accessories found</p>
+      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
+        Get started by creating your first accessory resource.
+      </p>
+    </div>
+  {:else if viewMode === "grid"}
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {#each accessories as accessory (accessory.id)}
+      {#each filteredAccessories as accessory (accessory.id)}
         <div class="group overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg">
           <div class="relative aspect-square overflow-hidden bg-muted">
             <img
@@ -183,7 +240,7 @@
     </div>
   {:else}
     <div class="space-y-4">
-      {#each accessories as accessory (accessory.id)}
+      {#each filteredAccessories as accessory (accessory.id)}
         <div class="flex gap-4 overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-lg">
           <div class="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
             <img

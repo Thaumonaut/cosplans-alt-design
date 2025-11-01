@@ -32,9 +32,38 @@ if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
 
 // Create Supabase browser client with SSR support
 // This properly handles PKCE flow and cookies for OAuth
-export const supabase: SupabaseClient<Database> = createBrowserClient(
+export const supabase: SupabaseClient<Database> = createBrowserClient<Database>(
   PUBLIC_SUPABASE_URL,
-  PUBLIC_SUPABASE_ANON_KEY
+  PUBLIC_SUPABASE_ANON_KEY,
+  {
+    cookies: {
+      getAll() {
+        if (typeof document === 'undefined') return [];
+        return document.cookie.split(';').map(c => {
+          const [name, ...rest] = c.trim().split('=');
+          const value = rest.join('=');
+          return { name, value };
+        }).filter(c => c.name);
+      },
+      setAll(cookiesToSet) {
+        if (typeof document === 'undefined') return;
+        cookiesToSet.forEach(({ name, value, options }) => {
+          let cookieString = `${name}=${value}`;
+          if (options?.maxAge) cookieString += `; Max-Age=${options.maxAge}`;
+          if (options?.domain) cookieString += `; Domain=${options.domain}`;
+          if (options?.path) cookieString += `; Path=${options.path || '/'}`;
+          if (options?.secure) cookieString += '; Secure';
+          if (options?.sameSite) {
+            cookieString += `; SameSite=${options.sameSite}`;
+          } else {
+            // Default to Lax for better compatibility
+            cookieString += '; SameSite=Lax';
+          }
+          document.cookie = cookieString;
+        });
+      },
+    },
+  }
 );
 
 // Helper function to handle Supabase errors

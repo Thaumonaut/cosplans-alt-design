@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Import service and supabase directly via relative paths to satisfy linter path resolution
 const { authService } = await import('../../../src/lib/auth/auth-service')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { supabase } = require('../../../src/lib/supabase') as { supabase: any }
+const { supabase } = await import('../../../src/lib/supabase')
 
 describe('authService (TDD)', () => {
   beforeEach(() => {

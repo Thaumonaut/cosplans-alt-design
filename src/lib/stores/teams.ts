@@ -86,6 +86,41 @@ export const currentTeam = {
   get: (): Team | null => {
     return teams.get().current
   },
+  // Wait for teams to load if they're currently loading
+  async waitForLoad(): Promise<Team | null> {
+    const state = teams.get()
+    // If already loaded and has a current team, return it
+    if (!state.loading && state.current) {
+      return state.current
+    }
+    // If not loading but no current team, teams might not be loaded yet
+    if (!state.loading && state.items.length === 0) {
+      // Try to get user from auth and load teams
+      const { supabase } = await import('$lib/supabase')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await teams.load(user.id)
+        return teams.get().current
+      }
+    }
+    // Wait for loading to complete
+    return new Promise((resolve) => {
+      let unsubscribe: (() => void) | null = null
+      unsubscribe = teams.subscribe((state) => {
+        if (!state.loading && unsubscribe) {
+          unsubscribe()
+          resolve(state.current)
+        }
+      })
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (unsubscribe) {
+          unsubscribe()
+        }
+        resolve(teams.get().current)
+      }, 5000)
+    })
+  },
 }
 
 // Derived store for current user role

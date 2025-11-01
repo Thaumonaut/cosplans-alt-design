@@ -36,7 +36,12 @@ const config = {
 		csp: {
 			mode: 'auto',
 			directives: {
-				'script-src': ['self']
+				'script-src': ['self', 'unsafe-hashes'],
+				'img-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
+				'media-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
+				'connect-src': ['self', 'https:', 'wss:', 'ws:'],
+				'style-src': ['self', 'unsafe-inline'],
+				'font-src': ['self', 'data:']
 			}
 		}
 	}

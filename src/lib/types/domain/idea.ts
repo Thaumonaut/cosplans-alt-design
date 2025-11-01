@@ -5,7 +5,7 @@ export interface Idea {
   id: string
   teamId: string
   character: string
-  series: string
+  series?: string | null
   description?: string
   difficulty: IdeaDifficulty
   estimatedCost?: number // stored in cents (e.g., 599 = $5.99) to avoid floating point errors
@@ -14,13 +14,14 @@ export interface Idea {
   notes?: string
   status: IdeaStatus
   convertedProjectId?: string | null
+  primaryImageIndex?: number // Index of the primary/header image (0-based, defaults to 0)
   createdAt: string
   updatedAt: string
 }
 
 export interface IdeaCreate {
   character: string
-  series: string
+  series?: string | null
   description?: string
   difficulty: IdeaDifficulty
   estimatedCost?: number // stored in cents (e.g., 599 = $5.99) to avoid floating point errors
@@ -40,6 +41,7 @@ export interface IdeaUpdate {
   notes?: string
   status?: IdeaStatus
   convertedProjectId?: string | null
+  primaryImageIndex?: number // Index of the primary/header image (0-based)
 }
 
 

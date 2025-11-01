@@ -1,12 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { goto } from '$app/navigation'
-  import { Button, Card, Checkbox } from 'flowbite-svelte'
+  import { Card, Checkbox } from 'flowbite-svelte'
+  import { Button } from '$lib/components/ui'
   import { Plus, CheckSquare } from 'lucide-svelte'
   import { taskService } from '$lib/api/services/taskService'
   import { teamService } from '$lib/api/services/teamService'
   import { currentTeam } from '$lib/stores/teams'
   import { get } from 'svelte/store'
+  import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
+  import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import type { Task, TaskCreate } from '$lib/types/domain/task'
   import type { TeamMember } from '$lib/api/services/teamService'
 
@@ -22,6 +25,7 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let showCreateForm = $state(false)
+  let showNewTaskFlyout = $state(false)
   let newTaskTitle = $state('')
   let newTaskDescription = $state('')
   let newTaskPriority = $state<Task['priority']>('medium')
@@ -116,15 +120,20 @@
   }
 
   function handleAddTask() {
-    // Navigate to task creation page with projectId context
-    goto(`/tasks/new?projectId=${projectId}${resourceId ? `&resourceId=${resourceId}` : ''}`)
+    showNewTaskFlyout = true
+  }
+
+  async function handleTaskCreated(taskId: string) {
+    showNewTaskFlyout = false
+    await loadTasks()
+    onTaskChange?.()
   }
 </script>
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
     <h2 class="text-xl font-semibold">Tasks</h2>
-    <Button color="primary" size="sm" onclick={handleAddTask}>
+    <Button variant="default" size="sm" onclick={handleAddTask}>
       <Plus class="mr-2 size-4" />
       Add Task
     </Button>
@@ -166,10 +175,10 @@
           </div>
         {/if}
         <div class="flex gap-2">
-          <Button color="primary" size="sm" onclick={createTask} disabled={creating || !newTaskTitle.trim()}>
+          <Button variant="default" size="sm" onclick={createTask} disabled={creating || !newTaskTitle.trim()}>
             {creating ? 'Creating...' : 'Create'}
           </Button>
-          <Button color="light" size="sm" onclick={() => { showCreateForm = false; newTaskTitle = ''; newTaskDescription = ''; }}>
+          <Button variant="outline" size="sm" onclick={() => { showCreateForm = false; newTaskTitle = ''; newTaskDescription = ''; }}>
             Cancel
           </Button>
         </div>
@@ -195,7 +204,7 @@
       <p class="mb-4 text-sm text-muted-foreground">
         Add tasks to track your progress on this project
       </p>
-      <Button color="primary" size="sm" onclick={handleAddTask}>
+      <Button variant="default" size="sm" onclick={handleAddTask}>
         <Plus class="mr-2 size-4" />
         Add First Task
       </Button>
@@ -243,4 +252,14 @@
     </div>
   {/if}
 </div>
+
+<!-- New Task Creation Flyout -->
+<CreationFlyout bind:open={showNewTaskFlyout} title="Create New Task">
+  <TaskDetail
+    mode="create"
+    projectId={projectId}
+    isFlyout={true}
+    onSuccess={handleTaskCreated}
+  />
+</CreationFlyout>
 

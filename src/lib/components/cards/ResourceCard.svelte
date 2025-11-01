@@ -2,7 +2,7 @@
   import type { Resource } from '$lib/types/domain/resource'
   import { Badge } from 'flowbite-svelte'
   import { DollarSign, Package, Link as LinkIcon } from 'lucide-svelte'
-  import { cn } from '$lib/utils'
+  import { cn, formatCurrencyFromCents } from '$lib/utils'
 
   interface Props {
     resource: Resource
@@ -32,10 +32,6 @@
     material: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20',
   }
 
-  function formatCurrency(cents: number): string {
-    const dollars = cents / 100
-    return `$${dollars.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
 
   const category = resource.metadata?.category || 'prop'
 </script>
@@ -86,7 +82,7 @@
       {#if resource.cost}
         <div class="flex items-center gap-1">
           <DollarSign class="size-3" />
-          <span>{formatCurrency(resource.cost)}</span>
+          <span>{formatCurrencyFromCents(resource.cost)}</span>
         </div>
       {/if}
 
@@ -115,6 +111,7 @@
     {/if}
   </div>
 </div>
+
 
 
 

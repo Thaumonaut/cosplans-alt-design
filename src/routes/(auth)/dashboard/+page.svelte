@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import CreationFlyout from "$lib/components/creation-flyout.svelte";
+  import CreationFlyout from "$lib/components/ui/CreationFlyout.svelte";
   import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Checkbox, Progress } from "$lib/components/ui";
   import {
     Plus,
@@ -12,20 +12,52 @@
     Calendar,
     DollarSign,
     FileText,
+    Sparkles,
   } from "lucide-svelte";
-  import ProjectCreationForm from "$lib/components/project-creation-form.svelte";
+  import ProjectDetail from "$lib/components/projects/ProjectDetail.svelte";
+  import IdeaDetail from "$lib/components/ideas/IdeaDetail.svelte";
   import { projectService } from '$lib/api/services/projectService';
+  import { photoshootService } from '$lib/api/services/photoshootService';
+  import { userService } from '$lib/api/services/userService';
   import { tasks, loadTasks } from '$lib/stores';
+  import { projects as projectsStore } from '$lib/stores/projects';
+  import { ideas } from '$lib/stores/ideas';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import type { Project as DomainProject } from '$lib/types/domain/project';
   import { get } from 'svelte/store';
+  import { currentTeam, teams } from '$lib/stores/teams';
+  import { user } from '$lib/stores/auth-store';
+  import { formatCurrencyFromCents } from '$lib/utils';
+  import type { UserProfile } from '$lib/api/services/userService';
 
   let { data }: { data: PageData } = $props();
 
   // Dashboard state
-  let creationOpen = $state(false);
+  let showNewProjectFlyout = $state(false);
+  let showNewIdeaFlyout = $state(false);
+  let selectedProjectId = $state<string | null>(null);
   let dbProjects: DomainProject[] = $state([]);
+  let dbIdeas: import('$lib/types/domain/idea').Idea[] = $state([]);
+  let dbPhotoshoots: import('$lib/types/domain/photoshoot').Photoshoot[] = $state([]);
+  let userProfile: UserProfile | null = $state(null);
   let loading = $state(false);
+
+  // Get display name with fallback logic
+  const displayName = $derived.by(() => {
+    if (!userProfile) return 'Cosplayer';
+    // Priority: name -> firstName lastName -> firstName -> email prefix -> 'Cosplayer'
+    if (userProfile.name) return userProfile.name;
+    if (userProfile.firstName && userProfile.lastName) {
+      return `${userProfile.firstName} ${userProfile.lastName}`;
+    }
+    if (userProfile.firstName) return userProfile.firstName;
+    if (userProfile.email) {
+      const emailPrefix = userProfile.email.split('@')[0];
+      if (emailPrefix) return emailPrefix;
+    }
+    return 'Cosplayer';
+  });
 
   // Format date for greeting: "Mon, Oct 27"
   const currentDate = $derived(() => {
@@ -37,7 +69,7 @@
   type DisplayProject = {
     id: string;
     character: string;
-    series: string;
+    series: string | null | undefined;
     image: string;
     progress: number;
     status: string;
@@ -46,7 +78,7 @@
     budget: { spent: number; total: number };
   };
 
-  const projects = $derived.by((): DisplayProject[] => {
+  const displayProjects = $derived.by((): DisplayProject[] => {
     return dbProjects.map(p => {
       // Format deadline: "Oct 15, 2025"
       let formattedDeadline: string | undefined = undefined;
@@ -59,8 +91,8 @@
         }
       }
       
-      // Get tasks for this project (mock for now - would need to fetch from API)
-      const projectTasks = get(tasks).filter(t => t.projectId === p.id);
+      // Get tasks for this project
+      const projectTasks = get(tasks).filter(t => t.projectId !== undefined && String(t.projectId) === p.id);
       const tasksCompleted = projectTasks.filter(t => t.completed).length;
       
       return {
@@ -83,14 +115,42 @@
     });
   });
 
-  // Group tasks by status
+  // Group tasks by status - using real data from tasks store
   const tasksByStatus = $derived.by(() => {
     const allTasks = get(tasks);
-    return {
-      inProgress: allTasks.filter(t => !t.completed && t.priority === 'high' || t.priority === 'medium').slice(0, 2),
-      toDo: allTasks.filter(t => !t.completed && t.priority === 'low').slice(0, 1),
-      upcoming: allTasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) > new Date()).slice(0, 1)
-    };
+    const now = new Date();
+    
+    // Filter out completed tasks for in-progress and to-do
+    const activeTasks = allTasks.filter(t => !t.completed);
+    
+    // In progress: high or medium priority active tasks
+    const inProgress = activeTasks
+      .filter(t => t.priority === 'high' || t.priority === 'medium')
+      .slice(0, 2);
+    
+    // To do: low priority active tasks
+    const toDo = activeTasks
+      .filter(t => t.priority === 'low')
+      .slice(0, 1);
+    
+    // Upcoming: tasks with due dates in the future
+    const upcoming = activeTasks
+      .filter(t => {
+        if (!t.dueDate) return false;
+        try {
+          const dueDate = new Date(t.dueDate);
+          return dueDate > now;
+        } catch {
+          return false;
+        }
+      })
+      .sort((a, b) => {
+        if (!a.dueDate || !b.dueDate) return 0;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      })
+      .slice(0, 1);
+    
+    return { inProgress, toDo, upcoming };
   });
 
   // Get current week days for calendar
@@ -116,14 +176,14 @@
 
   // Budget overview
   const budgetOverview = $derived.by(() => {
-    const totalSpent = projects.reduce((sum, p) => sum + p.budget.spent, 0);
-    const totalBudget = projects.reduce((sum, p) => sum + p.budget.total, 0);
+    const totalSpent = displayProjects.reduce((sum, p) => sum + p.budget.spent, 0);
+    const totalBudget = displayProjects.reduce((sum, p) => sum + p.budget.total, 0);
     return { totalSpent, totalBudget };
   });
 
-  // Timeline items (mock - would come from API)
+  // Timeline items - derived from real tasks, projects, and photoshoots
   const timelineItems = $derived.by(() => {
-    // Combine tasks and projects for timeline
+    // Combine tasks, projects, and photoshoots for timeline
     const items: Array<{
       id: string;
       title: string;
@@ -136,19 +196,32 @@
     
     // Add completed tasks
     get(tasks).filter(t => t.completed).slice(0, 3).forEach(task => {
-      items.push({
-        id: `task-${task.id}`,
-        title: task.title,
-        project: projects.find(p => p.id === String(task.projectId))?.character || 'Unknown',
-        date: task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
-        priority: task.priority,
-        completed: true,
-        type: 'task'
-      });
+      const dueDate = task.dueDate as string | Date | null | undefined;
+      if (dueDate) {
+        try {
+          const dateStr = typeof dueDate === 'string' 
+            ? dueDate.split('T')[0] 
+            : (dueDate instanceof Date ? dueDate.toISOString().split('T')[0] : '');
+          if (dateStr) {
+            const date = new Date(dateStr);
+            items.push({
+              id: `task-${task.id}`,
+              title: task.title,
+              project: displayProjects.find(p => p.id === String(task.projectId))?.character || 'Unknown',
+              date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              priority: task.priority,
+              completed: true,
+              type: 'task'
+            });
+          }
+        } catch {
+          // Skip invalid dates
+        }
+      }
     });
     
     // Add upcoming deadlines
-    projects.filter(p => p.deadline).slice(0, 2).forEach(project => {
+    displayProjects.filter(p => p.deadline).slice(0, 2).forEach(project => {
       items.push({
         id: `deadline-${project.id}`,
         title: `${project.character} Deadline`,
@@ -159,19 +232,42 @@
       });
     });
     
+    // Add upcoming photoshoots
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dbPhotoshoots
+      .filter(p => p.date && new Date(p.date) >= today)
+      .slice(0, 2)
+      .forEach(photoshoot => {
+        const photoshootDate = new Date(photoshoot.date!);
+        items.push({
+          id: `photoshoot-${photoshoot.id}`,
+          title: photoshoot.title,
+          project: 'Photoshoot',
+          date: photoshootDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          priority: 'medium',
+          type: 'event'
+        });
+      });
+    
     return items.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA.getTime() - dateB.getTime();
+      try {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      } catch {
+        return 0;
+      }
     });
   });
 
-  // Recent notes (mock - would come from API)
-  const recentNotes = $derived([
-    { id: '1', title: 'Armor painting technique notes', project: 'Malenia', time: '2 hours ago' },
-    { id: '2', title: 'Fabric research for kimono', project: 'Raiden Shogun', time: '5 hours ago' },
-    { id: '3', title: 'LED integration ideas', project: 'V (Cyberpunk)', time: '1 day ago' },
-  ]);
+  // Recent notes - empty for now (notes feature not yet implemented in database)
+  interface Note {
+    title: string;
+    project: string;
+    time: string;
+  }
+  const recentNotes = $derived<Note[]>([]);
 
   const statusColors = {
     'idea': 'bg-purple-500/10 text-purple-700 dark:text-purple-300',
@@ -186,15 +282,65 @@
     low: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
   };
 
-  // Load data
+  // Note: Dashboard uses projectService directly instead of data from +page.ts
+  // because the types are different (apiClient returns different Project type)
+  
+  // Load data on mount as primary method (since SSR is disabled)
   onMount(async () => {
     try {
       loading = true;
-      const [loadedProjects] = await Promise.all([
-        projectService.list({ status: undefined }),
-        loadTasks({ completed: false })
-      ]);
-      dbProjects = loadedProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').slice(0, 3);
+      
+      // Load user profile first
+      try {
+        userProfile = await userService.getProfile();
+      } catch (error) {
+        console.error('Failed to load user profile:', error);
+        // Continue without profile, will use fallback
+      }
+      
+      // Wait for teams to be loaded (with timeout)
+      let team = get(currentTeam);
+      if (!team) {
+        const currentUser = get(user);
+        if (currentUser) {
+          // Try loading teams
+          await teams.load(currentUser.id);
+          team = get(currentTeam);
+          
+          // If still no team after loading, wait a bit more
+          if (!team) {
+            const waitStart = Date.now();
+            while (!team && Date.now() - waitStart < 3000) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              team = get(currentTeam);
+            }
+          }
+        }
+      }
+      
+      // Only load projects if we have a team
+      if (team) {
+        const [loadedProjects, loadedPhotoshoots] = await Promise.all([
+          projectService.list({ status: undefined }),
+          photoshootService.list().catch(() => []), // Fail gracefully if photoshoots service has issues
+          loadTasks({ completed: false }),
+          ideas.load(team.id)
+        ]);
+        dbProjects = loadedProjects.filter((p: DomainProject) => p.status !== 'completed' && p.status !== 'archived').slice(0, 3);
+        dbPhotoshoots = loadedPhotoshoots || [];
+        // Get recently added ideas (sorted by createdAt, most recent first)
+        const allIdeas = get(ideas);
+        dbIdeas = allIdeas.items
+          .filter(i => i.status === 'saved') // Only show saved ideas (not converted)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5); // Show 5 most recent
+      } else {
+        // No team available, just load tasks (they might not need a team)
+        await loadTasks({ completed: false });
+        dbProjects = []; // No projects without a team
+        dbIdeas = [];
+        dbPhotoshoots = [];
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
@@ -212,32 +358,16 @@
   <div class="space-y-4">
     <p class="text-sm text-muted-foreground">{currentDate()}</p>
     <div class="space-y-2">
-      <h1 class="text-4xl font-bold">Hello, Cosplayer</h1>
+      <h1 class="text-4xl font-bold">
+        Hello, {displayName}
+      </h1>
       <p class="text-lg text-primary">How can I help you today?</p>
-    </div>
-    <div class="flex flex-wrap gap-3">
-      <Button variant="outline" class="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-        <Bot class="mr-2 size-4" />
-        Ask AI
-      </Button>
-      <Button variant="outline" class="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-        <CheckSquare2 class="mr-2 size-4" />
-        Get tasks updates
-      </Button>
-      <Button variant="outline" class="border-primary text-primary hover:bg-primary hover:text-primary-foreground" onclick={() => (creationOpen = true)}>
-        <FolderPlus class="mr-2 size-4" />
-        Create project
-      </Button>
-      <Button variant="outline" class="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-        <Plug class="mr-2 size-4" />
-        Connect apps
-      </Button>
     </div>
   </div>
 
-  <div class="grid gap-8 lg:grid-cols-3">
+  <div class="grid gap-8 xl:grid-cols-3">
     <!-- Left Column: Active Projects -->
-    <div class="lg:col-span-2 space-y-8">
+    <div class="xl:col-span-2 space-y-8">
       <!-- Active Projects -->
       <div>
         <div class="mb-6 flex items-center justify-between">
@@ -245,18 +375,24 @@
             <h2 class="text-2xl font-semibold">Active Projects</h2>
             <p class="text-sm text-muted-foreground">Your current cosplay projects</p>
           </div>
-          <Button variant="outline" size="sm" onclick={() => (creationOpen = true)}>
-            <Plus class="mr-2 size-4" />
-            New Project
-          </Button>
+          <div class="flex gap-2">
+            <Button variant="outline" size="sm" onclick={() => (showNewIdeaFlyout = true)}>
+              <Sparkles class="mr-2 size-4" />
+              New Idea
+            </Button>
+            <Button variant="outline" size="sm" onclick={() => (showNewProjectFlyout = true)}>
+              <Plus class="mr-2 size-4" />
+              New Project
+            </Button>
+          </div>
         </div>
-        <div class="space-y-4">
+    <div class="space-y-4">
           {#if loading}
             <div class="text-center py-8 text-muted-foreground">Loading projects...</div>
-          {:else if projects.length === 0}
+          {:else if displayProjects.length === 0}
             <div class="text-center py-8 text-muted-foreground">No active projects. Create your first project to get started!</div>
           {:else}
-            {#each projects as project (project.id)}
+            {#each displayProjects as project (project.id)}
               <Card class="overflow-hidden">
                 <div class="flex gap-4">
                   <div class="relative h-32 w-32 flex-shrink-0 overflow-hidden">
@@ -286,7 +422,7 @@
                       {/if}
                       <div>
                         <p class="text-muted-foreground">Budget</p>
-                        <p class="font-medium">${project.budget.spent}/${project.budget.total}</p>
+                        <p class="font-medium">{formatCurrencyFromCents(project.budget.spent * 100)}/{formatCurrencyFromCents(project.budget.total * 100)}</p>
                       </div>
                     </div>
                   </div>
@@ -296,6 +432,62 @@
           {/if}
         </div>
       </div>
+
+      <!-- Recently Added Ideas -->
+      {#if dbIdeas.length > 0}
+        <div>
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-semibold">Recently Added Ideas</h2>
+              <p class="text-sm text-muted-foreground">Your latest cosplay inspiration</p>
+            </div>
+            <Button variant="ghost" size="sm" onclick={() => goto('/ideas')}>
+              View all
+            </Button>
+          </div>
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {#each dbIdeas as idea (idea.id)}
+              <div class="cursor-pointer hover:shadow-md transition-shadow" onclick={() => goto(`/ideas/${idea.id}`)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goto(`/ideas/${idea.id}`); } }}>
+                <Card>
+                  <CardContent class="p-4 space-y-3">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h3 class="text-base font-semibold line-clamp-1">{idea.character}</h3>
+                      {#if idea.series}
+                        <p class="text-sm text-muted-foreground line-clamp-1">{idea.series}</p>
+                      {/if}
+                    </div>
+                    <Badge class="bg-purple-500/10 text-purple-700 dark:text-purple-300" variant="secondary">
+                      Idea
+                    </Badge>
+                  </div>
+                  {#if idea.images && idea.images.length > 0}
+                    <div class="relative h-32 w-full overflow-hidden rounded-md bg-muted">
+                      <img 
+                        src={idea.images[0]} 
+                        alt={idea.character} 
+                        class="h-full w-full object-cover"
+                        onerror={(e) => {
+                          // If image fails to load (e.g., invalid blob URL), hide it
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  {/if}
+                  <div class="flex items-center justify-between text-xs text-muted-foreground">
+                    <span class="capitalize">{idea.difficulty}</span>
+                    {#if idea.createdAt}
+                      <span>{new Date(idea.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    {/if}
+                  </div>
+                </CardContent>
+              </Card>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
 
     <!-- Right Column: Sidebar Widgets -->
@@ -355,13 +547,13 @@
                     </div>
                   </div>
                 {/each}
-              </div>
-            </div>
+    </div>
+  </div>
           {/if}
 
           <!-- UPCOMING -->
           {#if tasksByStatus.upcoming.length > 0}
-            <div>
+      <div>
               <p class="mb-2 text-xs font-medium text-muted-foreground">UPCOMING ({tasksByStatus.upcoming.length} task)</p>
               <div class="space-y-2">
                 {#each tasksByStatus.upcoming as task}
@@ -417,14 +609,27 @@
           <div class="text-right">
             <p class="text-sm text-muted-foreground">{weekDays[0]?.month}</p>
           </div>
-          <!-- Event example -->
-          <div class="mt-4 flex items-center gap-2 text-sm">
-            <div class="size-2 rounded-full bg-primary"></div>
-            <div>
-              <p class="font-medium">Anime Expo 2025</p>
-              <p class="text-xs text-muted-foreground">Today 10:00-11:00 am</p>
+          <!-- Upcoming events from photoshoots and project deadlines -->
+          {#if timelineItems.length > 0}
+            {@const nextEvent = timelineItems.filter(item => item.type === 'deadline' || item.type === 'event')[0]}
+            {#if nextEvent}
+              <div class="mt-4 flex items-center gap-2 text-sm">
+                <div class="size-2 rounded-full bg-primary"></div>
+                <div>
+                  <p class="font-medium">{nextEvent.title}</p>
+                  <p class="text-xs text-muted-foreground">{nextEvent.date}</p>
+                </div>
+              </div>
+            {:else}
+              <div class="mt-4 text-center text-xs text-muted-foreground">
+                No upcoming events
+              </div>
+            {/if}
+          {:else}
+            <div class="mt-4 text-center text-xs text-muted-foreground">
+              No upcoming events
             </div>
-          </div>
+          {/if}
         </CardContent>
       </Card>
 
@@ -437,11 +642,11 @@
           </CardTitle>
         </CardHeader>
         <CardContent class="space-y-4">
-          {#each projects as project}
+          {#each displayProjects as project}
             <div class="space-y-1">
               <div class="flex items-center justify-between text-sm">
                 <span class="font-medium">{project.character}</span>
-                <span class="text-muted-foreground">${project.budget.spent} of ${project.budget.total} spent</span>
+                <span class="text-muted-foreground">{formatCurrencyFromCents(project.budget.spent * 100)} of {formatCurrencyFromCents(project.budget.total * 100)} spent</span>
               </div>
               <div class="relative h-1.5 overflow-hidden rounded-full bg-muted">
                 <div 
@@ -454,9 +659,9 @@
           <div class="pt-2 border-t">
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium">Total Budget</span>
-              <span class="text-sm font-semibold">${budgetOverview.totalSpent} / ${budgetOverview.totalBudget}</span>
-            </div>
-          </div>
+              <span class="text-sm font-semibold">{formatCurrencyFromCents(budgetOverview.totalSpent * 100)} / {formatCurrencyFromCents(budgetOverview.totalBudget * 100)}</span>
+        </div>
+      </div>
         </CardContent>
       </Card>
 
@@ -469,7 +674,10 @@
           </CardTitle>
         </CardHeader>
         <CardContent class="space-y-3">
-          {#each timelineItems.slice(0, 6) as item}
+          {#if timelineItems.length === 0}
+            <p class="text-sm text-muted-foreground text-center py-4">No timeline items</p>
+          {:else}
+            {#each timelineItems.slice(0, 6) as item}
             <div class="flex items-start gap-3">
               {#if item.completed}
                 <CheckSquare2 class="mt-0.5 size-4 text-muted-foreground" />
@@ -486,7 +694,8 @@
                 {item.priority}
               </Badge>
             </div>
-          {/each}
+            {/each}
+          {/if}
         </CardContent>
       </Card>
 
@@ -500,18 +709,122 @@
           <Button variant="ghost" size="sm" class="text-xs">View all</Button>
         </CardHeader>
         <CardContent class="space-y-3">
-          {#each recentNotes as note}
-            <div>
-              <p class="text-sm font-medium">{note.title}</p>
-              <p class="text-xs text-muted-foreground">{note.project} - {note.time}</p>
-            </div>
-          {/each}
+          {#if recentNotes.length === 0}
+            <p class="text-sm text-muted-foreground text-center py-4">
+              No notes yet. Notes feature coming soon.
+            </p>
+          {:else}
+            {#each recentNotes as note}
+              <div>
+                <p class="text-sm font-medium">{note.title}</p>
+                <p class="text-xs text-muted-foreground">{note.project} - {note.time}</p>
+              </div>
+            {/each}
+          {/if}
         </CardContent>
       </Card>
     </div>
   </div>
 </div>
 
-<CreationFlyout bind:open={creationOpen} title="New Project">
-  <ProjectCreationForm />
+<!-- Project Detail Flyout -->
+{#if showNewProjectFlyout}
+  {@const flyoutOpen = showNewProjectFlyout}
+  {@const setFlyoutOpen = (val: boolean) => {
+    showNewProjectFlyout = val
+  }}
+  <CreationFlyout
+    open={flyoutOpen}
+    onOpenChange={setFlyoutOpen}
+    title="New Project"
+    onFullScreen={() => {
+      goto('/projects/new')
+      showNewProjectFlyout = false
+    }}
+  >
+    <ProjectDetail
+      mode="create"
+      isFlyout={true}
+      onSuccess={async (id) => {
+        // If id is empty, project was deleted or converted - close flyout
+        if (!id || id === '') {
+          showNewProjectFlyout = false
+          // Reload projects list
+          const team = get(currentTeam)
+          if (team) {
+            const loadedProjects = await projectService.list({ status: undefined })
+            dbProjects = loadedProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').slice(0, 3)
+          }
+          return
+        }
+        
+        // Project was created, close flyout and reload
+        showNewProjectFlyout = false
+        // Reload projects list
+        const team = get(currentTeam)
+        if (team) {
+          const loadedProjects = await projectService.list({ status: undefined })
+          dbProjects = loadedProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').slice(0, 3)
+        }
+      }}
+    />
 </CreationFlyout>
+{/if}
+
+<!-- Idea Detail Flyout -->
+{#if showNewIdeaFlyout}
+  <CreationFlyout 
+    bind:open={showNewIdeaFlyout} 
+    title="New Idea"
+    onFullScreen={() => {
+      goto('/ideas/new')
+      showNewIdeaFlyout = false
+    }}
+  >
+    <IdeaDetail 
+      mode="create" 
+      isFlyout={true}
+      onSuccess={async (id: string) => {
+        // If id is empty, idea was deleted - close flyout
+        if (!id || id === '') {
+          showNewIdeaFlyout = false
+          // Reload ideas list
+          const team = get(currentTeam)
+          if (team) {
+            await ideas.load(team.id)
+            // Refresh dashboard ideas
+            const allIdeas = get(ideas)
+            dbIdeas = allIdeas.items
+              .filter(i => i.status === 'saved')
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .slice(0, 5)
+          }
+          return
+        }
+        
+        showNewIdeaFlyout = false
+        
+        // Check if this ID is a project (from conversion)
+        const wasConversion = id !== undefined && id !== ''
+        if (wasConversion) {
+          // This is a project ID from conversion, redirect to project page
+          setTimeout(() => {
+            goto(`/projects/${id}`)
+          }, 100)
+        } else {
+          // Reload ideas list
+          const team = get(currentTeam)
+          if (team) {
+            await ideas.load(team.id)
+            // Refresh dashboard ideas
+            const allIdeas = get(ideas)
+            dbIdeas = allIdeas.items
+              .filter(i => i.status === 'saved')
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .slice(0, 5)
+          }
+        }
+      }}
+    />
+  </CreationFlyout>
+{/if}

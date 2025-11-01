@@ -25,6 +25,7 @@
         <InlineImageUpload
           images={images}
           editable={true}
+          folder="projects"
           onSave={onUpdate}
           multiple={true}
         />

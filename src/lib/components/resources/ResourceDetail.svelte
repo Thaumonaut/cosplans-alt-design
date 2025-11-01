@@ -3,9 +3,10 @@
   import { goto } from '$app/navigation'
   import { resourceService } from '$lib/api/services/resourceService'
   import { currentTeam } from '$lib/stores/teams'
-  import { Button } from '$lib/components/ui'
+  import { toast } from '$lib/stores/toast'
+  import { Button, Dialog, DialogFooter } from '$lib/components/ui'
   import { Badge } from 'flowbite-svelte'
-  import { Calendar, X, DollarSign, Tag as TagIcon, Upload, ImageIcon, Package } from 'lucide-svelte'
+  import { Calendar, X, DollarSign, Tag as TagIcon, Upload, ImageIcon, Package, Trash2 } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
@@ -38,6 +39,8 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let saving = $state(false)
+  let deleting = $state(false)
+  let showDeleteDialog = $state(false)
   let activeTab = $state<'overview' | 'details' | 'gallery'>('overview')
 
   let costValue = $state(0)
@@ -293,6 +296,33 @@
       imagesValue = resource.images ?? []
     }
   })
+
+  async function handleDelete() {
+    if (!resource?.id || deleting) return
+
+    deleting = true
+    try {
+      await resourceService.delete(resource.id)
+      toast.success('Resource Deleted', 'The resource has been deleted successfully')
+      showDeleteDialog = false
+      
+      // Navigate away after deletion
+      if (isFlyout && onSuccess) {
+        onSuccess('')
+      } else {
+        goto('/resources')
+      }
+    } catch (err: any) {
+      toast.error('Failed to Delete', err?.message || 'Failed to delete resource')
+      deleting = false
+    }
+  }
+
+  // Export functions and state for parent components (e.g., flyout footer)
+  // Note: Functions don't need to be reactive, only state values
+  export { handleCreate, saving }
+  const isValid = $derived(!!nameValue && nameValue.trim().length > 0)
+  export { isValid }
 </script>
 
 {#if loading}
@@ -305,33 +335,48 @@
     <Button variant="outline" onclick={() => goto('/resources')}>Back to Resources</Button>
   </div>
 {:else}
-  <div class="flex h-full flex-col">
+  <div class="flex flex-col" class:h-full={!isFlyout} style={isFlyout ? 'min-height: 100%; display: flex; flex-direction: column;' : ''}>
     <!-- Header with Title and Quick Info -->
-    <div class="border-b bg-background px-8 py-6">
+    <div class="flex-shrink-0 border-b bg-background px-10 py-6" class:px-8={!isFlyout}>
       <div class="space-y-4">
         {#if error && currentMode() === 'create'}
           <div class="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
         {/if}
 
-        <!-- Title -->
-        <div class="space-y-2">
-          <InlineTextEditor
-            bind:value={nameValue}
-            editable={!isReadOnly()}
-            onSave={async (v: string) => {
-              if (currentMode() === 'create') {
-                newResource.name = v
-                nameValue = v
-              } else {
-                await handleSaveField('name', v)
-              }
-            }}
-            onValidate={validateRequired}
-            placeholder="Resource name"
-            variant="title"
-            className="text-3xl font-semibold"
-          />
-        </div>
+            <!-- Title and Actions Row -->
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 space-y-2">
+                <InlineTextEditor
+                  bind:value={nameValue}
+                  editable={!isReadOnly()}
+                  onSave={async (v: string) => {
+                    if (currentMode() === 'create') {
+                      newResource.name = v
+                      nameValue = v
+                    } else {
+                      await handleSaveField('name', v)
+                    }
+                  }}
+                  onValidate={validateRequired}
+                  placeholder="Resource name"
+                  variant="title"
+                  className="text-3xl font-semibold"
+                />
+              </div>
+
+              <!-- Delete Button (only in edit mode) -->
+              {#if currentMode() === 'edit' && resource}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onclick={() => showDeleteDialog = true}
+                  class="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 class="size-4" />
+                  <span class="sr-only">Delete resource</span>
+                </Button>
+              {/if}
+            </div>
 
         <!-- Metadata Bar -->
         <div class="flex flex-wrap items-center gap-6 text-sm">
@@ -387,8 +432,8 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="border-b bg-background">
-      <div class="flex gap-8 px-8">
+    <div class="flex-shrink-0 border-b bg-background">
+      <div class="flex gap-8" class:px-8={!isFlyout} class:px-10={isFlyout}>
         <button
           onclick={() => activeTab = 'overview'}
           class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'overview' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -411,8 +456,8 @@
     </div>
 
     <!-- Tab Content - Moodboard Style -->
-    <div class="flex-1 overflow-y-auto bg-muted/30">
-      <div class="p-8">
+    <div class="flex-1 bg-muted/30" style="min-height: 0; overflow-y: auto;">
+      <div class="p-8" class:p-10={isFlyout} class:p-8={!isFlyout}>
         {#if activeTab === 'overview'}
           <!-- Overview: Hero Image + Description + Quick Details -->
           <div class="mx-auto max-w-4xl space-y-8">
@@ -503,6 +548,7 @@
                 <InlineImageUpload
                   images={imagesValue}
                   editable={true}
+                  folder="resources"
                   onSave={async (v: string[]) => {
                     if (currentMode() === 'create') {
                       newResource.images = v
@@ -1138,13 +1184,61 @@
 
     <!-- Comments Section -->
     {#if resource}
-      <div class="border-t px-8 py-6">
+      <div class="border-t py-6" class:px-8={!isFlyout} class:px-10={isFlyout}>
         <CommentBox entityType="resource" entityId={resource.id} editable={!isReadOnly()} />
       </div>
     {/if}
 
-    <!-- Create Mode Actions -->
-    {#if currentMode() === 'create'}
+    <!-- Delete Confirmation Dialog -->
+    <Dialog bind:open={showDeleteDialog} title="Delete Resource" description="Are you sure you want to delete this resource? This action cannot be undone.">
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => showDeleteDialog = false}
+          disabled={deleting}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="destructive"
+          onclick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? 'Deleting...' : 'Delete Resource'}
+        </Button>
+      </DialogFooter>
+    </Dialog>
+
+    <!-- Create Mode Actions - Render buttons when in flyout mode, positioned at bottom -->
+    {#if currentMode() === 'create' && isFlyout}
+      <div class="mt-auto flex-shrink-0 border-t bg-background px-10 py-4">
+        <div class="flex gap-3">
+          <Button
+            variant="default"
+            class="flex-1"
+            onclick={handleCreate}
+            disabled={saving || !nameValue}
+          >
+            {saving ? 'Creating...' : 'Create Resource'}
+          </Button>
+          <Button
+            variant="outline"
+            class="flex-1"
+            onclick={() => {
+              if (onSuccess) {
+                onSuccess('')
+              }
+            }}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    {/if}
+    
+    <!-- Create Mode Actions - Only show when not in flyout (normal page view) -->
+    {#if currentMode() === 'create' && !isFlyout}
       <div class="sticky bottom-0 border-t bg-background/95 px-8 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div class="flex gap-3">
           <Button
@@ -1159,11 +1253,7 @@
             variant="outline"
             class="flex-1 bg-transparent"
             onclick={() => {
-              if (isFlyout && onSuccess) {
-                onSuccess('')
-              } else {
-                goto('/resources')
-              }
+              goto('/resources')
             }}
             disabled={saving}
           >

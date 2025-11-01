@@ -2,11 +2,13 @@
   import { onMount } from 'svelte'
   import { goto } from '$app/navigation'
   import { projects } from '$lib/stores/projects'
-  import { currentTeam } from '$lib/stores/teams'
+  import { currentTeam, teams } from '$lib/stores/teams'
+  import { user } from '$lib/stores/auth-store'
   import { projectService } from '$lib/api/services/projectService'
-  import { Button } from '$lib/components/ui'
+  import { toast } from '$lib/stores/toast'
+  import { Button, Dialog, DialogFooter } from '$lib/components/ui'
+  import { AlertCircle, X, Calendar, DollarSign, Tag as TagIcon, Upload, ImageIcon, Clock, Trash2, ArrowLeft } from 'lucide-svelte'
   import { Badge, Progressbar } from 'flowbite-svelte'
-  import { Calendar, X, DollarSign, Tag as TagIcon, Upload, ImageIcon, Clock } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
@@ -31,7 +33,7 @@
   let project: Project | null = $state(null)
   let newProject: ProjectCreate = $state({
     character: '',
-    series: '',
+    series: undefined,
     status: 'planning',
     estimatedBudget: 0,
     description: '',
@@ -41,6 +43,10 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let saving = $state(false)
+  let deleting = $state(false)
+  let convertingToIdea = $state(false)
+  let showDeleteDialog = $state(false)
+  let showConvertToIdeaDialog = $state(false)
   let activeTab = $state<'overview' | 'resources' | 'tasks' | 'gallery'>('overview')
 
   let estimatedBudgetValue = $state(0)
@@ -181,6 +187,56 @@
     }
   })
 
+  async function handleDelete() {
+    if (!project?.id || deleting) return
+
+    deleting = true
+    try {
+      await projects.delete(project.id)
+      toast.success('Project Deleted', 'The project has been deleted successfully')
+      showDeleteDialog = false
+      
+      // Navigate away after deletion - always close flyout if in one
+      if (isFlyout && onSuccess) {
+        // Pass empty string to indicate deletion/closure
+        onSuccess('')
+        // Also ensure flyout closes by waiting a bit for state to update
+        await new Promise(resolve => setTimeout(resolve, 100))
+      } else {
+        goto('/projects')
+      }
+    } catch (err: any) {
+      toast.error('Failed to Delete', err?.message || 'Failed to delete project')
+      deleting = false
+    }
+  }
+
+  async function handleConvertToIdea() {
+    if (!project?.id || convertingToIdea) return
+
+    convertingToIdea = true
+    try {
+      const result = await projectService.convertToIdea(project.id)
+      toast.success('Converted to Idea', 'The project has been converted back to an idea')
+      showConvertToIdeaDialog = false
+      
+      // Navigate to the idea - close flyout if in one
+      if (isFlyout && onSuccess) {
+        // Pass empty string to close flyout, then navigate
+        onSuccess('')
+        // Wait a bit then navigate
+        setTimeout(() => {
+          goto(`/ideas/${result.ideaId}`)
+        }, 100)
+      } else {
+        goto(`/ideas/${result.ideaId}`)
+      }
+    } catch (err: any) {
+      toast.error('Failed to Convert', err?.message || 'Failed to convert project to idea')
+      convertingToIdea = false
+    }
+  }
+
   async function handleSaveField(field: string, value: any) {
     if (currentMode() === 'create') {
       if (field === 'character') newProject.character = value
@@ -237,30 +293,65 @@
   }
 
   async function handleCreate() {
+    console.log('[ProjectDetail] handleCreate called', { isFlyout, onSuccess: !!onSuccess, newProject })
     error = null
 
-    if (!newProject.character || !newProject.series) {
-      error = 'Character and Series are required'
+    if (!newProject.character) {
+      console.log('[ProjectDetail] Validation failed: missing character')
+      const errorMsg = 'Character name is required'
+      error = errorMsg
+      toast.error('Cannot Create Project', errorMsg)
       return
     }
 
-    const team = get(currentTeam)
+    // Ensure teams are loaded before checking for current team
+    let team = get(currentTeam)
     if (!team) {
-      error = 'No team selected'
+      console.log('[ProjectDetail] No team selected, trying to load teams')
+      const currentUser = get(user)
+      if (currentUser) {
+        try {
+          await teams.load(currentUser.id)
+          team = get(currentTeam)
+        } catch (err) {
+          console.error('[ProjectDetail] Failed to load teams', err)
+        }
+      }
+    }
+
+    if (!team) {
+      console.log('[ProjectDetail] No team available after loading')
+      const teamsState = get(teams)
+      let errorMsg = ''
+      if (teamsState.items.length === 0) {
+        errorMsg = 'No teams found. A personal team should have been created automatically. Please contact support or try refreshing the page.'
+      } else {
+        errorMsg = 'No team is currently selected. Please select a team from the team selector in the sidebar.'
+      }
+      error = errorMsg
+      toast.error('Cannot Create Project', errorMsg)
       return
     }
 
+    console.log('[ProjectDetail] Starting create process', { teamId: team.id })
     saving = true
 
     try {
       const created = await projects.create(newProject)
+      console.log('[ProjectDetail] Project created successfully', { createdId: created.id })
+      toast.success('Project Created', `${created.character} project has been created successfully!`)
       if (isFlyout && onSuccess) {
+        console.log('[ProjectDetail] Calling onSuccess callback')
         onSuccess(created.id)
       } else {
+        console.log('[ProjectDetail] Navigating to project detail page')
         goto(`/projects/${created.id}`)
       }
     } catch (err: any) {
-      error = err?.message || 'Failed to create project'
+      console.error('[ProjectDetail] Create failed', err)
+      const errorMsg = err?.message || 'Failed to create project'
+      error = errorMsg
+      toast.error('Failed to Create Project', errorMsg)
       saving = false
     }
   }
@@ -275,14 +366,14 @@
   $effect(() => {
     if (currentMode() === 'create') {
       characterValue = newProject.character
-      seriesValue = newProject.series
+      seriesValue = newProject.series ?? ''
       statusValue = newProject.status || 'planning'
       descriptionValue = newProject.description ?? ''
       deadlineValue = newProject.deadline ?? ''
       imagesValue = newProject.referenceImages ?? []
     } else if (project) {
       characterValue = project.character
-      seriesValue = project.series
+      seriesValue = project.series ?? ''
       statusValue = project.status
       descriptionValue = project.description ?? ''
       deadlineValue = project.deadline ?? ''
@@ -305,44 +396,67 @@
     <!-- Header with Title and Quick Info -->
     <div class="border-b bg-background px-8 py-6">
       <div class="space-y-4">
-        {#if error && currentMode() === 'create'}
-          <div class="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-        {/if}
+        <!-- Title and Actions Row -->
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 space-y-2">
+            <InlineTextEditor
+              bind:value={characterValue}
+              editable={!isReadOnly}
+              onSave={async (v: string) => {
+                if (currentMode() === 'create') {
+                  newProject.character = v
+                  characterValue = v
+                } else {
+                  await handleSaveField('character', v)
+                }
+              }}
+              onValidate={validateRequired}
+              placeholder="Character name"
+              variant="title"
+              className="text-3xl font-semibold"
+            />
+            <InlineTextEditor
+              bind:value={seriesValue}
+              editable={!isReadOnly}
+              onSave={async (v: string) => {
+                if (currentMode() === 'create') {
+                  newProject.series = v.trim() || undefined
+                  seriesValue = v
+                } else {
+                  await handleSaveField('series', v.trim() || null)
+                }
+              }}
+              placeholder="Series or source material (optional)"
+              variant="body"
+              className="text-lg text-muted-foreground"
+            />
+          </div>
 
-        <!-- Title and Series -->
-        <div class="space-y-2">
-          <InlineTextEditor
-            bind:value={characterValue}
-            editable={!isReadOnly}
-            onSave={async (v: string) => {
-              if (currentMode() === 'create') {
-                newProject.character = v
-                characterValue = v
-              } else {
-                await handleSaveField('character', v)
-              }
-            }}
-            onValidate={validateRequired}
-            placeholder="Character name"
-            variant="title"
-            className="text-3xl font-semibold"
-          />
-          <InlineTextEditor
-            bind:value={seriesValue}
-            editable={!isReadOnly}
-            onSave={async (v: string) => {
-              if (currentMode() === 'create') {
-                newProject.series = v
-                seriesValue = v
-              } else {
-                await handleSaveField('series', v)
-              }
-            }}
-            onValidate={validateRequired}
-            placeholder="Series or source material"
-            variant="body"
-            className="text-lg text-muted-foreground"
-          />
+          <!-- Action Buttons (only in edit mode) -->
+          {#if currentMode() === 'edit' && project}
+            <div class="flex gap-2">
+              <!-- Convert to Idea Button -->
+              <Button
+                variant="ghost"
+                size="icon"
+                onclick={() => showConvertToIdeaDialog = true}
+                class="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft class="size-4" />
+                <span class="sr-only">Convert to idea</span>
+              </Button>
+              <!-- Delete Button -->
+              <Button
+                variant="ghost"
+                size="icon"
+                onclick={() => showDeleteDialog = true}
+                class="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 class="size-4" />
+                <span class="sr-only">Delete project</span>
+              </Button>
+            </div>
+          {/if}
         </div>
 
         <!-- Metadata Bar -->
@@ -458,6 +572,7 @@
                       <InlineImageUpload
                         images={imagesValue}
                         editable={true}
+                        folder="projects"
                         onSave={async (v: string[]) => {
                           if (currentMode() === 'create') {
                             newProject.referenceImages = v
@@ -704,8 +819,17 @@
           <Button
             variant="default"
             class="flex-1"
-            onclick={handleCreate}
-            disabled={saving || !characterValue || !seriesValue}
+            onclick={(e) => {
+              console.log('[ProjectDetail] Create Project button clicked', { 
+                event: e, 
+                saving, 
+                hasCharacter: !!characterValue,
+                disabled: saving || !characterValue
+              })
+              e.stopPropagation()
+              handleCreate()
+            }}
+            disabled={saving || !characterValue}
           >
             {saving ? 'Creating...' : 'Create Project'}
           </Button>
@@ -735,3 +859,43 @@
     {/if}
   </div>
 {/if}
+
+<!-- Delete Confirmation Dialog -->
+<Dialog bind:open={showDeleteDialog} title="Delete Project" description="Are you sure you want to delete this project? This action cannot be undone.">
+  <DialogFooter>
+    <Button
+      variant="outline"
+      onclick={() => showDeleteDialog = false}
+      disabled={deleting}
+    >
+      Cancel
+    </Button>
+    <Button
+      variant="destructive"
+      onclick={handleDelete}
+      disabled={deleting}
+    >
+      {deleting ? 'Deleting...' : 'Delete Project'}
+    </Button>
+  </DialogFooter>
+</Dialog>
+
+<!-- Convert to Idea Confirmation Dialog -->
+<Dialog bind:open={showConvertToIdeaDialog} title="Convert to Idea" description="This will convert the project back to an idea and delete the project. The idea will be created with the project's current data.">
+  <DialogFooter>
+    <Button
+      variant="outline"
+      onclick={() => showConvertToIdeaDialog = false}
+      disabled={convertingToIdea}
+    >
+      Cancel
+    </Button>
+    <Button
+      variant="default"
+      onclick={handleConvertToIdea}
+      disabled={convertingToIdea}
+    >
+      {convertingToIdea ? 'Converting...' : 'Convert to Idea'}
+    </Button>
+  </DialogFooter>
+</Dialog>

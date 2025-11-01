@@ -1,60 +1,26 @@
 <script lang="ts">
   import { Plus, Filter, Grid3x3, List } from 'lucide-svelte';
   import { Button, Badge, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '$lib/components/ui';
+  import { onMount } from 'svelte';
+  import { resourceService } from '$lib/api/services/resourceService';
+  import type { Resource } from '$lib/types/domain/resource';
+  import { currentTeam } from '$lib/stores/teams';
+  import { get } from 'svelte/store';
+  import { projectService } from '$lib/api/services/projectService';
 
   interface Prop {
-    id: number;
+    id: string;
     name: string;
     character: string;
     image: string;
-    type: 'weapon' | 'accessory' | 'armor' | 'other';
+    type: string;
     status: 'planning' | 'in-progress' | 'completed';
     materials: string[];
     complexity: 'low' | 'medium' | 'high';
   }
 
-  const props: Prop[] = [
-    {
-      id: 1,
-      name: "Malenia's Prosthetic Arm",
-      character: "Malenia, Blade of Miquella",
-      image: "/armor-shoulder.jpg",
-      type: "weapon",
-      status: "in-progress",
-      materials: ["EVA foam", "Worbla", "LED strips"],
-      complexity: "high",
-    },
-    {
-      id: 2,
-      name: "Raiden's Musou Isshin",
-      character: "Raiden Shogun",
-      image: "/purple-katana-sword.jpg",
-      type: "weapon",
-      status: "planning",
-      materials: ["PVC pipe", "Foam", "Acrylic paint"],
-      complexity: "medium",
-    },
-    {
-      id: 3,
-      name: "Cyberpunk Pistol",
-      character: "V (Female)",
-      image: "/futuristic-pistol-neon.jpg",
-      type: "weapon",
-      status: "planning",
-      materials: ["3D print", "LED", "Paint"],
-      complexity: "medium",
-    },
-    {
-      id: 4,
-      name: "Ciri's Sword",
-      character: "Ciri",
-      image: "/silver-medieval-sword.jpg",
-      type: "weapon",
-      status: "completed",
-      materials: ["Wood", "Foam", "Silver paint"],
-      complexity: "low",
-    },
-  ];
+  let props = $state<Prop[]>([]);
+  let loading = $state(true);
 
   const complexityColors = {
     low: "bg-green-500/10 text-green-700 dark:text-green-400",
@@ -82,6 +48,66 @@
     status: [] as string[],
   });
 
+  // Load props from resources
+  async function loadProps() {
+    try {
+      loading = true;
+      const team = get(currentTeam);
+      if (!team) {
+        props = [];
+        return;
+      }
+
+      // Load resources with category 'prop'
+      const resources = await resourceService.list({ category: 'prop' });
+      
+      // Load projects to get character names
+      const projects = await projectService.list();
+      const projectsMap = new Map(projects.map(p => [p.id, p]));
+
+      // Transform resources to props
+      props = resources.map(resource => {
+        const metadata = resource.metadata as any;
+        const material = metadata?.material || '';
+        const materials = material ? [material] : [];
+        
+        // Get project/character if linked
+        let character = 'Unknown';
+        // Try to find linked project via project_resources (would need separate query)
+        
+        // Determine complexity based on metadata or default
+        let complexity: 'low' | 'medium' | 'high' = 'medium';
+        if (metadata?.fragile || metadata?.requiresAssembly) {
+          complexity = 'high';
+        }
+
+        // Map resource status to prop status
+        let status: 'planning' | 'in-progress' | 'completed' = 'planning';
+        if (resource.metadata && 'status' in resource.metadata) {
+          const resourceStatus = (resource.metadata as any).status;
+          if (resourceStatus === 'completed') status = 'completed';
+          else if (resourceStatus === 'in-progress' || resourceStatus === 'acquired') status = 'in-progress';
+        }
+
+        return {
+          id: resource.id,
+          name: resource.name,
+          character,
+          image: resource.images[0] || '/placeholder.svg',
+          type: metadata?.material || 'other',
+          status,
+          materials,
+          complexity,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to load props:', error);
+      props = [];
+    } finally {
+      loading = false;
+    }
+  }
+
   function toggleFilter(category: keyof typeof filters, value: string) {
     const currentFilters = filters[category];
     if (currentFilters.includes(value)) {
@@ -90,6 +116,35 @@
       filters[category] = [...currentFilters, value];
     }
   }
+
+  // Filter props based on active filters
+  const filteredProps = $derived(() => {
+    let filtered = props;
+
+    if (filters.type.length > 0) {
+      filtered = filtered.filter(p => filters.type.includes(p.type));
+    }
+
+    if (filters.complexity.length > 0) {
+      filtered = filtered.filter(p => filters.complexity.includes(p.complexity));
+    }
+
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(p => filters.status.includes(p.status));
+    }
+
+    return filtered;
+  });
+
+  onMount(() => {
+    loadProps();
+    
+    const unsubscribe = currentTeam.subscribe(() => {
+      loadProps();
+    });
+    
+    return unsubscribe;
+  });
 </script>
 
 <svelte:head>
@@ -101,7 +156,13 @@
   <div class="mb-8 flex items-center justify-between">
     <div>
       <h1 class="text-balance text-3xl font-bold leading-tight">Props</h1>
-      <p class="text-pretty text-muted-foreground">{props.length} props across all projects</p>
+      <p class="text-pretty text-muted-foreground">
+        {#if loading}
+          Loading props...
+        {:else}
+          {filteredProps.length} {filteredProps.length === 1 ? 'prop' : 'props'} across all projects
+        {/if}
+      </p>
     </div>
     
     <div class="flex items-center gap-2">
@@ -179,9 +240,27 @@
   </div>
 
   <!-- Props Grid/List View -->
-  {#if viewMode === "grid"}
+  {#if loading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p class="text-sm text-muted-foreground">Loading props...</p>
+      </div>
+    </div>
+  {:else if filteredProps.length === 0}
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+      <p class="mb-2 text-lg font-medium text-muted-foreground">No props found</p>
+      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
+        {#if filters.type.length > 0 || filters.complexity.length > 0 || filters.status.length > 0}
+          Try adjusting your filters to see more props.
+        {:else}
+          Get started by creating your first prop resource.
+        {/if}
+      </p>
+    </div>
+  {:else if viewMode === "grid"}
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {#each props as prop (prop.id)}
+      {#each filteredProps as prop (prop.id)}
         <div class="group overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg">
           <div class="relative aspect-square overflow-hidden bg-muted">
             <img
@@ -224,7 +303,7 @@
     </div>
   {:else}
     <div class="space-y-4">
-      {#each props as prop (prop.id)}
+      {#each filteredProps as prop (prop.id)}
         <div class="flex gap-4 overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-lg">
           <div class="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
             <img src={prop.image || "/placeholder.svg"} alt={prop.name} class="size-full object-cover" />

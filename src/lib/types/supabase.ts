@@ -36,23 +36,23 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          description: string | null;
-          owner_id: string;
+          type: string;
+          created_by: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           name: string;
-          description?: string | null;
-          owner_id: string;
+          type?: string;
+          created_by: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           name?: string;
-          description?: string | null;
-          owner_id?: string;
+          type?: string;
+          created_by?: string;
           updated_at?: string;
         };
       };

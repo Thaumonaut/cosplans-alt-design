@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Partially mock module to preserve shape
-vi.mock('../../../src/lib/api/services/ideaService', async (importOriginal) => {
-  const actual = await (importOriginal as any).importActual('../../../src/lib/api/services/ideaService')
+vi.mock('../../../src/lib/api/services/ideaService', async () => {
+  const actual = await vi.importActual('../../../src/lib/api/services/ideaService')
   return {
     ...actual,
     ideaService: {
-      ...actual.ideaService,
+      ...(actual as any).ideaService,
       list: vi.fn(),
       get: vi.fn(),
       create: vi.fn(),

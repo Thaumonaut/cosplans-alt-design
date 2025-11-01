@@ -1,5 +1,6 @@
 import { supabase } from '$lib/supabase'
 import type { Idea, IdeaCreate, IdeaUpdate } from '$lib/types/domain/idea'
+import { reliableQuery } from '$lib/api/reliable-loader'
 
 export const ideaService = {
   async list(teamId: string): Promise<Idea[]> {
@@ -30,24 +31,82 @@ export const ideaService = {
   },
 
   async create(teamId: string, idea: IdeaCreate): Promise<Idea> {
+    // Ensure user is authenticated
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Not authenticated')
+
+    // Verify user is a member of the team
+    // Try query first, but if it fails due to schema cache, use more permissive check
+    const { data: membership, error: membershipError } = await supabase
+      .from('team_members')
+      .select('role')
+      .eq('team_id', teamId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // If query fails or no membership found, check if user is team owner as fallback
+    if (membershipError || !membership) {
+      // Check if user is the team owner (owner_id column)
+      const { data: teamData, error: teamError } = await supabase
+        .from('teams')
+        .select('owner_id')
+        .eq('id', teamId)
+        .single()
+
+      if (!teamError && teamData && (teamData as any).owner_id === user.id) {
+        // User is team owner, allow creation (membership might not be visible due to cache)
+        console.warn('Team membership not found, but user is team owner - allowing idea creation')
+      } else {
+        // Not a member and not the owner
+        throw new Error(
+          `You must be a member of this team to create ideas. ` +
+          `If you just created this team, please refresh the page and try again. ` +
+          `Error: ${membershipError?.message || 'Membership not found'}`
+        )
+      }
+    }
+
+    // Build insert data, handling undefined/null values
+    const insertData: Record<string, unknown> = {
+      team_id: teamId,
+      character: idea.character,
+      series: idea.series || '', // series is NOT NULL, provide empty string as fallback
+      difficulty: idea.difficulty,
+      images: idea.images || [],
+      tags: idea.tags || [],
+      status: 'saved',
+    }
+
+    // Only include optional fields if they have values
+    if (idea.description !== undefined && idea.description !== null) {
+      insertData.description = idea.description
+    }
+    if (idea.estimatedCost !== undefined && idea.estimatedCost !== null) {
+      insertData.estimated_cost = idea.estimatedCost
+    }
+    if (idea.notes !== undefined && idea.notes !== null) {
+      insertData.notes = idea.notes
+    }
+
     const { data, error } = await supabase
       .from('ideas')
-      .insert({
-        team_id: teamId,
-        character: idea.character,
-        series: idea.series,
-        description: idea.description,
-        difficulty: idea.difficulty,
-        estimated_cost: idea.estimatedCost,
-        images: idea.images || [],
-        tags: idea.tags || [],
-        notes: idea.notes,
-        status: 'saved',
-      })
+      .insert(insertData)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      // Provide more helpful error message for RLS violations
+      if (error.code === '42501') {
+        throw new Error(
+          `Permission denied: You must be a member of this team to create ideas. ` +
+          `If you believe this is an error, please refresh the page and try again.`
+        )
+      }
+      throw error
+    }
     return mapIdeaFromDb(data)
   },
 
@@ -61,6 +120,7 @@ export const ideaService = {
     if (updates.images !== undefined) dbUpdates.images = updates.images
     if (updates.tags !== undefined) dbUpdates.tags = updates.tags
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+    if (updates.primaryImageIndex !== undefined) dbUpdates.primary_image_index = updates.primaryImageIndex
 
     const { data, error } = await supabase
       .from('ideas')
@@ -82,41 +142,59 @@ export const ideaService = {
     if (error) throw error
   },
 
-  async convert(ideaId: string, teamId: string): Promise<{ projectId: string; idea: Idea }> {
+  async convert(ideaId: string, teamId: string): Promise<{ projectId: string }> {
     // Get the idea first
     const idea = await this.get(ideaId)
     if (!idea) throw new Error('Idea not found')
 
-    // Create project from idea (using RPC if available, otherwise manual insert)
+    // Create project from idea
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .insert({
         team_id: teamId,
         from_idea_id: ideaId,
         character: idea.character,
-        series: idea.series,
-        description: idea.description,
+        series: idea.series || null,
+        description: idea.description || null,
         status: 'planning',
         progress: 0,
-        estimated_budget: idea.estimatedCost,
+        estimated_budget: idea.estimatedCost || null,
+        spent_budget: 0,
         cover_image: idea.images[0] || null,
+        reference_images: idea.images || [],
+        tags: idea.tags || [],
       })
       .select()
       .single()
 
     if (projectError) throw projectError
 
-    // Update idea to mark as converted
-    const updatedIdea = await this.update(ideaId, {
-      status: 'converted',
-      convertedProjectId: projectData.id,
-    })
+    // Delete the idea after successful conversion
+    // First, clear the from_idea_id reference to avoid foreign key constraint issues
+    // Then delete the idea
+    try {
+      // Clear the reference first
+      const { error: updateError } = await supabase
+        .from('projects')
+        .update({ from_idea_id: null })
+        .eq('id', projectData.id)
+      
+      if (updateError) {
+        console.warn('Failed to clear from_idea_id reference before deleting idea:', updateError?.message || updateError)
+        // Continue anyway - try to delete and let it fail if needed
+      }
 
-    if (!updatedIdea) throw new Error('Failed to update idea status')
+      // Now delete the idea
+      await this.delete(ideaId)
+    } catch (deleteError: any) {
+      // If deletion fails, log but don't throw - project was created successfully
+      // The user can manually delete the idea later if needed
+      console.warn('Failed to delete idea after conversion:', deleteError?.message || deleteError)
+      // Don't throw - conversion was successful, just the cleanup failed
+    }
 
     return {
       projectId: projectData.id,
-      idea: updatedIdea,
     }
   },
 }
@@ -135,6 +213,7 @@ function mapIdeaFromDb(row: any): Idea {
     notes: row.notes,
     status: row.status,
     convertedProjectId: row.converted_project_id,
+    primaryImageIndex: row.primary_image_index !== undefined && row.primary_image_index !== null ? Number(row.primary_image_index) : 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

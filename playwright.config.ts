@@ -94,9 +94,11 @@ export default defineConfig({
   
   // Run local dev server before starting tests
   webServer: {
-    command: 'bun run dev',
+    command: 'pnpm run dev',
     url: 'http://localhost:5173',
     env: {
+      // Ensure PATH includes node from nvm for spawned processes (set before spreading process.env)
+      PATH: process.env.PATH || '/home/jek/.nvm/versions/node/v22.20.0/bin:/usr/bin:/bin',
       ...process.env,
       // Ensure PUBLIC_ vars are present for SvelteKit build-time
       PUBLIC_SUPABASE_URL: process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL || '',

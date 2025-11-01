@@ -12,6 +12,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
   if (isPublicRoute) {
     try {
       const supabase = createSupabaseLoadClient(fetch);
+      // Silently check for session on public routes - don't log errors if missing
       const {
         data: { session },
       } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
@@ -24,7 +25,11 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
       };
     } catch (err) {
       // If Supabase fails on public routes, still allow page to render
-      console.warn('Supabase initialization failed on public route:', err);
+      // Only log if it's not an expected auth error
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (!errMsg.includes('Auth session missing') && !errMsg.includes('session')) {
+        console.warn('Supabase initialization failed on public route:', err);
+      }
       return {
         supabase: null,
         session: null,
@@ -37,15 +42,29 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
   try {
     const supabase = createSupabaseLoadClient(fetch);
 
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
+    // Try to get session - silently handle missing sessions (expected when not logged in)
+    let session = null;
+    try {
+      const { data: { session: sessionData }, error: sessionError } = await supabase.auth.getSession();
+      if (!sessionError && sessionData) {
+        session = sessionData;
+      }
+    } catch (err) {
+      // Silently ignore session errors - missing session is normal when not logged in
+    }
 
-    // If there's an error getting the session, continue without it
-    // This allows public pages like login to render correctly
-    if (error) {
-      console.warn('Failed to get session in layout:', error);
+    // If no session, try getUser() as fallback (validates JWT from cookies)
+    if (!session) {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        // Only create session from user if we successfully got a user
+        if (!userError && user) {
+          // Create minimal session object from validated user
+          session = { user };
+        }
+      } catch (err) {
+        // Silently ignore - no session means user isn't logged in
+      }
     }
 
     return {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DollarSign, AlertTriangle } from 'lucide-svelte'
-  import { cn } from '$lib/utils'
+  import { cn, formatCurrencyFromCents } from '$lib/utils'
 
   interface Props {
     estimatedBudget?: number // in cents
@@ -9,10 +9,6 @@
 
   let { estimatedBudget, spentBudget }: Props = $props()
 
-  function formatCurrency(cents: number): string {
-    const dollars = cents / 100
-    return `$${dollars.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
 
   const isOverBudget = $derived(estimatedBudget && spentBudget > estimatedBudget)
   const percentageSpent = $derived(
@@ -67,14 +63,14 @@
     <div class="flex items-baseline justify-between">
       <span class="text-xs text-muted-foreground">Spent</span>
       <span class={cn('text-2xl font-bold', isOverBudget && 'text-red-600')}>
-        {formatCurrency(spentBudget)}
+        {formatCurrencyFromCents(spentBudget)}
       </span>
     </div>
 
     {#if estimatedBudget}
       <div class="flex items-baseline justify-between">
         <span class="text-xs text-muted-foreground">Estimated</span>
-        <span class="text-lg text-muted-foreground">{formatCurrency(estimatedBudget)}</span>
+        <span class="text-lg text-muted-foreground">{formatCurrencyFromCents(estimatedBudget)}</span>
       </div>
 
       <!-- Progress Bar -->
@@ -97,7 +93,7 @@
         <div class="mt-1 flex items-center justify-between text-xs text-muted-foreground">
           <span>{Math.round(percentageSpent)}% spent</span>
           {#if estimatedBudget && spentBudget < estimatedBudget}
-            <span>{formatCurrency(estimatedBudget - spentBudget)} remaining</span>
+            <span>{formatCurrencyFromCents((estimatedBudget || 0) - spentBudget)} remaining</span>
           {/if}
         </div>
       </div>
@@ -111,7 +107,7 @@
       <div class="flex-1">
         <p class="text-sm font-medium text-red-600">Budget Exceeded</p>
         <p class="text-xs text-red-600/80">
-          Spending is {formatCurrency(spentBudget - (estimatedBudget || 0))} over the estimated
+          Spending is {formatCurrencyFromCents(spentBudget - (estimatedBudget || 0))} over the estimated
           budget.
         </p>
       </div>

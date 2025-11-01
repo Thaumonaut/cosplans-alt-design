@@ -10,7 +10,9 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 1
+    },
     "preserveOutput": "always",
     "reporter": [
       [
@@ -44,7 +46,9 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -58,7 +62,9 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "firefox",
         "name": "firefox",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -72,7 +78,9 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "webkit",
         "name": "webkit",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -86,7 +94,9 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -100,7 +110,9 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -117,9 +129,10 @@
     "version": "1.56.1",
     "workers": 4,
     "webServer": {
-      "command": "bun run dev",
+      "command": "pnpm run dev",
       "url": "http://localhost:5173",
       "env": {
+        "PATH": "/home/jek/Downloads/cosplay-tracker/node_modules/.bin:/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node-gyp-bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.nvm/versions/node/v22.20.0/bin:/home/jek/.cargo/bin:/home/jek/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin",
         "GJS_DEBUG_TOPICS": "JS ERROR;JS LOG",
         "LESSOPEN": "| /usr/bin/lesspipe %s",
         "VSCODE_CWD": "/home/jek",
@@ -143,12 +156,12 @@
         "COREPACK_ROOT": "/home/jek/.nvm/versions/node/v22.20.0/lib/node_modules/corepack",
         "GNOME_SHELL_SESSION_MODE": "zorin",
         "GTK_MODULES": "gail:atk-bridge",
-        "MANAGERPID": "1064",
-        "SYSTEMD_EXEC_PID": "1480",
+        "MANAGERPID": "1009",
+        "SYSTEMD_EXEC_PID": "1432",
         "IM_CONFIG_CHECK_ENV": "1",
         "NO_COLOR": "1",
         "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus",
-        "GIO_LAUNCHED_DESKTOP_FILE_PID": "3827",
+        "GIO_LAUNCHED_DESKTOP_FILE_PID": "4182",
         "NVM_DIR": "/home/jek/.nvm",
         "VSCODE_CRASH_REPORTER_PROCESS_TYPE": "extensionHost",
         "IM_CONFIG_PHASE": "1",
@@ -158,8 +171,8 @@
         "LOGNAME": "jek",
         "FORCE_COLOR": "0",
         "pnpm_config_verify_deps_before_run": "false",
-        "JOURNAL_STREAM": "8:10198",
-        "_": "/home/jek/.nvm/versions/node/v22.20.0/bin/pnpm",
+        "JOURNAL_STREAM": "8:16473",
+        "_": "/usr/bin/timeout",
         "XDG_SESSION_CLASS": "user",
         "npm_config_registry": "https://registry.npmjs.org/",
         "USERNAME": "jek",
@@ -167,13 +180,12 @@
         "GNOME_DESKTOP_SESSION_ID": "this-is-deprecated",
         "COMPOSER_NO_INTERACTION": "1",
         "npm_config_node_gyp": "/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node_modules/node-gyp/bin/node-gyp.js",
-        "PATH": "/home/jek/Downloads/cosplay-tracker/node_modules/.bin:/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node-gyp-bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.local/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.nvm/versions/node/v22.20.0/bin:/home/jek/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin",
-        "SESSION_MANAGER": "local/jekovo:@/tmp/.ICE-unix/1438,unix/jekovo:/tmp/.ICE-unix/1438",
-        "INVOCATION_ID": "5a6f2c2b83d54dcabd75da7f84adc051",
+        "SESSION_MANAGER": "local/jekovo:@/tmp/.ICE-unix/1339,unix/jekovo:/tmp/.ICE-unix/1339",
+        "INVOCATION_ID": "f854e5caea164ddfac85a9bccc9acd41",
         "npm_package_name": "cosplay-tracker-sveltekit",
         "NODE": "/home/jek/.nvm/versions/node/v22.20.0/bin/node",
         "XDG_MENU_PREFIX": "gnome-",
-        "VSCODE_PROCESS_TITLE": "extension-host  [2-2]",
+        "VSCODE_PROCESS_TITLE": "extension-host  [1-1]",
         "GNOME_SETUP_DISPLAY": ":1",
         "XDG_RUNTIME_DIR": "/run/user/1000",
         "GDK_BACKEND": "x11",
@@ -184,10 +196,10 @@
         "XDG_CURRENT_DESKTOP": "zorin:GNOME",
         "XMODIFIERS": "@im=ibus",
         "XDG_SESSION_DESKTOP": "zorin",
-        "XAUTHORITY": "/run/user/1000/.mutter-Xwaylandauth.N8DLE3",
+        "XAUTHORITY": "/run/user/1000/.mutter-Xwaylandauth.TPUPF3",
         "LS_COLORS": "",
-        "CURSOR_TRACE_ID": "95cff6d0b9bc4ed499984d9d020d0baf",
-        "npm_lifecycle_script": "playwright test -- tests/e2e/resources/resource-management.spec.ts --reporter=list",
+        "CURSOR_TRACE_ID": "3e1443652098448c9009f2b90c0cef8f",
+        "npm_lifecycle_script": "playwright test --project=chromium --grep=smoke",
         "SSH_AGENT_LAUNCHER": "gnome-keyring",
         "SSH_AUTH_SOCK": "/run/user/1000/keyring/ssh",
         "ORIGINAL_XDG_CURRENT_DESKTOP": "zorin:GNOME",
@@ -210,7 +222,7 @@
         "npm_config__jsr_registry": "https://npm.jsr.io/",
         "npm_command": "run-script",
         "PNPM_SCRIPT_SRC_DIR": "/home/jek/Downloads/cosplay-tracker",
-        "VSCODE_PID": "3827",
+        "VSCODE_PID": "4182",
         "INIT_CWD": "/home/jek/Downloads/cosplay-tracker",
         "SUPABASE_TEST_URL": "https://lykvbjvconsoolsprdue.supabase.co",
         "SUPABASE_TEST_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5a3ZianZjb25zb29sc3ByZHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NzM2MzgsImV4cCI6MjA3NzM0OTYzOH0.fDR5Momj-vTgucvQsIKIuAO2I_WxB59vs4TXPv5KTF8",
@@ -237,17 +249,55 @@
       "timeout": 120000
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: http://localhost:5173 is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.",
-      "stack": "Error: http://localhost:5173 is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer."
+      "title": "smoke.spec.ts",
+      "file": "smoke.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "smoke: e2e launches browser",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 179,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2025-11-01T08:36:28.173Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4219922fea2e2bd3c691-3256fb2beee4aa47f7a2",
+          "file": "smoke.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-10-31T16:02:16.376Z",
-    "duration": 66.73599999999999,
-    "expected": 0,
+    "startTime": "2025-11-01T08:36:15.074Z",
+    "duration": 13418.929,
+    "expected": 1,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

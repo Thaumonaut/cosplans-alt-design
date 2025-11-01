@@ -4,7 +4,7 @@
   import type { ProjectResource } from '$lib/types/domain/resource'
   import { Badge } from 'flowbite-svelte'
   import { Package, Link as LinkIcon } from 'lucide-svelte'
-  import { cn } from '$lib/utils'
+  import { cn, formatCurrencyFromCents } from '$lib/utils'
 
   interface Props {
     projectId: string
@@ -58,11 +58,6 @@
     acquired: 'Acquired',
     'in-progress': 'In Progress',
     completed: 'Completed',
-  }
-
-  function formatCurrency(cents: number): string {
-    const dollars = cents / 100
-    return `$${dollars.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   const categoryLabels: Record<string, string> = {
@@ -134,9 +129,9 @@
             <!-- Cost -->
             {#if link.resource.cost}
               <div class="text-xs text-muted-foreground">
-                Cost: {formatCurrency(link.resource.cost * link.quantity)}
+                Cost: {formatCurrencyFromCents((link.resource.cost || 0) * link.quantity)}
                 {#if link.quantity > 1}
-                  <span class="opacity-60">({formatCurrency(link.resource.cost)} each)</span>
+                  <span class="opacity-60">({formatCurrencyFromCents(link.resource.cost)} each)</span>
                 {/if}
               </div>
             {/if}

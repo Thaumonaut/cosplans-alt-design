@@ -6,22 +6,21 @@ test.describe('Navigation', () => {
     await page.goto('/dashboard');
     await loginIfNeeded(page);
     
+    // MVP Core routes only
     const routes = [
+      '/dashboard',
+      '/ideas',
+      '/projects',
+      '/resources',
+      '/tools',
+      '/photoshoots',
       '/characters',
-      '/accessories', 
-      '/props',
-      '/materials',
-      '/equipment',
       '/planning',
       '/calendar',
       '/events',
-      '/photoshoots',
       '/tasks',
       '/timeline',
       '/budget',
-      '/marketplace',
-      '/messages',
-      '/profile',
       '/settings'
     ];
     

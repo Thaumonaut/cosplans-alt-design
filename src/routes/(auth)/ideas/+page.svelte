@@ -7,27 +7,51 @@
   import { Grid3x3, List, Plus, Search, Sparkles } from 'lucide-svelte'
   import IdeaCard from '$lib/components/cards/IdeaCard.svelte'
   import NewIdeaDrawer from '$lib/components/ideas/NewIdeaDrawer.svelte'
+  import IdeaDetail from '$lib/components/ideas/IdeaDetail.svelte'
+  import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import Fuse from 'fuse.js'
   import type { Idea } from '$lib/types/domain/idea'
   import { get } from 'svelte/store'
 
   let activeTab = $state<'grid' | 'list'>('grid')
   let showNewIdeaDrawer = $state(false)
+  let showIdeaDetailFlyout = $state(false)
+  let selectedIdeaId = $state<string | null>(null)
   let searchQuery = $state('')
   let difficultyFilter = $state<'all' | 'beginner' | 'intermediate' | 'advanced'>('all')
 
-  // Load ideas on mount
+  import type { PageData } from './$types'
+  let { data }: { data: PageData } = $props()
+
+  // Use data from +page.ts if available
+  $effect(() => {
+    if (data?.ideas && data.ideas.length > 0) {
+      // Ideas were loaded in +page.ts, ensure store has them
+      const currentIdeas = get(ideas)
+      if (currentIdeas.items.length === 0) {
+        const team = get(currentTeam)
+        if (team) {
+          ideas.load(team.id)
+        }
+      }
+    }
+  })
+
+  // Load ideas on mount as fallback if not loaded from +page.ts
   onMount(async () => {
-    const team = get(currentTeam)
-    if (team) {
-      await ideas.load(team.id)
+    // Only load if we don't already have data from load function
+    if (!data?.ideas || data.ideas.length === 0) {
+      const team = get(currentTeam)
+      if (team) {
+        await ideas.load(team.id)
+      }
     }
   })
 
   // Reload when team changes
   $effect(() => {
     const team = get(currentTeam)
-    if (team) {
+    if (team && (!data?.ideas || data.ideas.length === 0)) {
       ideas.load(team.id)
     }
   })
@@ -199,19 +223,77 @@
       <div class="space-y-6">
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {#each filtered as idea (idea.id)}
-            <IdeaCard idea={idea} onclick={() => goto(`/ideas/${idea.id}`)} />
+            <IdeaCard idea={idea} onclick={() => {
+              selectedIdeaId = idea.id
+              showIdeaDetailFlyout = true
+            }} />
           {/each}
         </div>
       </div>
     {:else}
       <div class="space-y-4">
         {#each filtered as idea (idea.id)}
-          <IdeaCard idea={idea} variant="list" onclick={() => goto(`/ideas/${idea.id}`)} />
+          <IdeaCard idea={idea} variant="list" onclick={() => {
+            selectedIdeaId = idea.id
+            showIdeaDetailFlyout = true
+          }} />
         {/each}
       </div>
     {/if}
   {/if}
 </div>
+
+<!-- Idea Detail Flyout -->
+{#if showIdeaDetailFlyout && selectedIdeaId}
+  <CreationFlyout 
+    bind:open={showIdeaDetailFlyout} 
+    title="Idea Details"
+    onFullScreen={() => {
+      goto(`/ideas/${selectedIdeaId}`)
+      showIdeaDetailFlyout = false
+    }}
+  >
+    <IdeaDetail 
+      ideaId={selectedIdeaId} 
+      mode="edit" 
+      isFlyout={true}
+      onSuccess={(id: string) => {
+        // If id is empty, idea was deleted - close flyout
+        if (!id || id === '') {
+          showIdeaDetailFlyout = false
+          selectedIdeaId = null
+          // Reload ideas list
+          const team = get(currentTeam)
+          if (team) {
+            ideas.load(team.id)
+          }
+          return
+        }
+        
+        showIdeaDetailFlyout = false
+        
+        // Check if this ID is a project (from conversion) by checking if it exists in projects
+        // For now, assume if we're passed an ID and the flyout closes, it might be a conversion
+        // The handleConvertToProject function passes the projectId directly
+        // We'll check: if id !== selectedIdeaId, then it's likely a project ID from conversion
+        const wasConversion = id !== selectedIdeaId
+        
+        if (wasConversion) {
+          // This is a project ID from conversion, redirect to project page
+          setTimeout(() => {
+            goto(`/projects/${id}`)
+          }, 100)
+        } else {
+          // This is an idea ID (from creation/update), reload ideas list
+          const team = get(currentTeam)
+          if (team) {
+            ideas.load(team.id)
+          }
+        }
+      }}
+    />
+  </CreationFlyout>
+{/if}
 
 <NewIdeaDrawer
   bind:open={showNewIdeaDrawer}

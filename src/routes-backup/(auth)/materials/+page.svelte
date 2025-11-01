@@ -1,64 +1,23 @@
 <script lang="ts">
   import { Plus, Filter, Grid3x3, List } from 'lucide-svelte';
   import { Button, Badge, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '$lib/components/ui';
+  import { onMount } from 'svelte';
+  import { resourceService } from '$lib/api/services/resourceService';
+  import { currentTeam } from '$lib/stores/teams';
+  import { get } from 'svelte/store';
 
   interface Material {
-    id: number;
+    id: string;
     name: string;
-    category: 'foam' | 'thermoplastic' | 'fabric' | 'electronics' | 'paint' | 'other';
+    category: string;
     quantity: { current: number; unit: string };
     status: 'in-stock' | 'low-stock' | 'out-of-stock' | 'ordered';
     usedIn: string[];
     cost: number;
   }
 
-  const materials: Material[] = [
-    {
-      id: 1,
-      name: "EVA Foam Sheets",
-      category: "foam",
-      quantity: { current: 5, unit: "sheets" },
-      status: "in-stock",
-      usedIn: ["Malenia's Armor", "Raiden's Accessories"],
-      cost: 45.0,
-    },
-    {
-      id: 2,
-      name: "Worbla Thermoplastic",
-      category: "thermoplastic",
-      quantity: { current: 2, unit: "sheets" },
-      status: "low-stock",
-      usedIn: ["Malenia's Prosthetic"],
-      cost: 80.0,
-    },
-    {
-      id: 3,
-      name: "Purple Silk Fabric",
-      category: "fabric",
-      quantity: { current: 0, unit: "yards" },
-      status: "out-of-stock",
-      usedIn: ["Raiden's Kimono"],
-      cost: 35.0,
-    },
-    {
-      id: 4,
-      name: "LED Strip Lights",
-      category: "electronics",
-      quantity: { current: 3, unit: "meters" },
-      status: "in-stock",
-      usedIn: ["Malenia's Prosthetic", "V's Jacket"],
-      cost: 25.0,
-    },
-    {
-      id: 5,
-      name: "Acrylic Paint Set",
-      category: "paint",
-      quantity: { current: 1, unit: "set" },
-      status: "in-stock",
-      usedIn: ["Multiple Projects"],
-      cost: 40.0,
-    },
-  ];
+  let materials = $state<Material[]>([]);
+  let loading = $state(true);
 
   const statusColors = {
     "in-stock": "bg-green-500/10 text-green-700 dark:text-green-400",
@@ -82,6 +41,45 @@
     status: [] as string[],
   });
 
+  async function loadMaterials() {
+    try {
+      loading = true;
+      const team = get(currentTeam);
+      if (!team) {
+        materials = [];
+        return;
+      }
+
+      const resources = await resourceService.list({ category: 'material' });
+      
+      materials = resources.map(resource => {
+        const metadata = resource.metadata as any;
+        const quantity = metadata?.quantity || 0;
+        const unit = metadata?.unit || 'units';
+        
+        // Determine status based on quantity
+        let status: 'in-stock' | 'low-stock' | 'out-of-stock' | 'ordered' = 'in-stock';
+        if (quantity === 0) status = 'out-of-stock';
+        else if (quantity < 2) status = 'low-stock';
+
+        return {
+          id: resource.id,
+          name: resource.name,
+          category: metadata?.materialType || 'other',
+          quantity: { current: quantity, unit },
+          status,
+          usedIn: [],
+          cost: resource.cost ? resource.cost / 100 : 0, // Convert from cents
+        };
+      });
+    } catch (error) {
+      console.error('Failed to load materials:', error);
+      materials = [];
+    } finally {
+      loading = false;
+    }
+  }
+
   function toggleFilter(category: keyof typeof filters, value: string) {
     const currentFilters = filters[category];
     if (currentFilters.includes(value)) {
@@ -90,6 +88,25 @@
       filters[category] = [...currentFilters, value];
     }
   }
+
+  const filteredMaterials = $derived(() => {
+    let filtered = materials;
+    if (filters.category.length > 0) {
+      filtered = filtered.filter(m => filters.category.includes(m.category));
+    }
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(m => filters.status.includes(m.status));
+    }
+    return filtered;
+  });
+
+  onMount(() => {
+    loadMaterials();
+    const unsubscribe = currentTeam.subscribe(() => {
+      loadMaterials();
+    });
+    return unsubscribe;
+  });
 </script>
 
 <svelte:head>
@@ -102,7 +119,11 @@
     <div>
       <h1 class="text-balance text-3xl font-bold leading-tight">Materials</h1>
       <p class="text-pretty text-muted-foreground">
-        {materials.length} materials tracked across all projects
+        {#if loading}
+          Loading materials...
+        {:else}
+          {filteredMaterials.length} {filteredMaterials.length === 1 ? 'material' : 'materials'} tracked across all projects
+        {/if}
       </p>
     </div>
     
@@ -164,9 +185,23 @@
   </div>
 
   <!-- Materials Grid/List View -->
-  {#if viewMode === "grid"}
+  {#if loading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p class="text-sm text-muted-foreground">Loading materials...</p>
+      </div>
+    </div>
+  {:else if filteredMaterials.length === 0}
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+      <p class="mb-2 text-lg font-medium text-muted-foreground">No materials found</p>
+      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
+        Get started by creating your first material resource.
+      </p>
+    </div>
+  {:else if viewMode === "grid"}
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {#each materials as material (material.id)}
+      {#each filteredMaterials as material (material.id)}
         <div class="overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-lg">
           <div class="mb-3 flex items-start justify-between">
             <div>
@@ -208,7 +243,7 @@
     </div>
   {:else}
     <div class="space-y-3">
-      {#each materials as material (material.id)}
+      {#each filteredMaterials as material (material.id)}
         <div class="flex items-center justify-between rounded-xl border bg-card p-4 transition-all hover:shadow-lg">
           <div class="flex flex-1 items-center gap-4">
             <div class="flex-1">
