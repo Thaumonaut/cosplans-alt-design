@@ -114,8 +114,11 @@
 <div class="font-sans antialiased">
   <div class="flex min-h-screen w-full">
     <AppSidebar />
-    <main class="max-w-full flex-1 overflow-x-hidden">
-      {@render children()}
+    <main class="max-w-full flex-1 overflow-x-hidden flex flex-col">
+      <PageHeader />
+      <div class="flex-1 overflow-y-auto">
+        {@render children()}
+      </div>
     </main>
   </div>
   <Toast />
