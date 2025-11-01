@@ -63,7 +63,7 @@
         </a>
       </div>
     {:else}
-      <form class="mt-8 space-y-6" on:submit|preventDefault={handleSubmit}>
+      <form class="mt-8 space-y-6" onsubmit={()=>handleSubmit}>
         {#if error}
           <div class="bg-red-50 border border-red-200 rounded-md p-4">
             <div class="flex">

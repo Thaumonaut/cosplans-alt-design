@@ -93,15 +93,21 @@
 </script>
 
 <div class="relative" bind:this={dropdownElement}>
-  <!-- Trigger button -->
-  <button 
-    type="button"
+  <!-- Trigger - can be button or other element from snippet -->
+  <div
     onclick={toggleDropdown}
-    onkeydown={(e) => e.key === 'Enter' || e.key === ' ' ? toggleDropdown() : null}
-    class="inline-flex items-center justify-center"
+    onkeydown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        toggleDropdown()
+      }
+    }}
+    class="inline-flex items-center justify-center cursor-pointer"
+    role="button"
+    tabindex="0"
   >
     {@render trigger?.()}
-  </button>
+  </div>
 
   <!-- Dropdown menu positioned correctly -->
   {#if isOpen}

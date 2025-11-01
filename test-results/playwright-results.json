@@ -2,17 +2,15 @@
   "config": {
     "configFile": "/home/jek/Downloads/cosplay-tracker/playwright.config.ts",
     "rootDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
-    "forbidOnly": false,
+    "forbidOnly": true,
     "fullyParallel": true,
     "globalSetup": null,
     "globalTeardown": null,
-    "globalTimeout": 0,
+    "globalTimeout": 600000,
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 4
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "reporter": [
       [
@@ -28,7 +26,11 @@
         }
       ],
       [
-        "line",
+        "list",
+        null
+      ],
+      [
+        "/home/jek/Downloads/cosplay-tracker/tests/config/flaky-test-reporter.ts",
         null
       ]
     ],
@@ -41,10 +43,8 @@
       {
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "retries": 3,
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -52,15 +52,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 120000
       },
       {
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "retries": 3,
+        "metadata": {},
         "id": "firefox",
         "name": "firefox",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -68,15 +66,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 120000
       },
       {
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "retries": 3,
+        "metadata": {},
         "id": "webkit",
         "name": "webkit",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -84,15 +80,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 120000
       },
       {
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "retries": 3,
+        "metadata": {},
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -100,15 +94,13 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 120000
       },
       {
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 4
-        },
+        "retries": 3,
+        "metadata": {},
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -116,7 +108,7 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 120000
       }
     ],
     "shard": null,
@@ -125,2081 +117,141 @@
     "version": "1.56.1",
     "workers": 4,
     "webServer": {
-      "command": "pnpm build && pnpm preview",
-      "port": 4173,
-      "reuseExistingServer": true
+      "command": "bun run dev",
+      "url": "http://localhost:5173",
+      "reuseExistingServer": false,
+      "timeout": 120000,
+      "stdout": "ignore",
+      "stderr": "pipe",
+      "env": {
+        "GJS_DEBUG_TOPICS": "JS ERROR;JS LOG",
+        "LESSOPEN": "| /usr/bin/lesspipe %s",
+        "VSCODE_CWD": "/home/jek",
+        "VSCODE_ESM_ENTRYPOINT": "vs/workbench/api/node/extensionHostProcess",
+        "USER": "jek",
+        "VSCODE_NLS_CONFIG": "{\"userLocale\":\"en-us\",\"osLocale\":\"en-us\",\"resolvedLanguage\":\"en\",\"defaultMessagesFile\":\"/usr/share/cursor/resources/app/out/nls.messages.json\",\"locale\":\"en-us\",\"availableLanguages\":{}}",
+        "npm_config_user_agent": "pnpm/10.20.0 npm/? node/v22.20.0 linux x64",
+        "VSCODE_HANDLES_UNCAUGHT_ERRORS": "true",
+        "XDG_SESSION_TYPE": "wayland",
+        "npm_node_execpath": "/home/jek/.nvm/versions/node/v22.20.0/bin/node",
+        "SHLVL": "0",
+        "HOME": "/home/jek",
+        "CHROME_DESKTOP": "cursor.desktop",
+        "OLDPWD": "/home/jek/Downloads/cosplay-tracker",
+        "DESKTOP_SESSION": "zorin",
+        "NVM_BIN": "/home/jek/.nvm/versions/node/v22.20.0/bin",
+        "npm_package_json": "/home/jek/Downloads/cosplay-tracker/package.json",
+        "NVM_INC": "/home/jek/.nvm/versions/node/v22.20.0/include/node",
+        "VSCODE_IPC_HOOK": "/run/user/1000/vscode-a573f20e-1.7.-main.sock",
+        "GIO_LAUNCHED_DESKTOP_FILE": "/usr/share/applications/cursor.desktop",
+        "COREPACK_ROOT": "/home/jek/.nvm/versions/node/v22.20.0/lib/node_modules/corepack",
+        "GNOME_SHELL_SESSION_MODE": "zorin",
+        "GTK_MODULES": "gail:atk-bridge",
+        "MANAGERPID": "1009",
+        "SYSTEMD_EXEC_PID": "1432",
+        "IM_CONFIG_CHECK_ENV": "1",
+        "NO_COLOR": "1",
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus",
+        "GIO_LAUNCHED_DESKTOP_FILE_PID": "4182",
+        "NVM_DIR": "/home/jek/.nvm",
+        "VSCODE_CRASH_REPORTER_PROCESS_TYPE": "extensionHost",
+        "IM_CONFIG_PHASE": "1",
+        "WAYLAND_DISPLAY": "wayland-0",
+        "VSCODE_L10N_BUNDLE_LOCATION": "",
+        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "1",
+        "LOGNAME": "jek",
+        "FORCE_COLOR": "0",
+        "pnpm_config_verify_deps_before_run": "false",
+        "JOURNAL_STREAM": "8:16473",
+        "_": "/usr/bin/timeout",
+        "XDG_SESSION_CLASS": "user",
+        "npm_config_registry": "https://registry.npmjs.org/",
+        "USERNAME": "jek",
+        "TERM": "dumb",
+        "GNOME_DESKTOP_SESSION_ID": "this-is-deprecated",
+        "COMPOSER_NO_INTERACTION": "1",
+        "npm_config_node_gyp": "/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node_modules/node-gyp/bin/node-gyp.js",
+        "PATH": "/home/jek/Downloads/cosplay-tracker/node_modules/.bin:/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node-gyp-bin:/home/jek/.nvm/versions/node/v22.20.0/bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.nvm/versions/node/v22.20.0/bin:/home/jek/.cargo/bin:/home/jek/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin",
+        "SESSION_MANAGER": "local/jekovo:@/tmp/.ICE-unix/1339,unix/jekovo:/tmp/.ICE-unix/1339",
+        "INVOCATION_ID": "f854e5caea164ddfac85a9bccc9acd41",
+        "npm_package_name": "cosplay-tracker-sveltekit",
+        "NODE": "/home/jek/.nvm/versions/node/v22.20.0/bin/node",
+        "XDG_MENU_PREFIX": "gnome-",
+        "VSCODE_PROCESS_TITLE": "extension-host  [1-1]",
+        "GNOME_SETUP_DISPLAY": ":1",
+        "XDG_RUNTIME_DIR": "/run/user/1000",
+        "GDK_BACKEND": "x11",
+        "npm_config_frozen_lockfile": "",
+        "CURSOR_AGENT": "1",
+        "DISPLAY": ":0",
+        "LANG": "en_US.UTF-8",
+        "XDG_CURRENT_DESKTOP": "zorin:GNOME",
+        "XMODIFIERS": "@im=ibus",
+        "XDG_SESSION_DESKTOP": "zorin",
+        "XAUTHORITY": "/run/user/1000/.mutter-Xwaylandauth.TPUPF3",
+        "LS_COLORS": "",
+        "CURSOR_TRACE_ID": "3e1443652098448c9009f2b90c0cef8f",
+        "npm_lifecycle_script": "playwright test --project=chromium --grep=smoke",
+        "SSH_AGENT_LAUNCHER": "gnome-keyring",
+        "SSH_AUTH_SOCK": "/run/user/1000/keyring/ssh",
+        "ORIGINAL_XDG_CURRENT_DESKTOP": "zorin:GNOME",
+        "SHELL": "/bin/bash",
+        "npm_package_version": "0.1.0",
+        "npm_lifecycle_event": "test:e2e",
+        "npm_config_verify_deps_before_run": "false",
+        "NODE_PATH": "/home/jek/Downloads/cosplay-tracker/node_modules/.pnpm/@playwright+test@1.56.1/node_modules/@playwright/test/node_modules:/home/jek/Downloads/cosplay-tracker/node_modules/.pnpm/@playwright+test@1.56.1/node_modules/@playwright/node_modules:/home/jek/Downloads/cosplay-tracker/node_modules/.pnpm/@playwright+test@1.56.1/node_modules:/home/jek/Downloads/cosplay-tracker/node_modules/.pnpm/node_modules",
+        "QT_ACCESSIBILITY": "1",
+        "GDMSESSION": "zorin",
+        "LESSCLOSE": "/usr/bin/lesspipe %s %s",
+        "GJS_DEBUG_OUTPUT": "stderr",
+        "QT_IM_MODULE": "ibus",
+        "PWD": "/home/jek/Downloads/cosplay-tracker",
+        "npm_execpath": "/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/bin/pnpm.cjs",
+        "XDG_CONFIG_DIRS": "/etc/xdg/xdg-zorin:/etc/xdg",
+        "VSCODE_CODE_CACHE_PATH": "/home/jek/.config/Cursor/CachedData/5c17eb2968a37f66bc6662f48d6356a100b67be0",
+        "NVM_CD_FLAGS": "",
+        "XDG_DATA_DIRS": "/usr/share/zorin:/home/jek/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop",
+        "npm_config__jsr_registry": "https://npm.jsr.io/",
+        "npm_command": "run-script",
+        "PNPM_SCRIPT_SRC_DIR": "/home/jek/Downloads/cosplay-tracker",
+        "VSCODE_PID": "4182",
+        "INIT_CWD": "/home/jek/Downloads/cosplay-tracker",
+        "SUPABASE_TEST_URL": "https://lykvbjvconsoolsprdue.supabase.co",
+        "SUPABASE_TEST_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5a3ZianZjb25zb29sc3ByZHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NzM2MzgsImV4cCI6MjA3NzM0OTYzOH0.fDR5Momj-vTgucvQsIKIuAO2I_WxB59vs4TXPv5KTF8",
+        "TEST_BASE_URL": "http://localhost:5173",
+        "TEST_USER_EMAIL": "test@example.com",
+        "TEST_USER_PASSWORD": "Test123!@",
+        "CI": "${CI:-false}",
+        "TEST_TIMEOUT_UNIT": "5000",
+        "TEST_TIMEOUT_INTEGRATION": "30000",
+        "TEST_TIMEOUT_E2E": "120000",
+        "TEST_WORKERS_UNIT": "8",
+        "TEST_WORKERS_INTEGRATION": "4",
+        "TEST_WORKERS_E2E": "4",
+        "TEST_COVERAGE_THRESHOLD": "80",
+        "TEST_COVERAGE_CRITICAL_THRESHOLD": "100",
+        "VISUAL_REGRESSION_THRESHOLD": "0.05",
+        "FLAKY_TEST_MAX_RETRIES": "3",
+        "FLAKY_TEST_QUARANTINE_AFTER": "2",
+        "TEST_CLEANUP_ORPHANED_AGE_HOURS": "1",
+        "PUBLIC_SUPABASE_URL": "https://lykvbjvconsoolsprdue.supabase.co",
+        "PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5a3ZianZjb25zb29sc3ByZHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NzM2MzgsImV4cCI6MjA3NzM0OTYzOH0.fDR5Momj-vTgucvQsIKIuAO2I_WxB59vs4TXPv5KTF8"
+      }
     }
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "dashboard.spec.ts",
-      "file": "dashboard.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Dashboard",
-          "file": "dashboard.spec.ts",
-          "line": 3,
-          "column": 6,
-          "specs": [
-            {
-              "title": "should load the dashboard page",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 6290,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                          "column": 40,
-                          "line": 14
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 40,
-                            "line": 14
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:50.758Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                        "column": 40,
-                        "line": 14
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-1b31b7a782c17a082f89",
-              "file": "dashboard.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should navigate to different sections",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "timedOut",
-                      "duration": 31981,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 16,
-                            "line": 21
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/characters\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 19 |\u001b[39m     \n \u001b[90m 20 |\u001b[39m     \u001b[90m// Test navigation to characters page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'a[href=\"/characters\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[32m'/characters'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m     \n \u001b[90m 24 |\u001b[39m     \u001b[90m// Test navigation to projects page (if exists)\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:21:16\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:50.808Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-chromium/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-e13cb84eeea9198328f4",
-              "file": "dashboard.spec.ts",
-              "line": 17,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 921,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:50.722Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-7036cde7cb3054f87671",
-              "file": "dashboard.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should load the dashboard page",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 4,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 6149,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                          "column": 40,
-                          "line": 14
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 40,
-                            "line": 14
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:53.546Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-firefox/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-firefox/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-firefox/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                        "column": 40,
-                        "line": 14
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-dc14b0ded752d196974e",
-              "file": "dashboard.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should navigate to different sections",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 5,
-                      "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 30140,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 16,
-                            "line": 21
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/characters\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 19 |\u001b[39m     \n \u001b[90m 20 |\u001b[39m     \u001b[90m// Test navigation to characters page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'a[href=\"/characters\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[32m'/characters'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m     \n \u001b[90m 24 |\u001b[39m     \u001b[90m// Test navigation to projects page (if exists)\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:21:16\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:57.676Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-firefox/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-firefox/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-firefox/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-69dc5a01e284c54e21e3",
-              "file": "dashboard.spec.ts",
-              "line": 17,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 1043,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:59.629Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-4f53e95f095180c5fef8",
-              "file": "dashboard.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should load the dashboard page",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 8,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:05.817Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-ccb08b03242d00e3a36f",
-              "file": "dashboard.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should navigate to different sections",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 9,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:06.798Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-6f119fa53fb7f1c23998",
-              "file": "dashboard.spec.ts",
-              "line": 17,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 10,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:07.818Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-889de46f8c8cbfc7edd4",
-              "file": "dashboard.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should load the dashboard page",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 17,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 5724,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                          "column": 40,
-                          "line": 14
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 40,
-                            "line": 14
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 12 |\u001b[39m     \n \u001b[90m 13 |\u001b[39m     \u001b[90m// Check if dashboard content is loaded\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'main'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 15 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 16 |\u001b[39m\n \u001b[90m 17 |\u001b[39m   test(\u001b[32m'should navigate to different sections'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:14:40\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:13.129Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-Mobile-Chrome/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-Mobile-Chrome/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-load-the-dashboard-page-Mobile-Chrome/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                        "column": 40,
-                        "line": 14
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-77067486b0356fa16724",
-              "file": "dashboard.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should navigate to different sections",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 18,
-                      "parallelIndex": 3,
-                      "status": "timedOut",
-                      "duration": 31021,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts",
-                            "column": 16,
-                            "line": 21
-                          },
-                          "message": "Error: page.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/characters\"]')\u001b[22m\n\n\n\u001b[0m \u001b[90m 19 |\u001b[39m     \n \u001b[90m 20 |\u001b[39m     \u001b[90m// Test navigation to characters page\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'a[href=\"/characters\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(\u001b[32m'/characters'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m     \n \u001b[90m 24 |\u001b[39m     \u001b[90m// Test navigation to projects page (if exists)\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/dashboard.spec.ts:21:16\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:14.131Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-Mobile-Chrome/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-Mobile-Chrome/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/dashboard-Dashboard-should-navigate-to-different-sections-Mobile-Chrome/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-dd7d11e838483b4e0caa",
-              "file": "dashboard.spec.ts",
-              "line": 17,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 19,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 425,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:19.431Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-4dddd49deeffc5d23d49",
-              "file": "dashboard.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should load the dashboard page",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 21,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:24.759Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-fcd933c6c8a3fed44ac5",
-              "file": "dashboard.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should navigate to different sections",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 22,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:25.839Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-530be74ef36a14096369",
-              "file": "dashboard.spec.ts",
-              "line": 17,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 23,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:26.972Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "90cda532ab82d274b30b-867faf5a5d3e2573bdfc",
-              "file": "dashboard.spec.ts",
-              "line": 29,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "forms.spec.ts",
-      "file": "forms.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Forms",
-          "file": "forms.spec.ts",
-          "line": 3,
-          "column": 6,
-          "specs": [
-            {
-              "title": "should handle character creation form",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 975,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:50.833Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-ad42b5c77b353f5d74d0",
-              "file": "forms.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should validate form inputs",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 298,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:51.874Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-88a6b9243243fe8e42a1",
-              "file": "forms.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should handle search functionality",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 297,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:51.923Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-fd2f205442301bbe550b",
-              "file": "forms.spec.ts",
-              "line": 50,
-              "column": 3
-            },
-            {
-              "title": "should handle character creation form",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 7,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 1407,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:01.626Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-c6c2200da841f990b876",
-              "file": "forms.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should validate form inputs",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 603,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:01.151Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-e221adfe9d78b2e46551",
-              "file": "forms.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should handle search functionality",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 380,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:01.774Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-67399ff41f921dd9fb8c",
-              "file": "forms.spec.ts",
-              "line": 50,
-              "column": 3
-            },
-            {
-              "title": "should handle character creation form",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 11,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:08.837Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-b3f2d197298f50fc6c44",
-              "file": "forms.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should validate form inputs",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 12,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:09.855Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-c3645ab0776d0a7dfc64",
-              "file": "forms.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should handle search functionality",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 13,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 2,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:10.815Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-60a5a7d0bd0f654278ba",
-              "file": "forms.spec.ts",
-              "line": 50,
-              "column": 3
-            },
-            {
-              "title": "should handle character creation form",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 19,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 473,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:19.927Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-14ecf593415b43fd6574",
-              "file": "forms.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should validate form inputs",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 19,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 551,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:20.408Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-42f5e1f21ffd910ae5ff",
-              "file": "forms.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should handle search functionality",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 19,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 384,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:20.969Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-3dd7b95a60895a3faba3",
-              "file": "forms.spec.ts",
-              "line": 50,
-              "column": 3
-            },
-            {
-              "title": "should handle character creation form",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 24,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 4,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:28.066Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-45043d771e28e4f8f459",
-              "file": "forms.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should validate form inputs",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 25,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 4,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:28.931Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-f4eef6b076981cdf4d3a",
-              "file": "forms.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "should handle search functionality",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 26,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 4,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:29.589Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "3d495e9d89fc3701f213-97004a55caca017166a6",
-              "file": "forms.spec.ts",
-              "line": 50,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "navigation.spec.ts",
-      "file": "navigation.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Navigation",
-          "file": "navigation.spec.ts",
-          "line": 3,
-          "column": 6,
-          "specs": [
-            {
-              "title": "should navigate through all main routes",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 6944,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                          "column": 52,
-                          "line": 33
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                            "column": 52,
-                            "line": 33
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:52.188Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                        "column": 52,
-                        "line": 33
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-2612d5b8d455d8b9178f",
-              "file": "navigation.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should handle sidebar navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 287,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:52.245Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-b218c719f86b4b2b07c2",
-              "file": "navigation.spec.ts",
-              "line": 40,
-              "column": 3
-            },
-            {
-              "title": "should handle breadcrumb navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 295,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:28:52.545Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-61830162678b2fe13576",
-              "file": "navigation.spec.ts",
-              "line": 51,
-              "column": 3
-            },
-            {
-              "title": "should navigate through all main routes",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 8694,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                          "column": 52,
-                          "line": 33
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                            "column": 52,
-                            "line": 33
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:02.170Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-firefox/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-firefox/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-firefox/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                        "column": 52,
-                        "line": 33
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-e13c4abbfd029cb2f1ef",
-              "file": "navigation.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should handle sidebar navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 7,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 458,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:03.582Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-44ded67a64b7d3528420",
-              "file": "navigation.spec.ts",
-              "line": 40,
-              "column": 3
-            },
-            {
-              "title": "should handle breadcrumb navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 7,
-                      "parallelIndex": 3,
-                      "status": "passed",
-                      "duration": 590,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:04.056Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-14986c17ef546c2ffc76",
-              "file": "navigation.spec.ts",
-              "line": 51,
-              "column": 3
-            },
-            {
-              "title": "should navigate through all main routes",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 14,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:11.842Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-06906f8350d943f5009d",
-              "file": "navigation.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should handle sidebar navigation",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 15,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:11.877Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-808637dab20c512580e4",
-              "file": "navigation.spec.ts",
-              "line": 40,
-              "column": 3
-            },
-            {
-              "title": "should handle breadcrumb navigation",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 16,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:13.051Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-60b215a1ee9b7a20329e",
-              "file": "navigation.spec.ts",
-              "line": 51,
-              "column": 3
-            },
-            {
-              "title": "should navigate through all main routes",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 19,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 6834,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52",
-                        "location": {
-                          "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                          "column": 52,
-                          "line": 33
-                        },
-                        "snippet": "\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                            "column": 52,
-                            "line": 33
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('text=Error')\nExpected: not visible\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Error')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"text-center text-xs text-muted-foreground\">Error 404</div>\u001b[22m\n\u001b[2m      - unexpected value \"visible\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 31 |\u001b[39m       \n \u001b[90m 32 |\u001b[39m       \u001b[90m// Check that there's no error message\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 33 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Error'\u001b[39m))\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 34 |\u001b[39m       \n \u001b[90m 35 |\u001b[39m       \u001b[90m// Check that the URL is correct\u001b[39m\n \u001b[90m 36 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mtoHaveURL(route)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts:33:52\u001b[22m"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:21.370Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-Mobile-Chrome/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-Mobile-Chrome/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/jek/Downloads/cosplay-tracker/test-results/navigation-Navigation-shou-d92a5-ate-through-all-main-routes-Mobile-Chrome/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/jek/Downloads/cosplay-tracker/tests/e2e/navigation.spec.ts",
-                        "column": 52,
-                        "line": 33
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-35f37a7689da31c15e4f",
-              "file": "navigation.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should handle sidebar navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 20,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 482,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:23.424Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-51f39d890284afd345ff",
-              "file": "navigation.spec.ts",
-              "line": 40,
-              "column": 3
-            },
-            {
-              "title": "should handle breadcrumb navigation",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 20,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 267,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:23.975Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-09ebb03ce12c81d2753b",
-              "file": "navigation.spec.ts",
-              "line": 51,
-              "column": 3
-            },
-            {
-              "title": "should navigate through all main routes",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 27,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 4,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:29.591Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-4d3db1580713ed2d5c98",
-              "file": "navigation.spec.ts",
-              "line": 4,
-              "column": 3
-            },
-            {
-              "title": "should handle sidebar navigation",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 28,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:30.711Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-a7176cf683be770e9bb8",
-              "file": "navigation.spec.ts",
-              "line": 40,
-              "column": 3
-            },
-            {
-              "title": "should handle breadcrumb navigation",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Safari",
-                  "projectName": "Mobile Safari",
-                  "results": [
-                    {
-                      "workerIndex": 29,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 3,
-                      "error": {
-                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝",
-                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                      },
-                      "errors": [
-                        {
-                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Missing libraries:                                   ║\n║     libicudata.so.66                                 ║\n║     libicui18n.so.66                                 ║\n║     libicuuc.so.66                                   ║\n║     libevent-2.1.so.7                                ║\n║     libwebp.so.6                                     ║\n║     libffi.so.7                                      ║\n╚══════════════════════════════════════════════════════╝"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-25T19:29:31.402Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "5d2868f7d23420c27cca-6c340c00c276126a4759",
-              "file": "navigation.spec.ts",
-              "line": 51,
-              "column": 3
-            }
-          ]
-        }
-      ]
+      "message": "Error: Process from config.webServer was not able to start. Exit code: 127",
+      "stack": "Error: Process from config.webServer was not able to start. Exit code: 127"
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2025-10-25T19:28:34.225Z",
-    "duration": 71055.783,
-    "expected": 18,
+    "startTime": "2025-11-01T09:06:58.383Z",
+    "duration": 114.31799999999998,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 27,
+    "unexpected": 0,
     "flaky": 0
   }
 }

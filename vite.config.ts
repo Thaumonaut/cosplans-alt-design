@@ -1,8 +1,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import { resolve } from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+	// Load env variables - SvelteKit handles this automatically, but being explicit
+	const env = loadEnv(mode, process.cwd(), '');
+	
+	return {
 	plugins: [sveltekit()],
 	
 	// Dependency optimization
@@ -65,4 +69,5 @@ export default defineConfig({
 	css: {
 		devSourcemap: true
 	}
+	};
 });

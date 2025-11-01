@@ -39,7 +39,9 @@
   }
 
   function handleBackdropClick(event: MouseEvent) {
+    console.log('[CreationFlyout] Backdrop clicked', { target: event.target, currentTarget: event.currentTarget, tagName: (event.target as HTMLElement)?.tagName })
     if (event.target === event.currentTarget) {
+      console.log('[CreationFlyout] Closing flyout (backdrop click)')
       handleClose();
     }
   }
@@ -69,7 +71,11 @@
         open ? 'translate-x-0' : 'translate-x-full',
         className
       )}
-      onclick={(e) => e.stopPropagation()}
+      onclick={(e) => {
+        console.log('[CreationFlyout] Panel clicked', { target: e.target, currentTarget: e.currentTarget, tagName: (e.target as HTMLElement)?.tagName })
+        // Always stop propagation to prevent backdrop from closing
+        e.stopPropagation();
+      }}
       onkeydown={(e) => e.stopPropagation()}
       role="document"
     >

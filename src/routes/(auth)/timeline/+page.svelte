@@ -1,9 +1,18 @@
 <script lang="ts">
   import { BarChart3, ChevronLeft, ChevronRight, Filter } from 'lucide-svelte';
   import { Button, Card, Badge, Progress, Select } from '$lib/components/ui';
+  import { onMount } from 'svelte';
+  import { projectService } from '$lib/api/services/projectService';
+  import { photoshootService } from '$lib/api/services/photoshootService';
+  import { taskService } from '$lib/api/services/taskService';
+  import { currentTeam } from '$lib/stores/teams';
+  import { get } from 'svelte/store';
+  import type { Project as DomainProject } from '$lib/types/domain/project';
+  import type { Task as DomainTask } from '$lib/types/domain/task';
+  import type { Photoshoot } from '$lib/types/domain/photoshoot';
 
-  interface Project {
-    id: number;
+  interface TimelineProject {
+    id: string;
     name: string;
     startDate: string;
     endDate: string;
@@ -18,65 +27,107 @@
     }>;
   }
 
-  const projects: Project[] = [
-    {
-      id: 1,
-      name: "Elden Ring - Malenia",
-      startDate: "2025-09-15",
-      endDate: "2025-10-15",
-      progress: 85,
-      status: "in-progress",
-      color: "bg-primary",
-      tasks: [
-        { name: "Armor Patterning", start: "2025-09-15", end: "2025-09-25", progress: 100 },
-        { name: "Foam Fabrication", start: "2025-09-26", end: "2025-10-05", progress: 100 },
-        { name: "Painting & Weathering", start: "2025-10-06", end: "2025-10-12", progress: 90 },
-        { name: "Final Assembly", start: "2025-10-10", end: "2025-10-15", progress: 60 },
-      ],
-    },
-    {
-      id: 2,
-      name: "Genshin Impact - Raiden Shogun",
-      startDate: "2025-10-01",
-      endDate: "2025-11-20",
-      progress: 35,
-      status: "in-progress",
-      color: "bg-purple-500",
-      tasks: [
-        { name: "Reference Gathering", start: "2025-10-01", end: "2025-10-05", progress: 100 },
-        { name: "Material Ordering", start: "2025-10-06", end: "2025-10-12", progress: 100 },
-        { name: "Kimono Construction", start: "2025-10-13", end: "2025-10-30", progress: 40 },
-        { name: "Armor Pieces", start: "2025-10-25", end: "2025-11-10", progress: 20 },
-        { name: "Wig Styling", start: "2025-11-05", end: "2025-11-15", progress: 0 },
-      ],
-    },
-    {
-      id: 3,
-      name: "Arcane - Jinx",
-      startDate: "2025-11-01",
-      endDate: "2025-12-15",
-      progress: 10,
-      status: "planning",
-      color: "bg-blue-500",
-      tasks: [
-        { name: "Concept Planning", start: "2025-11-01", end: "2025-11-10", progress: 50 },
-        { name: "Budget Planning", start: "2025-11-05", end: "2025-11-12", progress: 30 },
-        { name: "Pattern Making", start: "2025-11-15", end: "2025-11-25", progress: 0 },
-        { name: "Fabric Sourcing", start: "2025-11-20", end: "2025-11-30", progress: 0 },
-      ],
-    },
-  ];
+  interface TimelineEvent {
+    name: string;
+    date: string;
+    type: string;
+    color: string;
+  }
 
-  const events = [
-    { name: "Anime Expo 2025", date: "2025-10-18", type: "convention", color: "bg-amber-500" },
-    { name: "Forest Photoshoot", date: "2025-10-25", type: "photoshoot", color: "bg-pink-500" },
-    { name: "Local Comic Con", date: "2025-11-22", type: "convention", color: "bg-amber-500" },
-    { name: "Studio Session", date: "2025-11-28", type: "photoshoot", color: "bg-pink-500" },
-  ];
+  let projects = $state<TimelineProject[]>([]);
+  let events = $state<TimelineEvent[]>([]);
+  let loading = $state(true);
 
-  let currentDate = $state(new Date(2025, 9, 1));
+  let currentDate = $state(new Date());
   let viewMode = $state<"projects" | "tasks">("projects");
-  let expandedProjects = $state<number[]>([1, 2]);
+  let expandedProjects = $state<string[]>([]);
+
+  // Color mapping based on project index
+  const projectColors = [
+    "bg-primary",
+    "bg-purple-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-yellow-500",
+    "bg-pink-500",
+  ];
+
+  async function loadTimelineData() {
+    try {
+      loading = true;
+      const team = get(currentTeam);
+      if (!team) {
+        projects = [];
+        events = [];
+        return;
+      }
+
+      const [dbProjects, dbPhotoshoots] = await Promise.all([
+        projectService.list(),
+        photoshootService.list(),
+      ]);
+
+      // Transform projects to timeline format
+      projects = dbProjects.map((project, index) => {
+        // Get tasks for this project
+        let projectTasks: DomainTask[] = [];
+        
+        // Calculate start date from created_at, end date from deadline or current date
+        const startDate = project.createdAt ? new Date(project.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        const endDate = project.deadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 30 days from now if no deadline
+
+        return {
+          id: project.id,
+          name: `${project.character}${project.series ? ` - ${project.series}` : ''}`,
+          startDate,
+          endDate,
+          progress: project.progress,
+          status: project.status,
+          color: projectColors[index % projectColors.length],
+          tasks: projectTasks.map(task => {
+            const dueDate = task.dueDate instanceof Date ? task.dueDate : (typeof task.dueDate === 'string' ? new Date(task.dueDate) : null);
+            return {
+              name: task.title,
+              start: dueDate ? new Date(dueDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : startDate, // 7 days before due date
+              end: dueDate ? dueDate.toISOString().split('T')[0] : endDate,
+              progress: task.completed ? 100 : 0,
+            };
+          }),
+        };
+      });
+
+      // Transform photoshoots to events
+      events = dbPhotoshoots
+        .filter(p => p.date)
+        .map(photoshoot => ({
+          name: photoshoot.title,
+          date: photoshoot.date!,
+          type: photoshoot.status === 'completed' ? 'past-photoshoot' : 'photoshoot',
+          color: photoshoot.status === 'completed' ? 'bg-gray-500' : 'bg-pink-500',
+        }));
+
+      // Expand first 2 projects by default
+      if (projects.length > 0) {
+        expandedProjects = projects.slice(0, 2).map(p => p.id);
+      }
+    } catch (error) {
+      console.error('Failed to load timeline data:', error);
+      projects = [];
+      events = [];
+    } finally {
+      loading = false;
+    }
+  }
+
+  onMount(() => {
+    loadTimelineData();
+    
+    const unsubscribe = currentTeam.subscribe(() => {
+      loadTimelineData();
+    });
+    
+    return unsubscribe;
+  });
 
   const monthName = $derived(currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }));
 
@@ -88,7 +139,7 @@
     currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
   }
 
-  function toggleProject(projectId: number) {
+  function toggleProject(projectId: string) {
     if (expandedProjects.includes(projectId)) {
       expandedProjects = expandedProjects.filter((id) => id !== projectId);
     } else {
@@ -184,10 +235,25 @@
       </div>
 
       <!-- Timeline Content -->
-      <div class="divide-y">
-        {#each projects as project (project.id)}
-          {@const isExpanded = expandedProjects.includes(project.id)}
-          {@const barPosition = getBarPosition(project.startDate, project.endDate)}
+      {#if loading}
+        <div class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+            <p class="text-sm text-muted-foreground">Loading timeline...</p>
+          </div>
+        </div>
+      {:else if projects.length === 0 && events.length === 0}
+        <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+          <p class="mb-2 text-lg font-medium text-muted-foreground">No timeline data</p>
+          <p class="text-center text-sm text-muted-foreground max-w-md">
+            Create projects and photoshoots to see them on the timeline.
+          </p>
+        </div>
+      {:else}
+        <div class="divide-y">
+          {#each projects as project (project.id)}
+            {@const isExpanded = expandedProjects.includes(project.id)}
+            {@const barPosition = getBarPosition(project.startDate, project.endDate)}
 
           <div>
             <!-- Project Row -->
@@ -262,6 +328,7 @@
           </div>
         </div>
       </div>
+    {/if}
     </Card>
 
     <!-- Legend -->

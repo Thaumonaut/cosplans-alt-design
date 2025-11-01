@@ -150,8 +150,7 @@ describe('Interactive Components Integration Tests', () => {
       
       const resources = [
         { title: 'Characters', url: '/characters', icon: 'Sparkles' },
-        { title: 'Outfits', url: '/outfits', icon: 'Shirt' },
-        { title: 'Props', url: '/props', icon: 'Package' },
+        { title: 'Resources', url: '/resources', icon: 'Package' },
       ];
       
       // Verify navigation structure

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { 
     Plus, 
     UserPlus, 
@@ -8,7 +9,8 @@
     Mail, 
     MoreVertical, 
     Settings, 
-    Users 
+    Users,
+    Loader2
   } from 'lucide-svelte';
   import { 
     Button, 
@@ -28,113 +30,289 @@
     DropdownMenu,
     DropdownMenuItem,
     DropdownMenuSeparator,
-    Dialog
+    Dialog,
+    Select
   } from '$lib/components/ui';
+  import { teamService, type Team, type TeamMember } from '$lib/api/services/teamService';
+  import { teams, currentTeam } from '$lib/stores/teams';
+  import { user, authActions } from '$lib/stores/auth-store';
+  import { toast } from '$lib/stores/toast';
+  import { get } from 'svelte/store';
 
-  interface Team {
-    id: number;
-    name: string;
-    type: string;
-    members: number;
-    role: string;
-    description: string;
-  }
-
-  interface TeamMember {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    avatar: string;
-    joinedDate: string;
-  }
-
-  interface PendingInvite {
-    id: number;
-    email: string;
-    invitedBy: string;
-    sentDate: string;
-  }
-
-  const teams: Team[] = [
-    {
-      id: 1,
-      name: "Cosplay Warriors",
-      type: "Public",
-      members: 8,
-      role: "Owner",
-      description: "Main cosplay team for conventions and group projects",
-    },
-    {
-      id: 2,
-      name: "Personal Projects",
-      type: "Personal",
-      members: 1,
-      role: "Owner",
-      description: "Solo cosplay builds and experiments",
-    },
-    {
-      id: 3,
-      name: "Con 2024 Prep",
-      type: "Temporary",
-      members: 5,
-      role: "Admin",
-      description: "Temporary team for upcoming convention",
-    },
-  ];
-
-  const currentTeamMembers: TeamMember[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      role: "Owner",
-      avatar: "/placeholder.svg?height=40&width=40",
-      joinedDate: "Jan 2023",
-    },
-    {
-      id: 2,
-      name: "Sarah Chen",
-      email: "sarah@example.com",
-      role: "Admin",
-      avatar: "/placeholder.svg?height=40&width=40",
-      joinedDate: "Mar 2023",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      role: "Member",
-      avatar: "/placeholder.svg?height=40&width=40",
-      joinedDate: "Jun 2023",
-    },
-    {
-      id: 4,
-      name: "Emily Rodriguez",
-      email: "emily@example.com",
-      role: "Member",
-      avatar: "/placeholder.svg?height=40&width=40",
-      joinedDate: "Aug 2023",
-    },
-  ];
-
-  const pendingInvites: PendingInvite[] = [
-    {
-      id: 1,
-      email: "alex@example.com",
-      invitedBy: "John Doe",
-      sentDate: "2 days ago",
-    },
-    {
-      id: 2,
-      email: "taylor@example.com",
-      invitedBy: "Sarah Chen",
-      sentDate: "5 days ago",
-    },
-  ];
-
+  let loading = $state(false);
+  let loadingMembers = $state(false);
+  let isLoadingInProgress = $state(false);
   let showCreateTeamDialog = $state(false);
   let showInviteMemberDialog = $state(false);
+  
+  let allTeams = $state<Team[]>([]);
+  let currentTeamData = $state<Team | null>(null);
+  let teamMembers = $state<TeamMember[]>([]);
+  let pendingInvites = $state<any[]>([]); // For future implementation
+
+  // Create team form
+  let newTeamName = $state('');
+  let newTeamType = $state<'personal' | 'private'>('private');
+  let newTeamDescription = $state('');
+
+  // Invite member form
+  let inviteEmail = $state('');
+  let inviteRole = $state<'editor' | 'viewer'>('editor');
+
+  // Load teams and members
+  async function loadData() {
+    // Prevent multiple simultaneous loads
+    if (isLoadingInProgress) {
+      console.log('[TeamSettings] Load already in progress, skipping');
+      return;
+    }
+    
+    try {
+      isLoadingInProgress = true;
+      loading = true;
+      
+      const currentUser = get(user);
+      if (!currentUser) {
+        console.warn('[TeamSettings] No user available, cannot load teams');
+        toast.error('Not Authenticated', 'Please sign in to view teams');
+        loading = false;
+        return;
+      }
+
+      // Load all teams
+      console.log('[TeamSettings] Loading teams for user:', currentUser.id);
+      try {
+        allTeams = await teamService.list(currentUser.id);
+        console.log('[TeamSettings] Loaded teams:', allTeams.length);
+      } catch (listError: any) {
+        console.error('[TeamSettings] teamService.list() failed:', listError);
+        throw listError; // Re-throw to be caught by outer catch
+      }
+      
+      // Set current team (use selected team or first team)
+      const selectedTeam = get(currentTeam);
+      currentTeamData = selectedTeam || allTeams[0] || null;
+      console.log('[TeamSettings] Current team:', currentTeamData?.name || 'none');
+
+      // Load members for current team
+      if (currentTeamData) {
+        await loadTeamMembers(currentTeamData.id);
+      } else {
+        console.warn('[TeamSettings] No team available to load members');
+      }
+    } catch (error: any) {
+      console.error('[TeamSettings] Failed to load teams:', error);
+      console.error('[TeamSettings] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        stack: error?.stack
+      });
+      toast.error('Failed to Load Teams', error?.message || 'Could not load your teams');
+    } finally {
+      loading = false;
+      isLoadingInProgress = false;
+    }
+  }
+
+  async function loadTeamMembers(teamId: string) {
+    try {
+      loadingMembers = true;
+      console.log('[TeamSettings] Loading members for team:', teamId);
+      teamMembers = await teamService.getMembers(teamId);
+      console.log('[TeamSettings] Loaded members:', teamMembers.length);
+    } catch (error: any) {
+      console.error('[TeamSettings] Failed to load team members:', error);
+      console.error('[TeamSettings] Member load error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        stack: error?.stack
+      });
+      toast.error('Failed to Load Members', error?.message || 'Could not load team members');
+    } finally {
+      loadingMembers = false;
+    }
+  }
+
+  async function handleCreateTeam() {
+    if (!newTeamName.trim()) {
+      toast.error('Team Name Required', 'Please enter a team name');
+      return;
+    }
+
+    try {
+      const created = await teamService.create({
+        name: newTeamName.trim(),
+        type: newTeamType,
+      });
+
+      toast.success('Team Created', `${created.name} has been created successfully`);
+      
+      // Reset form
+      newTeamName = '';
+      newTeamType = 'private';
+      newTeamDescription = '';
+      showCreateTeamDialog = false;
+
+      // Reload teams
+      await loadData();
+    } catch (error: any) {
+      console.error('Failed to create team:', error);
+      toast.error('Failed to Create Team', error?.message || 'Could not create team');
+    }
+  }
+
+  async function handleInviteMember() {
+    if (!inviteEmail.trim()) {
+      toast.error('Email Required', 'Please enter an email address');
+      return;
+    }
+
+    if (!currentTeamData) {
+      toast.error('No Team Selected', 'Please select a team first');
+      return;
+    }
+
+    try {
+      await teamService.invite(currentTeamData.id, {
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+
+      toast.success('Member Invited', `Invitation sent to ${inviteEmail}`);
+      
+      // Reset form
+      inviteEmail = '';
+      inviteRole = 'editor';
+      showInviteMemberDialog = false;
+
+      // Reload members
+      await loadTeamMembers(currentTeamData.id);
+    } catch (error: any) {
+      console.error('Failed to invite member:', error);
+      toast.error('Failed to Invite Member', error?.message || 'Could not send invitation');
+    }
+  }
+
+  async function handleRemoveMember(member: TeamMember) {
+    if (!currentTeamData) return;
+    
+    if (!confirm(`Are you sure you want to remove ${member.user?.name || member.user?.email || 'this member'} from the team?`)) {
+      return;
+    }
+
+    try {
+      await teamService.removeMember(currentTeamData.id, member.userId);
+      toast.success('Member Removed', 'Member has been removed from the team');
+      await loadTeamMembers(currentTeamData.id);
+    } catch (error: any) {
+      console.error('Failed to remove member:', error);
+      toast.error('Failed to Remove Member', error?.message || 'Could not remove member');
+    }
+  }
+
+  async function handleChangeRole(member: TeamMember, newRole: 'owner' | 'editor' | 'viewer') {
+    if (!currentTeamData) return;
+
+    try {
+      await teamService.updateMemberRole(currentTeamData.id, member.userId, newRole);
+      toast.success('Role Updated', 'Member role has been updated');
+      await loadTeamMembers(currentTeamData.id);
+    } catch (error: any) {
+      console.error('Failed to update role:', error);
+      toast.error('Failed to Update Role', error?.message || 'Could not update member role');
+    }
+  }
+
+  async function handleSwitchTeam(team: Team) {
+    currentTeamData = team;
+    await loadTeamMembers(team.id);
+    // Update current team in store
+    await teams.setCurrent(team.id);
+  }
+
+  function formatDate(dateString?: string) {
+    if (!dateString) return 'Unknown';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    } catch {
+      return 'Unknown';
+    }
+  }
+
+  function getInitials(name?: string, email?: string) {
+    if (name) {
+      const parts = name.split(' ');
+      if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    }
+    if (email) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  }
+
+  function getRoleDisplayName(role: string) {
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+
+  function getTeamMemberCount(teamId: string) {
+    // For now, return count from current team members if it matches
+    if (currentTeamData?.id === teamId) {
+      return teamMembers.length;
+    }
+    return 0; // Would need to load separately for other teams
+  }
+
+  // Track if we've already attempted to load data
+  let hasLoaded = $state(false);
+
+  onMount(async () => {
+    // Wait for user to be available before loading
+    let attempts = 0;
+    const maxAttempts = 20; // 2 seconds total
+    
+    while (attempts < maxAttempts) {
+      const currentUser = get(user);
+      if (currentUser) {
+        if (!hasLoaded) {
+          hasLoaded = true;
+          await loadData();
+        }
+        return;
+      }
+      
+      // Wait 100ms before checking again
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    // If user still not available, try to get from Supabase directly
+    if (!hasLoaded) {
+      try {
+        const { supabase } = await import('$lib/supabase');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          authActions.setUser(authUser);
+          hasLoaded = true;
+          await loadData();
+          return;
+        }
+      } catch (err) {
+        console.error('[TeamSettings] Failed to get user:', err);
+      }
+      
+      // Still no user - show error
+      if (!hasLoaded) {
+        toast.error('Not Authenticated', 'Please sign in to view teams');
+        loading = false;
+      }
+    }
+  });
 </script>
 
 <svelte:head>
@@ -154,63 +332,74 @@
     </Button>
   </div>
 
+  {#if loading}
+    <div class="flex items-center justify-center py-20">
+      <Loader2 class="mr-2 size-5 animate-spin text-muted-foreground" />
+      <span class="text-sm text-muted-foreground">Loading teams...</span>
+    </div>
+  {:else}
   <!-- Teams Overview -->
   <div>
     <h2 class="mb-4 text-xl font-semibold">Your Teams</h2>
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {#each teams as team (team.id)}
+      {#if allTeams.length === 0}
         <Card>
+          <CardContent class="py-12 text-center">
+            <Users class="mx-auto mb-4 size-12 text-muted-foreground" />
+            <p class="mb-2 text-lg font-semibold">No teams yet</p>
+            <p class="mb-4 text-sm text-muted-foreground">Create your first team to start collaborating</p>
+            <Button onclick={() => showCreateTeamDialog = true}>
+              <Plus class="mr-2 size-4" />
+              Create Team
+            </Button>
+          </CardContent>
+        </Card>
+      {:else}
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {#each allTeams as team (team.id)}
+            <button 
+              type="button"
+              class="w-full text-left"
+              onclick={() => handleSwitchTeam(team)}
+              aria-label="Select team {team.name}"
+            >
+            <Card 
+              class="transition-all hover:shadow-md {currentTeamData?.id === team.id ? 'ring-2 ring-primary' : ''}"
+            >
           <CardHeader>
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <CardTitle class="text-lg">{team.name}</CardTitle>
-                <CardDescription class="mt-1">{team.description}</CardDescription>
+                    <CardDescription class="mt-1">
+                      {team.type === 'personal' ? 'Personal workspace' : 'Team collaboration'}
+                    </CardDescription>
               </div>
-              <DropdownMenu>
-                <Button variant="ghost" size="icon" slot="trigger">
-                  <MoreVertical class="size-4" />
-                </Button>
-                <div slot="content">
-                  <DropdownMenuItem>
-                    <Settings class="mr-2 size-4" />
-                    Team Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <UserPlus class="mr-2 size-4" />
-                    Invite Members
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem class="text-destructive">
-                    <Trash2 class="mr-2 size-4" />
-                    Delete Team
-                  </DropdownMenuItem>
-                </div>
-              </DropdownMenu>
             </div>
           </CardHeader>
           <CardContent>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <Badge variant="secondary">{team.type}</Badge>
-                <Badge variant="outline">{team.role}</Badge>
+                    <Badge variant="secondary">{team.type === 'personal' ? 'Personal' : 'Team'}</Badge>
               </div>
               <div class="flex items-center gap-1 text-sm text-muted-foreground">
                 <Users class="size-4" />
-                {team.members}
+                    {getTeamMemberCount(team.id)}
               </div>
             </div>
           </CardContent>
         </Card>
+            </button>
       {/each}
     </div>
+      {/if}
   </div>
 
   <!-- Current Team Details -->
+    {#if currentTeamData}
   <Card>
     <CardHeader>
       <div class="flex items-center justify-between">
         <div>
-          <CardTitle>Cosplay Warriors</CardTitle>
+              <CardTitle>{currentTeamData.name}</CardTitle>
           <CardDescription>Manage members and team settings</CardDescription>
         </div>
         <Button onclick={() => showInviteMemberDialog = true}>
@@ -222,179 +411,199 @@
     <CardContent class="space-y-6">
       <!-- Team Members -->
       <div>
-        <h3 class="mb-3 font-semibold">Team Members ({currentTeamMembers.length})</h3>
+            <h3 class="mb-3 font-semibold">
+              Team Members 
+              {#if loadingMembers}
+                <Loader2 class="ml-2 inline size-4 animate-spin" />
+              {:else}
+                ({teamMembers.length})
+              {/if}
+            </h3>
+            {#if loadingMembers}
+              <div class="flex items-center justify-center py-8">
+                <Loader2 class="mr-2 size-5 animate-spin text-muted-foreground" />
+                <span class="text-sm text-muted-foreground">Loading members...</span>
+              </div>
+            {:else if teamMembers.length === 0}
+              <div class="rounded-lg border border-dashed p-8 text-center">
+                <Users class="mx-auto mb-2 size-8 text-muted-foreground" />
+                <p class="text-sm text-muted-foreground">No members yet. Invite someone to get started!</p>
+              </div>
+            {:else}
         <div class="space-y-2">
-          {#each currentTeamMembers as member (member.id)}
+                {#each teamMembers as member (member.id)}
             <div class="flex items-center justify-between rounded-lg border p-3">
               <div class="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={member.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage 
+                          src={member.user?.avatarUrl || '/placeholder-user.jpg'} 
+                          alt={member.user?.name || member.user?.email || 'Team member'}
+                        />
+                        <AvatarFallback>
+                          {getInitials(member.user?.name, member.user?.email)}
+                        </AvatarFallback>
                 </Avatar>
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="font-medium">{member.name}</span>
-                    {#if member.role === "Owner"}
+                          <span class="font-medium">{member.user?.name || member.user?.email || 'Unknown'}</span>
+                          {#if member.role === 'owner'}
                       <Crown class="size-4 text-amber-500" />
-                    {:else if member.role === "Admin"}
+                          {:else if member.role === 'editor'}
                       <Shield class="size-4 text-blue-500" />
                     {/if}
                   </div>
                   <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{member.email}</span>
+                          <span>{member.user?.email}</span>
+                          {#if member.joinedAt}
                     <span>•</span>
-                    <span>Joined {member.joinedDate}</span>
+                            <span>Joined {formatDate(member.joinedAt)}</span>
+                          {/if}
                   </div>
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <Badge variant="outline">{member.role}</Badge>
-                {#if member.role !== "Owner"}
+                      <Badge variant="outline">{getRoleDisplayName(member.role)}</Badge>
+                      {#if member.role !== 'owner'}
                   <DropdownMenu>
-                    <Button variant="ghost" size="icon" slot="trigger">
+                          {#snippet trigger()}
+                            <Button variant="ghost" size="icon">
                       <MoreVertical class="size-4" />
                     </Button>
-                    <div slot="content">
-                      <DropdownMenuItem>Change Role</DropdownMenuItem>
-                      <DropdownMenuItem class="text-destructive">Remove from Team</DropdownMenuItem>
-                    </div>
+                          {/snippet}
+                          {#snippet children()}
+                            <DropdownMenuItem onclick={() => handleChangeRole(member, 'editor')}>
+                              Change to Editor
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onclick={() => handleChangeRole(member, 'viewer')}>
+                              Change to Viewer
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              variant="destructive"
+                              onclick={() => handleRemoveMember(member)}
+                            >
+                              Remove from Team
+                            </DropdownMenuItem>
+                          {/snippet}
                   </DropdownMenu>
                 {/if}
               </div>
             </div>
           {/each}
         </div>
-      </div>
-
-      <!-- Pending Invites -->
-      {#if pendingInvites.length > 0}
-        <div>
-          <h3 class="mb-3 font-semibold">Pending Invitations ({pendingInvites.length})</h3>
-          <div class="space-y-2">
-            {#each pendingInvites as invite (invite.id)}
-              <div class="flex items-center justify-between rounded-lg border border-dashed p-3">
-                <div class="flex items-center gap-3">
-                  <div class="flex size-10 items-center justify-center rounded-full bg-muted">
-                    <Mail class="size-4 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <div class="font-medium">{invite.email}</div>
-                    <div class="text-sm text-muted-foreground">
-                      Invited by {invite.invitedBy} • {invite.sentDate}
-                    </div>
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost">
-                  Resend
-                </Button>
-              </div>
-            {/each}
-          </div>
-        </div>
       {/if}
-
-      <!-- Team Settings -->
-      <div class="space-y-4 border-t pt-6">
-        <h3 class="font-semibold">Team Settings</h3>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">Allow member invites</div>
-              <div class="text-sm text-muted-foreground">Let team members invite others</div>
-            </div>
-            <Switch />
           </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">Public team</div>
-              <div class="text-sm text-muted-foreground">Make team visible in marketplace</div>
-            </div>
-            <Switch checked />
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">Project notifications</div>
-              <div class="text-sm text-muted-foreground">Notify team of project updates</div>
-            </div>
-            <Switch checked />
-          </div>
-        </div>
-      </div>
-
-      <!-- Danger Zone -->
-      <div class="space-y-4 border-t border-destructive/20 pt-6">
-        <h3 class="font-semibold text-destructive">Danger Zone</h3>
-        <div class="space-y-2">
-          <Button variant="outline" class="w-full justify-start text-destructive bg-transparent">
-            <Trash2 class="mr-2 size-4" />
-            Delete Team
-          </Button>
-          <p class="text-sm text-muted-foreground">
-            This action cannot be undone. All team data will be permanently deleted.
-          </p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+    {:else}
+      <Card>
+        <CardContent class="py-12 text-center">
+          <p class="text-muted-foreground">Select a team to view details</p>
     </CardContent>
   </Card>
+    {/if}
+  {/if}
 </div>
 
 <!-- Create Team Dialog -->
-{#if showCreateTeamDialog}
-  <Dialog bind:open={showCreateTeamDialog}>
-    <div class="space-y-4 p-6">
-      <div>
-        <h2 class="text-lg font-semibold">Create New Team</h2>
-        <p class="text-sm text-muted-foreground">Set up a new team for collaboration</p>
-      </div>
+<Dialog 
+  bind:open={showCreateTeamDialog}
+  title="Create New Team"
+  description="Set up a new team for collaboration"
+>
       <div class="space-y-4">
         <div class="space-y-2">
           <Label>Team Name</Label>
-          <Input placeholder="Enter team name..." />
+      <Input 
+        bind:value={newTeamName}
+        placeholder="Enter team name..." 
+      />
         </div>
         <div class="space-y-2">
           <Label>Team Type</Label>
-          <select class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-            <option>Personal</option>
-            <option>Public</option>
-            <option>Temporary</option>
-          </select>
+      <Select 
+        bind:value={newTeamType}
+        options={[
+          { value: 'private', label: 'Private Team' },
+          { value: 'personal', label: 'Personal' }
+        ]}
+      />
         </div>
         <div class="space-y-2">
-          <Label>Description</Label>
-          <Textarea placeholder="What's this team for?" />
+      <Label>Description (Optional)</Label>
+      <Textarea 
+        bind:value={newTeamDescription}
+        placeholder="What's this team for?" 
+      />
         </div>
-        <Button class="w-full">Create Team</Button>
+    <div class="flex gap-2">
+      <Button 
+        class="flex-1" 
+        onclick={handleCreateTeam}
+        disabled={!newTeamName.trim()}
+      >
+        Create Team
+      </Button>
+      <Button 
+        variant="outline" 
+        class="flex-1"
+        onclick={() => {
+          showCreateTeamDialog = false;
+          newTeamName = '';
+          newTeamType = 'private';
+          newTeamDescription = '';
+        }}
+      >
+        Cancel
+      </Button>
       </div>
     </div>
   </Dialog>
-{/if}
 
 <!-- Invite Member Dialog -->
-{#if showInviteMemberDialog}
-  <Dialog bind:open={showInviteMemberDialog}>
-    <div class="space-y-4 p-6">
-      <div>
-        <h2 class="text-lg font-semibold">Invite Team Member</h2>
-        <p class="text-sm text-muted-foreground">Send an invitation to join your team</p>
-      </div>
+<Dialog 
+  bind:open={showInviteMemberDialog}
+  title="Invite Team Member"
+  description="Send an invitation to join your team"
+>
       <div class="space-y-4">
         <div class="space-y-2">
           <Label>Email Address</Label>
-          <Input type="email" placeholder="member@example.com" />
+      <Input 
+        type="email" 
+        bind:value={inviteEmail}
+        placeholder="member@example.com" 
+      />
         </div>
         <div class="space-y-2">
           <Label>Role</Label>
-          <select class="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
-            <option>Member</option>
-            <option>Admin</option>
-          </select>
+      <Select 
+        bind:value={inviteRole}
+        options={[
+          { value: 'editor', label: 'Editor' },
+          { value: 'viewer', label: 'Viewer' }
+        ]}
+      />
         </div>
-        <div class="space-y-2">
-          <Label>Personal Message (Optional)</Label>
-          <Textarea placeholder="Add a personal note..." />
-        </div>
-        <Button class="w-full">Send Invitation</Button>
+    <div class="flex gap-2">
+      <Button 
+        class="flex-1" 
+        onclick={handleInviteMember}
+        disabled={!inviteEmail.trim()}
+      >
+        Send Invitation
+      </Button>
+      <Button 
+        variant="outline" 
+        class="flex-1"
+        onclick={() => {
+          showInviteMemberDialog = false;
+          inviteEmail = '';
+          inviteRole = 'editor';
+        }}
+      >
+        Cancel
+      </Button>
       </div>
     </div>
   </Dialog>
-{/if}

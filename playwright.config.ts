@@ -21,6 +21,8 @@ export default defineConfig({
   // Maximum time for assertions (10 seconds)
   expect: {
     timeout: 10 * 1000,
+    // Fail fast on assertions to avoid hanging
+    toHaveScreenshot: { threshold: 0.2 },
     // Visual regression threshold: 5% tolerance (95% similarity required)
     toHaveScreenshot: {
       maxDiffPixels: 0,
@@ -94,16 +96,23 @@ export default defineConfig({
   
   // Run local dev server before starting tests
   webServer: {
-    command: 'bun run dev',
+    // Use bun in CI, pnpm locally (detected from packageManager in package.json)
+    // For local: use pnpm exec which preserves PATH correctly
+    command: process.env.CI ? 'bun run dev' : 'pnpm exec vite dev',
     url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+    stdout: 'ignore',
+    stderr: 'pipe',
     env: {
+      // Spread existing env vars first (including .env.test loaded variables)
       ...process.env,
+      // Ensure PATH includes node from nvm for spawned processes (override after spreading)
+      PATH: process.env.PATH || '/home/jek/.nvm/versions/node/v22.20.0/bin:/usr/bin:/bin',
       // Ensure PUBLIC_ vars are present for SvelteKit build-time
       PUBLIC_SUPABASE_URL: process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL || '',
       PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_TEST_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || '',
     },
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
   },
   
   // Global setup and teardown

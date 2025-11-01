@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ fetch, url }) => {
     // Load projects that represent characters
     const projectsResponse = await apiClient.getProjects({ 
       status: status !== 'all' ? status : undefined 
-    })
+    }, fetch)
 
     if (!projectsResponse.success) {
       throw new Error(projectsResponse.message || 'Failed to load characters')

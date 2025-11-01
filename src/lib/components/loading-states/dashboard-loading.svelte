@@ -17,8 +17,8 @@
   </div>
   
   <!-- Main content skeleton -->
-  <div class="grid gap-6 lg:grid-cols-3">
-    <div class="space-y-6 lg:col-span-2">
+  <div class="grid gap-6 xl:grid-cols-3">
+    <div class="space-y-6 xl:col-span-2">
       <div class="space-y-4">
         <Skeleton class="h-6 w-48" />
         <div class="grid gap-4 sm:grid-cols-2">

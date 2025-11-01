@@ -3,11 +3,16 @@
   import { Button, Badge, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '$lib/components/ui';
   import CreationFlyout from '$lib/components/creation-flyout.svelte';
   import CharacterCreationForm from '$lib/components/character-creation-form.svelte';
+  import { onMount } from 'svelte';
+  import { projectService } from '$lib/api/services/projectService';
+  import type { Project } from '$lib/types/domain/project';
+  import { currentTeam } from '$lib/stores/teams';
+  import { get } from 'svelte/store';
 
   interface Character {
-    id: number;
+    id: string;
     name: string;
-    series: string;
+    series: string | null;
     image: string;
     difficulty: 'easy' | 'medium' | 'hard' | 'expert';
     tags: string[];
@@ -15,58 +20,8 @@
     usedInProjects: number;
   }
 
-  const characters: Character[] = [
-    {
-      id: 1,
-      name: "Malenia, Blade of Miquella",
-      series: "Elden Ring",
-      image: "/fantasy-warrior-armor-red-hair.jpg",
-      difficulty: "expert",
-      tags: ["armor", "fantasy", "warrior", "prosthetic"],
-      status: "in-progress",
-      usedInProjects: 1,
-    },
-    {
-      id: 2,
-      name: "Raiden Shogun",
-      series: "Genshin Impact",
-      image: "/anime-character-purple-kimono.jpg",
-      difficulty: "hard",
-      tags: ["kimono", "anime", "electro", "archon"],
-      status: "planning",
-      usedInProjects: 1,
-    },
-    {
-      id: 3,
-      name: "V (Female)",
-      series: "Cyberpunk 2077",
-      image: "/cyberpunk-character-neon-jacket.jpg",
-      difficulty: "medium",
-      tags: ["cyberpunk", "modern", "tech", "jacket"],
-      status: "idea",
-      usedInProjects: 1,
-    },
-    {
-      id: 4,
-      name: "Ciri",
-      series: "The Witcher 3",
-      image: "/fantasy-warrior-white-hair-sword.jpg",
-      difficulty: "hard",
-      tags: ["fantasy", "warrior", "leather", "sword"],
-      status: "completed",
-      usedInProjects: 1,
-    },
-    {
-      id: 5,
-      name: "Jinx",
-      series: "Arcane / League of Legends",
-      image: "/jinx-arcane-blue-hair-twin-braids.jpg",
-      difficulty: "medium",
-      tags: ["anime", "punk", "blue-hair", "weapons"],
-      status: "idea",
-      usedInProjects: 0,
-    },
-  ];
+  let characters = $state<Character[]>([]);
+  let loading = $state(true);
 
   const difficultyColors = {
     easy: "bg-green-500/10 text-green-700 dark:text-green-400",
@@ -90,6 +45,45 @@
     series: [] as string[],
   });
 
+  // Map difficulty based on progress/complexity
+  function getDifficulty(project: Project): 'easy' | 'medium' | 'hard' | 'expert' {
+    if (project.progress >= 75) return 'expert';
+    if (project.progress >= 50) return 'hard';
+    if (project.progress >= 25) return 'medium';
+    return 'easy';
+  }
+
+  // Load characters from projects
+  async function loadCharacters() {
+    try {
+      loading = true;
+      const team = get(currentTeam);
+      if (!team) {
+        characters = [];
+        return;
+      }
+
+      const projects = await projectService.list();
+      
+      // Transform projects to characters
+      characters = projects.map(project => ({
+        id: project.id,
+        name: project.character,
+        series: project.series || null,
+        image: project.coverImage || '/placeholder.svg',
+        difficulty: getDifficulty(project),
+        tags: project.tags || [],
+        status: project.status === 'archived' ? 'completed' : project.status as 'idea' | 'planning' | 'in-progress' | 'completed',
+        usedInProjects: 1, // Each project represents one character use
+      }));
+    } catch (error) {
+      console.error('Failed to load characters:', error);
+      characters = [];
+    } finally {
+      loading = false;
+    }
+  }
+
   function toggleFilter(category: keyof typeof filters, value: string) {
     const currentFilters = filters[category];
     if (currentFilters.includes(value)) {
@@ -98,6 +92,36 @@
       filters[category] = [...currentFilters, value];
     }
   }
+
+  // Filter characters based on active filters
+  const filteredCharacters = $derived(() => {
+    let filtered = characters;
+
+    if (filters.difficulty.length > 0) {
+      filtered = filtered.filter(c => filters.difficulty.includes(c.difficulty));
+    }
+
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(c => filters.status.includes(c.status));
+    }
+
+    if (filters.series.length > 0) {
+      filtered = filtered.filter(c => c.series && filters.series.includes(c.series));
+    }
+
+    return filtered;
+  });
+
+  onMount(() => {
+    loadCharacters();
+    
+    // Reload when team changes
+    const unsubscribe = currentTeam.subscribe(() => {
+      loadCharacters();
+    });
+    
+    return unsubscribe;
+  });
 </script>
 
 <svelte:head>
@@ -171,14 +195,36 @@
   <div class="mb-8">
     <h1 class="text-balance text-3xl font-bold leading-tight">Characters</h1>
     <p class="text-pretty text-muted-foreground">
-      {characters.length} characters in your library across all projects
+      {#if loading}
+        Loading characters...
+      {:else}
+        {filteredCharacters.length} {filteredCharacters.length === 1 ? 'character' : 'characters'} in your library
+      {/if}
     </p>
   </div>
 
   <!-- Characters Grid/List View -->
-  {#if viewMode === "grid"}
+  {#if loading}
+    <div class="flex items-center justify-center py-12">
+      <div class="text-center">
+        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        <p class="text-sm text-muted-foreground">Loading characters...</p>
+      </div>
+    </div>
+  {:else if filteredCharacters.length === 0}
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
+      <p class="mb-2 text-lg font-medium text-muted-foreground">No characters found</p>
+      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
+        {#if filters.difficulty.length > 0 || filters.status.length > 0 || filters.series.length > 0}
+          Try adjusting your filters to see more characters.
+        {:else}
+          Get started by creating your first project. Each project represents a character cosplay.
+        {/if}
+      </p>
+    </div>
+  {:else if viewMode === "grid"}
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {#each characters as character (character.id)}
+      {#each filteredCharacters as character (character.id)}
         <div class="group overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg">
           <div class="relative aspect-[3/4] overflow-hidden bg-muted">
             <img
@@ -221,7 +267,7 @@
     </div>
   {:else}
     <div class="space-y-4">
-      {#each characters as character (character.id)}
+      {#each filteredCharacters as character (character.id)}
         <div class="flex gap-4 overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-lg">
           <div class="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
             <img

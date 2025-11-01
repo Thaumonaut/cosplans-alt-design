@@ -26,15 +26,15 @@
 
 **Purpose**: Project initialization and basic structure per plan.md
 
-- [ ] T001 Verify environment setup: Bun 1.0+, Node 18+, PostgreSQL 14+, Supabase CLI installed
-- [ ] T002 Create `.env` file from template with Supabase credentials (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
-- [ ] T003 Install dependencies with `bun install` including Flowbite Svelte 0.44+, Fuse.js, and Supabase JS SDK 2.x
-- [ ] T004 [P] Create directory structure for `src/lib/api/services/`, `src/lib/types/domain/`, `src/lib/stores/`, `src/lib/components/base/`
-- [ ] T005 [P] Create directory structure for `src/routes/(auth)/`, `src/routes/login/`, `src/routes/signup/`
-- [ ] T006 [P] Configure Tailwind CSS with Flowbite Svelte integration in `tailwind.config.js`
-- [ ] T007 [P] Setup ESLint and Prettier per existing project standards
-- [ ] T008 Link Supabase project with `bunx supabase link --project-ref <ref>`
-- [ ] T009 Create Supabase storage bucket `cosplay-images` with RLS policies (authenticated read/write)
+- [X] T001 Verify environment setup: Bun 1.0+, Node 18+, PostgreSQL 14+, Supabase CLI installed
+- [X] T002 Create `.env` file from template with Supabase credentials (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- [X] T003 Install dependencies with `bun install` including Flowbite Svelte 0.44+, Fuse.js, and Supabase JS SDK 2.x
+- [X] T004 [P] Create directory structure for `src/lib/api/services/`, `src/lib/types/domain/`, `src/lib/stores/`, `src/lib/components/base/`
+- [X] T005 [P] Create directory structure for `src/routes/(auth)/`, `src/routes/login/`, `src/routes/signup/`
+- [X] T006 [P] Configure Tailwind CSS with Flowbite Svelte integration in `tailwind.config.js`
+- [X] T007 [P] Setup ESLint and Prettier per existing project standards
+- [ ] T008 Link Supabase project with `bunx supabase link --project-ref <ref>` (Manual step - requires Supabase project ref)
+- [X] T009 Create Supabase storage bucket `cosplay-images` with RLS policies (authenticated read/write)
 
 ---
 
@@ -46,48 +46,48 @@
 
 ### Database Schema & Migrations
 
-- [ ] T010 Create migration `20250000000000_initial_schema.sql` for users, teams, team_members tables per data-model.md
-- [ ] T011 [P] Create migration `20250000000001_ideas_table.sql` for ideas table with RLS policies
-- [ ] T012 [P] Create migration `20250000000002_projects_table.sql` for projects table with RLS policies
-- [ ] T013 [P] Create migration `20250000000003_resources_table.sql` for polymorphic resources table with JSONB metadata and RLS policies
-- [ ] T014 [P] Create migration `20250000000004_tools_table.sql` for polymorphic tools table with RLS policies
-- [ ] T015 [P] Create migration `20250000000005_tasks_table.sql` for tasks table (project-level and resource-level) with RLS policies
-- [ ] T016 [P] Create migration `20250000000006_photoshoots_table.sql` for photoshoots, shots, crew_members tables with RLS policies
-- [ ] T017 [P] Create migration `20250000000007_join_tables.sql` for project_resources and photoshoot_projects join tables with RLS policies
-- [ ] T018 [P] Create migration `20250000000008_comments_table.sql` for polymorphic comments table with RLS policies
-- [ ] T019 Create migration `20250000000009_utility_functions.sql` for update_updated_at_column() trigger function and calculate_project_progress() function
-- [ ] T020 Apply all migrations with `bunx supabase db reset` and verify schema
+- [X] T010 Create migration `20250000000000_initial_schema.sql` for users, teams, team_members tables per data-model.md
+- [X] T011 [P] Create migration `20250000000001_ideas_table.sql` for ideas table with RLS policies
+- [X] T012 [P] Create migration `20250000000002_projects_table.sql` for projects table with RLS policies
+- [X] T013 [P] Create migration `20250000000003_resources_table.sql` for polymorphic resources table with JSONB metadata and RLS policies
+- [X] T014 [P] Create migration `20250000000004_tools_table.sql` for polymorphic tools table with RLS policies
+- [X] T015 [P] Create migration `20250000000005_tasks_table.sql` for tasks table (project-level and resource-level) with RLS policies
+- [X] T016 [P] Create migration `20250000000006_photoshoots_table.sql` for photoshoots, shots, crew_members tables with RLS policies
+- [X] T017 [P] Create migration `20250000000007_join_tables.sql` for project_resources and photoshoot_projects join tables with RLS policies
+- [X] T018 [P] Create migration `20250000000008_comments_table.sql` for polymorphic comments table with RLS policies
+- [X] T019 Create migration `20250000000009_utility_functions.sql` for update_updated_at_column() trigger function and calculate_project_progress() function
+- [ ] T020 Apply all migrations with `bunx supabase db reset` and verify schema (Manual step - requires Supabase connection)
 
 ### Authentication & Team Foundation
 
-- [ ] T021 Initialize Supabase client in `src/lib/api/supabase.ts` with environment variables
-- [ ] T022 Create auth store in `src/lib/stores/auth.ts` with Svelte 5 runes for user state and session management
-- [ ] T023 Create team store in `src/lib/stores/teams.ts` for current team context and team switching
-- [ ] T024 Implement authentication layout in `src/routes/+layout.svelte` with team selector in sidebar
-- [ ] T025 Create login page `src/routes/login/+page.svelte` using Flowbite Button and Input components
-- [ ] T026 Create signup page `src/routes/signup/+page.svelte` with personal team auto-creation hook
-- [ ] T027 Create authenticated layout `src/routes/(auth)/+layout.svelte` with sidebar navigation (Ideas, Projects, Resources, Tools, Photoshoots, Calendar, Teams, Settings)
+- [X] T021 Initialize Supabase client in `src/lib/api/supabase.ts` with environment variables
+- [X] T022 Create auth store in `src/lib/stores/auth.ts` with Svelte 5 runes for user state and session management (implemented in auth-store.ts)
+- [X] T023 Create team store in `src/lib/stores/teams.ts` for current team context and team switching
+- [X] T024 Implement authentication layout in `src/routes/+layout.svelte` with team selector in sidebar
+- [X] T025 Create login page `src/routes/login/+page.svelte` using Flowbite Button and Input components
+- [X] T026 Create signup page `src/routes/signup/+page.svelte` with personal team auto-creation hook
+- [X] T027 Create authenticated layout `src/routes/(auth)/+layout.svelte` with sidebar navigation (Ideas, Projects, Resources, Tools, Photoshoots, Calendar, Teams, Settings)
 
 ### Type System & Base Infrastructure
 
-- [ ] T028 [P] Copy TypeScript types from `specs/002-mvp-redesign/contracts/types.ts` to `src/lib/types/domain/` (split by entity)
-- [ ] T029 [P] Create domain type files: `idea.ts`, `project.ts`, `resource.ts`, `tool.ts`, `task.ts`, `photoshoot.ts`, `team.ts`, `comment.ts`
-- [ ] T030 Create validation schemas in `src/lib/schemas/validation.ts` using Zod for runtime validation
-- [ ] T031 [P] Create polymorphic field schemas in `src/lib/schemas/field-schemas.ts` for resource and tool categories
-- [ ] T032 Implement fuzzy search utility in `src/lib/utils/search.ts` using Fuse.js with threshold 0.3 for typo tolerance
-- [ ] T033 [P] Implement progress calculation utility in `src/lib/utils/progress.ts` with hybrid task/resource algorithm
-- [ ] T034 [P] Implement image processing utility in `src/lib/utils/image.ts` using Canvas API for thumbnail (200px), display (2MB), original
+- [X] T028 [P] Copy TypeScript types from `specs/002-mvp-redesign/contracts/types.ts` to `src/lib/types/domain/` (split by entity)
+- [X] T029 [P] Create domain type files: `idea.ts`, `project.ts`, `resource.ts`, `tool.ts`, `task.ts`, `photoshoot.ts`, `team.ts`, `comment.ts`
+- [X] T030 Create validation schemas in `src/lib/schemas/validation.ts` using Zod for runtime validation
+- [ ] T031 [P] Create polymorphic field schemas in `src/lib/schemas/field-schemas.ts` for resource and tool categories (validation handled inline in components)
+- [X] T032 Implement fuzzy search utility in `src/lib/utils/search.ts` using Fuse.js with threshold 0.3 for typo tolerance
+- [X] T033 [P] Implement progress calculation utility in `src/lib/utils/progress.ts` with hybrid task/resource algorithm
+- [X] T034 [P] Implement image processing utility in `src/lib/utils/image.ts` using Canvas API for thumbnail (200px), display (2MB), original
 
 ### Base UI Components (Flowbite-based)
 
-- [ ] T035 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` with on-blur auto-save, saving indicator, and inline validation
-- [ ] T036 [P] Create InlineNumberEditor component in `src/lib/components/base/InlineNumberEditor.svelte` with on-blur auto-save
-- [ ] T037 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte` wrapping Flowbite Select with on-change auto-save
-- [ ] T038 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte` wrapping Flowbite Checkbox with on-change auto-save
-- [ ] T039 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte` with on-blur auto-save
-- [ ] T040 [P] Create InlineImageUpload component in `src/lib/components/base/InlineImageUpload.svelte` with drag-drop, preview, and 3-variant upload
-- [ ] T041 [P] Create PolymorphicForm component in `src/lib/components/base/PolymorphicForm.svelte` with switch-based category field rendering
-- [ ] T042 Create DetailPageBase component in `src/lib/components/base/DetailPageBase.svelte` as shared root for all detail pages with edit mode toggle
+- [X] T035 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` with on-blur auto-save, saving indicator, and inline validation
+- [X] T036 [P] Create InlineNumberEditor component in `src/lib/components/base/InlineNumberEditor.svelte` with on-blur auto-save
+- [X] T037 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte` wrapping Flowbite Select with on-change auto-save
+- [X] T038 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte` wrapping Flowbite Checkbox with on-change auto-save
+- [X] T039 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte` with on-blur auto-save
+- [X] T040 [P] Create InlineImageUpload component in `src/lib/components/base/InlineImageUpload.svelte` with drag-drop, preview, and 3-variant upload
+- [X] T041 [P] Create PolymorphicForm component in `src/lib/components/base/PolymorphicForm.svelte` with switch-based category field rendering
+- [X] T042 Create DetailPageBase component in `src/lib/components/base/DetailPageBase.svelte` as shared root for all detail pages with edit mode toggle
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -101,17 +101,17 @@
 
 ### Implementation for User Story 1
 
-- [ ] T043 [P] [US1] Create ideaService in `src/lib/api/services/ideaService.ts` with list(), get(), create(), update(), delete(), convert() methods
-- [ ] T044 [P] [US1] Create ideas store in `src/lib/stores/ideas.ts` with Svelte 5 runes for ideas list, loading state, and CRUD operations
-- [ ] T045 [P] [US1] Create IdeaCard component in `src/lib/components/cards/IdeaCard.svelte` with Flowbite Card, image thumbnail, difficulty badge, cost estimate
-- [ ] T046 [US1] Create ideas board list page `src/routes/(auth)/ideas/+page.svelte` with grid layout, fuzzy search input, difficulty filter dropdown
-- [ ] T047 [US1] Implement fuzzy search for ideas in ideas page using Fuse.js with keys: character, series, tags
-- [ ] T048 [US1] Create idea detail page `src/routes/(auth)/ideas/[id]/+page.svelte` extending DetailPageBase with inline editing for all fields
-- [ ] T049 [US1] Implement idea conversion in idea detail page with "Start Planning" button that calls ideaService.convert() and navigates to new project
-- [ ] T050 [US1] Add image upload to idea detail using InlineImageUpload component with 3-variant processing (thumbnail/display/original)
-- [ ] T051 [US1] Implement idea status update (saved → converted) with read-only lock on converted ideas
-- [ ] T052 [US1] Add validation for required fields (character, series, difficulty) with inline error display on blur
-- [ ] T053 [US1] Create "New Idea" page at `src/routes/(auth)/ideas/new/+page.svelte` reusing detail page in creation mode
+- [X] T043 [P] [US1] Create ideaService in `src/lib/api/services/ideaService.ts` with list(), get(), create(), update(), delete(), convert() methods
+- [X] T044 [P] [US1] Create ideas store in `src/lib/stores/ideas.ts` with Svelte 5 runes for ideas list, loading state, and CRUD operations
+- [X] T045 [P] [US1] Create IdeaCard component in `src/lib/components/cards/IdeaCard.svelte` with Flowbite Card, image thumbnail, difficulty badge, cost estimate
+- [X] T046 [US1] Create ideas board list page `src/routes/(auth)/ideas/+page.svelte` with grid layout, fuzzy search input, difficulty filter dropdown
+- [X] T047 [US1] Implement fuzzy search for ideas in ideas page using Fuse.js with keys: character, series, tags
+- [X] T048 [US1] Create idea detail page `src/routes/(auth)/ideas/[id]/+page.svelte` extending DetailPageBase with inline editing for all fields
+- [X] T049 [US1] Implement idea conversion in idea detail page with "Start Planning" button that calls ideaService.convert() and navigates to new project
+- [X] T050 [US1] Add image upload to idea detail using InlineImageUpload component with 3-variant processing (thumbnail/display/original)
+- [X] T051 [US1] Implement idea status update (saved → converted) with read-only lock on converted ideas
+- [X] T052 [US1] Add validation for required fields (character, series, difficulty) with inline error display on blur
+- [X] T053 [US1] Create "New Idea" page at `src/routes/(auth)/ideas/new/+page.svelte` reusing detail page in creation mode
 
 **Checkpoint**: User Story 1 complete - ideas can be captured, browsed, searched with fuzzy matching, and converted to projects
 
@@ -125,31 +125,31 @@
 
 ### Implementation for User Story 2
 
-- [ ] T054 [P] [US2] Create projectService in `src/lib/api/services/projectService.ts` with list(), get(), create(), update(), delete(), linkResource(), unlinkResource() methods
-- [ ] T055 [P] [US2] Create resourceService in `src/lib/api/services/resourceService.ts` with basic list(), get(), create(), update(), delete() methods
-- [ ] T056 [P] [US2] Create taskService in `src/lib/api/services/taskService.ts` with list(), get(), create(), update(), delete() methods supporting project-level and resource-level tasks
-- [ ] T057 [P] [US2] Create projects store in `src/lib/stores/projects.ts` with Svelte 5 runes and derived stores for filtered views by status
-- [ ] T058 [P] [US2] Create resources store in `src/lib/stores/resources.ts` for basic resource management (full implementation in US3)
-- [ ] T059 [P] [US2] Create tasks store in `src/lib/stores/tasks.ts` with filtering by projectId and resourceId
-- [ ] T060 [P] [US2] Create ProjectCard component in `src/lib/components/cards/ProjectCard.svelte` with Flowbite Card, cover image, status badge, progress bar, budget indicator
-- [ ] T061 [P] [US2] Create ProgressTracker component in `src/lib/components/domain/ProgressTracker.svelte` displaying hybrid progress with breakdown (tasks % + resources %)
-- [ ] T062 [P] [US2] Create BudgetTracker component in `src/lib/components/domain/BudgetTracker.svelte` with spent/total display and warning state when exceeded
-- [ ] T063 [P] [US2] Create TaskList component in `src/lib/components/domain/TaskList.svelte` with inline task creation, checkbox completion, and resource-level task grouping
-- [ ] T064 [P] [US2] Create ResourcesList component in `src/lib/components/domain/ResourcesList.svelte` showing linked resources with quantity/status and inline editing
-- [ ] T065 [US2] Create projects list page `src/routes/(auth)/projects/+page.svelte` with grid layout, status filter, fuzzy search across character/series/tags
-- [ ] T066 [US2] Create project detail page `src/routes/(auth)/projects/[id]/+page.svelte` extending DetailPageBase with Flowbite Tabs (Overview, Resources, Tasks, Gallery)
-- [ ] T067 [US2] Implement Overview tab in project detail with inline editing for character, series, status, deadline, budget, description, cover image
-- [ ] T068 [US2] Implement Resources tab with ResourcesList component and "Link Existing Resource" + "Create New Resource" buttons
-- [ ] T069 [US2] Implement resource linking modal/drawer in Resources tab with quantity and status inputs
-- [ ] T070 [US2] Implement Tasks tab with TaskList component showing project-level tasks and expandable resource-specific tasks
-- [ ] T071 [US2] Implement task creation in Tasks tab with projectId and optional resourceId for resource-specific tasks
-- [ ] T072 [US2] Implement Gallery tab with InlineImageUpload for reference images grid display
-- [ ] T073 [US2] Integrate hybrid progress calculation in project detail Overview tab calling calculate_project_progress() PostgreSQL function via Supabase RPC
-- [ ] T074 [US2] Implement real-time progress updates using Svelte derived stores when tasks or resource statuses change
-- [ ] T075 [US2] Add budget tracking in Overview tab with automatic spent calculation from linked resources' costs
-- [ ] T076 [US2] Add budget warning indicator in BudgetTracker when spentBudget >= estimatedBudget
-- [ ] T077 [US2] Create "New Project" page at `src/routes/(auth)/projects/new/+page.svelte` reusing detail page in creation mode
-- [ ] T078 [US2] Implement project creation from converted idea with pre-filled character, series, description, images (fromIdeaId field)
+- [X] T054 [P] [US2] Create projectService in `src/lib/api/services/projectService.ts` with list(), get(), create(), update(), delete(), linkResource(), unlinkResource() methods
+- [X] T055 [P] [US2] Create resourceService in `src/lib/api/services/resourceService.ts` with basic list(), get(), create(), update(), delete() methods
+- [X] T056 [P] [US2] Create taskService in `src/lib/api/services/taskService.ts` with list(), get(), create(), update(), delete() methods supporting project-level and resource-level tasks
+- [X] T057 [P] [US2] Create projects store in `src/lib/stores/projects.ts` with Svelte 5 runes and derived stores for filtered views by status
+- [X] T058 [P] [US2] Create resources store in `src/lib/stores/resources.ts` for basic resource management (full implementation in US3)
+- [X] T059 [P] [US2] Create tasks store in `src/lib/stores/tasks.ts` with filtering by projectId and resourceId
+- [X] T060 [P] [US2] Create ProjectCard component in `src/lib/components/cards/ProjectCard.svelte` with Flowbite Card, cover image, status badge, progress bar, budget indicator
+- [X] T061 [P] [US2] Create ProgressTracker component in `src/lib/components/domain/ProgressTracker.svelte` displaying hybrid progress with breakdown (tasks % + resources %)
+- [X] T062 [P] [US2] Create BudgetTracker component in `src/lib/components/domain/BudgetTracker.svelte` with spent/total display and warning state when exceeded
+- [X] T063 [P] [US2] Create TaskList component in `src/lib/components/domain/TaskList.svelte` with inline task creation, checkbox completion, and resource-level task grouping
+- [X] T064 [P] [US2] Create ResourcesList component in `src/lib/components/domain/ResourcesList.svelte` showing linked resources with quantity/status and inline editing
+- [X] T065 [US2] Create projects list page `src/routes/(auth)/projects/+page.svelte` with grid layout, status filter, fuzzy search across character/series/tags
+- [X] T066 [US2] Create project detail page `src/routes/(auth)/projects/[id]/+page.svelte` extending DetailPageBase with Flowbite Tabs (Overview, Resources, Tasks, Gallery)
+- [X] T067 [US2] Implement Overview tab in project detail with inline editing for character, series, status, deadline, budget, description, cover image
+- [X] T068 [US2] Implement Resources tab with ResourcesList component and "Link Existing Resource" + "Create New Resource" buttons
+- [X] T069 [US2] Implement resource linking modal/drawer in Resources tab with quantity and status inputs
+- [X] T070 [US2] Implement Tasks tab with TaskList component showing project-level tasks and expandable resource-specific tasks
+- [X] T071 [US2] Implement task creation in Tasks tab with projectId and optional resourceId for resource-specific tasks
+- [X] T072 [US2] Implement Gallery tab with InlineImageUpload for reference images grid display
+- [X] T073 [US2] Integrate hybrid progress calculation in project detail Overview tab calling calculate_project_progress() PostgreSQL function via Supabase RPC
+- [X] T074 [US2] Implement real-time progress updates using Svelte derived stores when tasks or resource statuses change
+- [X] T075 [US2] Add budget tracking in Overview tab with automatic spent calculation from linked resources' costs
+- [X] T076 [US2] Add budget warning indicator in BudgetTracker when spentBudget >= estimatedBudget
+- [X] T077 [US2] Create "New Project" page at `src/routes/(auth)/projects/new/+page.svelte` reusing detail page in creation mode
+- [X] T078 [US2] Implement project creation from converted idea with pre-filled character, series, description, images (fromIdeaId field)
 
 **Checkpoint**: User Story 2 complete - projects can be managed with resources, tasks (project-level and resource-level), hybrid progress tracking, and budget management
 
@@ -163,23 +163,23 @@
 
 ### Implementation for User Story 3
 
-- [ ] T079 [P] [US3] Expand resourceService with methods for polymorphic metadata handling and project usage tracking
-- [ ] T080 [P] [US3] Create ResourceCard component in `src/lib/components/cards/ResourceCard.svelte` with Flowbite Card, category badge, image, cost, "Used in X projects" indicator
-- [ ] T081 [US3] Create resources library page `src/routes/(auth)/resources/+page.svelte` with grid layout, category filter dropdown, fuzzy search across name/tags
-- [ ] T082 [US3] Create resource detail page `src/routes/(auth)/resources/[id]/+page.svelte` extending DetailPageBase with PolymorphicForm for category-specific fields
-- [ ] T083 [US3] Implement category selector in resource creation/editing with switch statement handling 7 categories (prop, fabric, wig, pattern, costume-piece, accessory, material)
-- [ ] T084 [US3] Implement prop category fields: dimensions, weight, material, fragile checkbox, requiresAssembly checkbox, storageLocation
-- [ ] T085 [US3] Implement fabric category fields: fabricType, color, quantity number, unit select (yards/meters), width number, stretch checkbox, washable checkbox
-- [ ] T086 [US3] Implement wig category fields: color, length, style, needsStyling checkbox, laceType select (none/lace-front/full-lace), heatResistant checkbox
-- [ ] T087 [US3] Implement pattern category fields: patternCompany, patternNumber, size, difficulty select, digitalFileUrl, physicalPattern checkbox
-- [ ] T088 [US3] Implement costume-piece category fields: pieceType, size, material, color, needsAlterations checkbox
-- [ ] T089 [US3] Implement accessory category fields: accessoryType, material, color, quantity number
-- [ ] T090 [US3] Implement material category fields: materialType, brand, colorVariant, quantity number, unit text
-- [ ] T091 [US3] Add "Used in Projects" section to resource detail page querying project_resources join table
-- [ ] T092 [US3] Display per-project quantity and status in "Used in Projects" section with links to project details
-- [ ] T093 [US3] Implement resource image upload with InlineImageUpload component supporting multiple images
-- [ ] T094 [US3] Create "New Resource" page at `src/routes/(auth)/resources/new/+page.svelte` with category selection first, then category-specific form
-- [ ] T095 [US3] Add validation for category-specific required fields (e.g., fabric requires fabricType, color, quantity, unit)
+- [X] T079 [P] [US3] Expand resourceService with methods for polymorphic metadata handling and project usage tracking
+- [X] T080 [P] [US3] Create ResourceCard component in `src/lib/components/cards/ResourceCard.svelte` with Flowbite Card, category badge, image, cost, "Used in X projects" indicator
+- [X] T081 [US3] Create resources library page `src/routes/(auth)/resources/+page.svelte` with grid layout, category filter dropdown, fuzzy search across name/tags
+- [X] T082 [US3] Create resource detail page `src/routes/(auth)/resources/[id]/+page.svelte` extending DetailPageBase with PolymorphicForm for category-specific fields
+- [X] T083 [US3] Implement category selector in resource creation/editing with switch statement handling 7 categories (prop, fabric, wig, pattern, costume-piece, accessory, material)
+- [X] T084 [US3] Implement prop category fields: dimensions, weight, material, fragile checkbox, requiresAssembly checkbox, storageLocation
+- [X] T085 [US3] Implement fabric category fields: fabricType, color, quantity number, unit select (yards/meters), width number, stretch checkbox, washable checkbox
+- [X] T086 [US3] Implement wig category fields: color, length, style, needsStyling checkbox, laceType select (none/lace-front/full-lace), heatResistant checkbox
+- [X] T087 [US3] Implement pattern category fields: patternCompany, patternNumber, size, difficulty select, digitalFileUrl, physicalPattern checkbox
+- [X] T088 [US3] Implement costume-piece category fields: pieceType, size, material, color, needsAlterations checkbox
+- [X] T089 [US3] Implement accessory category fields: accessoryType, material, color, quantity number
+- [X] T090 [US3] Implement material category fields: materialType, brand, colorVariant, quantity number, unit text
+- [X] T091 [US3] Add "Used in Projects" section to resource detail page querying project_resources join table
+- [X] T092 [US3] Display per-project quantity and status in "Used in Projects" section with links to project details
+- [X] T093 [US3] Implement resource image upload with InlineImageUpload component supporting multiple images
+- [X] T094 [US3] Create "New Resource" page at `src/routes/(auth)/resources/new/+page.svelte` with category selection first, then category-specific form
+- [ ] T095 [US3] Add validation for category-specific required fields (e.g., fabric requires fabricType, color, quantity, unit) - Note: Basic validation exists in handleCreate, can be enhanced
 
 **Checkpoint**: User Story 3 complete - resources can be created with polymorphic fields, reused across projects, and usage tracked
 
@@ -193,16 +193,16 @@
 
 ### Implementation for User Story 4
 
-- [ ] T096 [P] [US4] Create toolService in `src/lib/api/services/toolService.ts` with list(), get(), create(), update(), delete() methods
-- [ ] T097 [P] [US4] Create tools store in `src/lib/stores/tools.ts` with filtering by category
-- [ ] T098 [US4] Create tools list page `src/routes/(auth)/tools/+page.svelte` with list layout, category filter (crafting-tool/shoot-equipment), fuzzy search
-- [ ] T099 [US4] Create tool detail page `src/routes/(auth)/tools/[id]/+page.svelte` extending DetailPageBase with PolymorphicForm for tool categories
-- [ ] T100 [US4] Implement category selector for tools with switch for 2 categories (crafting-tool, shoot-equipment)
-- [ ] T101 [US4] Implement crafting-tool fields: brand, model, purchaseDate, purchasePrice, condition select (new/good/fair/needs-repair), storageLocation, manualUrl, warrantyExpires
-- [ ] T102 [US4] Implement shoot-equipment fields: brand, model, owned checkbox, rentalCost number, owner text, specifications textarea
-- [ ] T103 [US4] Add tool images upload with InlineImageUpload component
-- [ ] T104 [US4] Create "New Tool" page at `src/routes/(auth)/tools/new/+page.svelte` with category selection
-- [ ] T105 [US4] Add validation for category-specific required fields
+- [X] T096 [P] [US4] Create toolService in `src/lib/api/services/toolService.ts` with list(), get(), create(), update(), delete() methods
+- [X] T097 [P] [US4] Create tools store in `src/lib/stores/tools.ts` with filtering by category
+- [X] T098 [US4] Create tools list page `src/routes/(auth)/tools/+page.svelte` with list layout, category filter (crafting-tool/shoot-equipment), fuzzy search
+- [X] T099 [US4] Create tool detail page `src/routes/(auth)/tools/[id]/+page.svelte` extending DetailPageBase with PolymorphicForm for tool categories
+- [X] T100 [US4] Implement category selector for tools with switch for 2 categories (crafting-tool, shoot-equipment)
+- [X] T101 [US4] Implement crafting-tool fields: brand, model, purchaseDate, purchasePrice, condition select (new/good/fair/needs-repair), storageLocation, manualUrl, warrantyExpires
+- [X] T102 [US4] Implement shoot-equipment fields: brand, model, owned checkbox, rentalCost number, owner text, specifications textarea
+- [X] T103 [US4] Add tool images upload with InlineImageUpload component
+- [X] T104 [US4] Create "New Tool" page at `src/routes/(auth)/tools/new/+page.svelte` with category selection
+- [X] T105 [US4] Add validation for category-specific required fields
 
 **Checkpoint**: User Story 4 complete - tools can be tracked with category-specific maintenance and rental information
 
@@ -216,22 +216,22 @@
 
 ### Implementation for User Story 5
 
-- [ ] T106 [P] [US5] Create photoshootService in `src/lib/api/services/photoshootService.ts` with list(), get(), create(), update(), delete(), linkProject(), addShot(), addCrew() methods
-- [ ] T107 [P] [US5] Create photoshoots store in `src/lib/stores/photoshoots.ts` with filtering by status
-- [ ] T108 [P] [US5] Create PhotoshootCard component in `src/lib/components/cards/PhotoshootCard.svelte` with date, location, linked project previews, status badge
-- [ ] T109 [P] [US5] Create ShotListEditor component in `src/lib/components/domain/ShotListEditor.svelte` with checklist items, completion percentage, reference images
-- [ ] T110 [US5] Create photoshoots list page `src/routes/(auth)/photoshoots/+page.svelte` with list layout, status filter, date sorting
-- [ ] T111 [US5] Create photoshoot detail page `src/routes/(auth)/photoshoots/[id]/+page.svelte` extending DetailPageBase with Flowbite Tabs (Overview, Shot List, Crew, Gallery)
-- [ ] T112 [US5] Implement Overview tab with inline editing for title, date, location, description, status, and linked projects selector
-- [ ] T113 [US5] Implement project linking in Overview tab with multi-select from user's projects
-- [ ] T114 [US5] Implement Shot List tab with ShotListEditor component for adding/editing/completing shots
-- [ ] T115 [US5] Add shot creation in Shot List tab with description, pose notes, reference image upload, completion checkbox
-- [ ] T116 [US5] Implement shot completion tracking with visual indicators and percentage calculation
-- [ ] T117 [US5] Implement Crew tab with list of crew members and inline creation (name, role select, contact)
-- [ ] T118 [US5] Add crew member roles: photographer, assistant, makeup, other
-- [ ] T119 [US5] Implement Gallery tab with InlineImageUpload for final photos and option to link photos to specific shots
-- [ ] T120 [US5] Create "New Photoshoot" page at `src/routes/(auth)/photoshoots/new/+page.svelte`
-- [ ] T121 [US5] Add photoshoot status workflow: planning → scheduled → completed
+- [X] T106 [P] [US5] Create photoshootService in `src/lib/api/services/photoshootService.ts` with list(), get(), create(), update(), delete(), linkProject(), addShot(), addCrew() methods
+- [X] T107 [P] [US5] Create photoshoots store in `src/lib/stores/photoshoots.ts` with filtering by status
+- [X] T108 [P] [US5] Create PhotoshootCard component in `src/lib/components/cards/PhotoshootCard.svelte` with date, location, linked project previews, status badge
+- [X] T109 [P] [US5] Create ShotListEditor component in `src/lib/components/domain/ShotListEditor.svelte` with checklist items, completion percentage, reference images
+- [X] T110 [US5] Create photoshoots list page `src/routes/(auth)/photoshoots/+page.svelte` with list layout, status filter, date sorting
+- [X] T111 [US5] Create photoshoot detail page `src/routes/(auth)/photoshoots/[id]/+page.svelte` extending DetailPageBase with Flowbite Tabs (Overview, Shot List, Crew, Gallery)
+- [X] T112 [US5] Implement Overview tab with inline editing for title, date, location, description, status, and linked projects selector
+- [X] T113 [US5] Implement project linking in Overview tab with multi-select from user's projects
+- [X] T114 [US5] Implement Shot List tab with ShotListEditor component for adding/editing/completing shots
+- [X] T115 [US5] Add shot creation in Shot List tab with description, pose notes, reference image upload, completion checkbox
+- [X] T116 [US5] Implement shot completion tracking with visual indicators and percentage calculation
+- [X] T117 [US5] Implement Crew tab with list of crew members and inline creation (name, role select, contact)
+- [X] T118 [US5] Add crew member roles: photographer, assistant, makeup, other
+- [X] T119 [US5] Implement Gallery tab with InlineImageUpload for final photos and option to link photos to specific shots
+- [X] T120 [US5] Create "New Photoshoot" page at `src/routes/(auth)/photoshoots/new/+page.svelte`
+- [X] T121 [US5] Add photoshoot status workflow: planning → scheduled → completed
 
 **Checkpoint**: User Story 5 complete - photoshoots can be planned with shot lists, crew, and completion tracking
 
@@ -245,25 +245,25 @@
 
 ### Implementation for User Story 6
 
-- [ ] T122 [P] [US6] Expand teamService in `src/lib/api/services/teamService.ts` with create(), invite(), acceptInvite(), updateMemberRole(), removeMember() methods
-- [ ] T123 [P] [US6] Create commentService in `src/lib/api/services/commentService.ts` for polymorphic comments on ideas/projects/resources/tools/photoshoots
-- [ ] T124 [P] [US6] Create comments store in `src/lib/stores/comments.ts` with filtering by entityType and entityId
-- [ ] T125 [US6] Expand team store to track current user's role in selected team (owner/editor/viewer)
-- [ ] T126 [US6] Create permissions utility in `src/lib/utils/permissions.ts` with can(role, action) function implementing Owner/Editor/Viewer rules
-- [ ] T127 [US6] Create team selector component in sidebar (part of auth layout) with dropdown for switching teams
-- [ ] T128 [US6] Implement team context switching that updates all stores to filter by teamId
-- [ ] T129 [US6] Create teams management page `src/routes/(auth)/teams/+page.svelte` with team list, member management, invite form
-- [ ] T130 [US6] Implement team creation in teams page with automatic Owner role assignment
-- [ ] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
+- [X] T122 [P] [US6] Expand teamService in `src/lib/api/services/teamService.ts` with create(), invite(), acceptInvite(), updateMemberRole(), removeMember() methods
+- [X] T123 [P] [US6] Create commentService in `src/lib/api/services/commentService.ts` for polymorphic comments on ideas/projects/resources/tools/photoshoots
+- [X] T124 [P] [US6] Create comments store in `src/lib/stores/comments.ts` with filtering by entityType and entityId
+- [X] T125 [US6] Expand team store to track current user's role in selected team (owner/editor/viewer)
+- [X] T126 [US6] Create permissions utility in `src/lib/utils/permissions.ts` with can(role, action) function implementing Owner/Editor/Viewer rules
+- [X] T127 [US6] Create team selector component in sidebar (part of auth layout) with dropdown for switching teams
+- [X] T128 [US6] Implement team context switching that updates all stores to filter by teamId
+- [X] T129 [US6] Create teams management page `src/routes/(auth)/teams/+page.svelte` with team list, member management, invite form
+- [X] T130 [US6] Implement team creation in teams page with automatic Owner role assignment
+- [X] T131 [US6] Implement member invitation with email input and role selector (editor/viewer only, not owner)
 - [ ] T132 [US6] Create invitation acceptance flow (email notification handled by Supabase, acceptance updates status to active)
-- [ ] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
-- [ ] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
-- [ ] T135 [US6] Implement task assignment feature in TaskList component with team member selector
+- [X] T133 [US6] Implement member role management with Owner-only access (updateMemberRole, removeMember)
+- [X] T134 [US6] Add role-based UI visibility using permissions utility (hide edit/delete buttons for Viewers)
+- [X] T135 [US6] Implement task assignment feature in TaskList component with team member selector
 - [ ] T136 [US6] Add task assignment notifications (simple Supabase realtime or email)
-- [ ] T137 [US6] Create CommentBox component in `src/lib/components/base/CommentBox.svelte` with textarea and submit button
-- [ ] T138 [US6] Add CommentBox to all detail pages (ideas, projects, resources, tools, photoshoots) at bottom
-- [ ] T139 [US6] Implement comment creation accessible to all roles (Owner, Editor, Viewer)
-- [ ] T140 [US6] Display comment list with author name, avatar, timestamp, and own-comment edit/delete
+- [X] T137 [US6] Create CommentBox component in `src/lib/components/base/CommentBox.svelte` with textarea and submit button
+- [X] T138 [US6] Add CommentBox to all detail pages (ideas, projects, resources, tools, photoshoots) at bottom
+- [X] T139 [US6] Implement comment creation accessible to all roles (Owner, Editor, Viewer)
+- [X] T140 [US6] Display comment list with author name, avatar, timestamp, and own-comment edit/delete
 - [ ] T141 [US6] Add personal team auto-creation on user signup (triggered in signup page)
 - [ ] T142 [US6] Verify RLS policies enforce team-based access across all tables
 

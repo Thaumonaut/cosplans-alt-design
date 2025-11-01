@@ -46,10 +46,8 @@ export function loadFromStorage<T>(key: keyof typeof STORAGE_KEYS): T | null {
 export function setupPersistence() {
   if (!browser) return
 
-  // Subscribe to store changes and save to localStorage
-  projects.subscribe(data => {
-    saveToStorage('projects', data)
-  })
+  // Note: Projects store is now API-backed and doesn't need localStorage persistence
+  // It uses Supabase for data persistence
 
   tasks.subscribe(data => {
     saveToStorage('tasks', data)
@@ -70,11 +68,8 @@ export function setupPersistence() {
 export function loadPersistedData() {
   if (!browser) return
 
-  // Load projects
-  const storedProjects = loadFromStorage<Project[]>('projects')
-  if (storedProjects && storedProjects.length > 0) {
-    projects.set(storedProjects)
-  }
+  // Note: Projects store is now API-backed and doesn't support localStorage persistence
+  // The new projects store uses Supabase for data persistence
 
   // Load tasks
   const storedTasks = loadFromStorage<Task[]>('tasks')

@@ -2,9 +2,62 @@
 	"name": "cosplans-staging",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2025-10-30",
+	"compatibility_flags": [],
+	
+	// Enable Workers.dev subdomain for testing
 	"workers_dev": true,
+	
+	// Assets directory for Pages deployment
 	"assets": {
 		"directory": ".svelte-kit/cloudflare"
+	},
+	
+	// Environment variables for production
+	"vars": {
+		// These will be available in production as PUBLIC_* variables
+		// Note: In SvelteKit, PUBLIC_ prefix is required for client-side access
+		// For sensitive vars, use secrets (wrangler secret put <name>)
+		"NODE_ENV": "production"
+	},
+	
+	// Environment-specific configurations
+	"env": {
+		"production": {
+			"vars": {
+				"NODE_ENV": "production"
+			}
+			// Uncomment and configure if using Cloudflare KV:
+			// "kv_namespaces": [
+			//   { "binding": "CACHE", "id": "your-kv-namespace-id" }
+			// ]
+		},
+		"staging": {
+			"vars": {
+				"NODE_ENV": "staging"
+			}
+		}
+	},
+	
+	// Site configuration for Cloudflare Pages
+	"site": {
+		"bucket": ".svelte-kit/cloudflare"
+	},
+	
+	// Build configuration
+	"build": {
+		"command": "pnpm run build",
+		"cwd": "."
 	}
+	
+	// Note: Sensitive environment variables (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
+	// should be set in Cloudflare Dashboard:
+	// - For Pages: Settings → Environment Variables  
+	// - For Workers: Use wrangler secret put command:
+	//   wrangler secret put PUBLIC_SUPABASE_URL
+	//   wrangler secret put PUBLIC_SUPABASE_ANON_KEY
+	//
+	// Required environment variables:
+	// - PUBLIC_SUPABASE_URL: Your Supabase project URL (e.g., https://xxx.supabase.co)
+	// - PUBLIC_SUPABASE_ANON_KEY: Your Supabase anonymous/public key
 }
 

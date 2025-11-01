@@ -132,9 +132,12 @@ export function getTasksByProject(projectId: number) {
 // Legacy functions for backward compatibility (now use local data only)
 export function addTaskLocal(task: Omit<Task, 'id'>) {
   tasks.update(currentTasks => {
+    // Generate unique ID using timestamp + random component to avoid collisions
+    const timestamp = Date.now()
+    const random = Math.floor(Math.random() * 1000)
     const newTask: Task = {
       ...task,
-      id: Date.now() // Simple ID generation for now
+      id: `${timestamp}-${random}` // Unique ID with timestamp and random component
     }
     return [...currentTasks, newTask]
   })

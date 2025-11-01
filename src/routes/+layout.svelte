@@ -5,30 +5,49 @@
   import { authActions } from "$lib/stores/auth-store.js";
   import type { LayoutData } from "./$types";
 
-  let { data }: { data: LayoutData } = $props();
+  let { data, children }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
   const { supabase, session } = data;
 
   // Initialize auth state in stores if we have session data
   $effect(() => {
     if (session?.user) {
-      authActions.initialize(session.user, session);
+      // session might be a full Session or just { user }
+      const fullSession = 'access_token' in session ? session : null;
+      authActions.initialize(session.user, fullSession);
     } else {
       authActions.clear();
     }
   });
 
   onMount(() => {
-    // Set up Supabase auth state listener for the entire app
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, _session) => {
-      if (_session?.expires_at !== session?.expires_at) {
-        invalidate("supabase:auth");
-      }
-    });
+    // Only set up auth listener if supabase client is available and in browser
+    if (typeof window === 'undefined') return;
+    if (!supabase) {
+      console.warn('Supabase client not available in layout');
+      return;
+    }
 
-    return () => subscription.unsubscribe();
+    // Set up Supabase auth state listener for the entire app
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const result = supabase.auth.onAuthStateChange((event, _session) => {
+        const currentExpiresAt = session && 'expires_at' in session ? session.expires_at : null;
+        const newExpiresAt = _session?.expires_at;
+        if (newExpiresAt !== currentExpiresAt) {
+          invalidate("supabase:auth");
+        }
+      });
+      subscription = result.data.subscription;
+    } catch (err) {
+      console.error('Failed to set up auth state listener:', err);
+    }
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   });
 </script>
 
@@ -43,5 +62,5 @@
 
 <!-- Root layout - just renders the slot for public and protected routes -->
 <div class="font-sans antialiased">
-  <slot />
+  {@render children()}
 </div>

@@ -56,8 +56,9 @@
 
   <!-- Project Name -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Project Name</label>
+    <label for="project-name" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Project Name</label>
     <InlineTextEditor
+      id="project-name"
       bind:value={projectName}
       placeholder="Enter project name..."
       variant="title"
@@ -66,8 +67,9 @@
 
   <!-- Character Selection -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Character</label>
+    <label for="character-select" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Character</label>
     <Select 
+      id="character-select"
       bind:value={character}
       placeholder="Select a character..."
       options={[
@@ -81,8 +83,9 @@
 
   <!-- Outfit Selection -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outfit</label>
+    <label for="outfit-select" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outfit</label>
     <Select 
+      id="outfit-select"
       bind:value={outfit}
       placeholder="Select an outfit..."
       options={[
@@ -96,7 +99,8 @@
 
   <!-- Status -->
   <div class="space-y-3">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Project Status</label>
+    <label id="status-label" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Project Status</label>
+    <div role="group" aria-labelledby="status-label">
     <div class="flex gap-2">
       {#each ["idea", "planning", "in-progress"] as statusOption}
         <Button
@@ -109,12 +113,14 @@
         </Button>
       {/each}
     </div>
+    </div>
   </div>
 
   <!-- Budget -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Budget</label>
+    <label for="budget-input" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Budget</label>
     <input
+      id="budget-input"
       type="number"
       bind:value={budget}
       placeholder="Enter total budget..."
@@ -124,8 +130,9 @@
 
   <!-- Deadline -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deadline</label>
+    <label for="deadline-input" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deadline</label>
     <input
+      id="deadline-input"
       type="date"
       bind:value={deadline}
       class="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
@@ -134,8 +141,9 @@
 
   <!-- Description -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</label>
+    <label for="description-editor" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</label>
     <InlineTextEditor
+      id="description-editor"
       bind:value={description}
       placeholder="Describe your project goals and vision..."
       variant="body"
@@ -145,8 +153,9 @@
 
   <!-- Notes -->
   <div class="space-y-2">
-    <label class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Notes</label>
+    <label for="notes-editor" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Notes</label>
     <InlineTextEditor
+      id="notes-editor"
       bind:value={notes}
       placeholder="Add any additional notes, ideas, or references..."
       variant="body"

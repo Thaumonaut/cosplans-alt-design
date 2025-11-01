@@ -51,7 +51,17 @@ Create `.env.test` in your project root:
 SUPABASE_TEST_URL=https://your-project.supabase.co
 SUPABASE_TEST_KEY=your-anon-key-here
 TEST_BASE_URL=http://localhost:5173
+
+# Test User Credentials (required for E2E tests)
+# Use any of these variable name patterns (whatever matches your existing setup):
+TEST_EMAIL=your-test-user@example.com
+TEST_PASSWORD=your-test-password
 ```
+
+**Note:** 
+- Add email/password variables that match a test user that exists in your Supabase test database
+- Supported variable names: `TEST_EMAIL`/`TEST_PASSWORD`, `EMAIL`/`PASSWORD`, `TEST_USER_EMAIL`/`TEST_USER_PASSWORD`, or `E2E_EMAIL`/`E2E_PASSWORD`
+- These credentials are automatically loaded by Playwright (configured in `playwright.config.ts`)
 
 **Security Note:** `.env.test` is already in `.gitignore` - do not commit credentials!
 

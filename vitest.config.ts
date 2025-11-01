@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
 import * as dotenv from 'dotenv';
+import path from 'path';
 
 // Load test environment variables
 dotenv.config({ path: '.env.test' });
@@ -15,6 +16,12 @@ dotenv.config({ path: '.env.test' });
  */
 export default defineConfig({
   plugins: [sveltekit()],
+  resolve: {
+    alias: {
+      '$env/static/public': path.resolve(__dirname, 'tests/mocks/env-public.ts'),
+      '$lib/env/public': path.resolve(__dirname, 'tests/mocks/env-public.ts'),
+    },
+  },
   
   test: {
     // Test environment
@@ -30,6 +37,9 @@ export default defineConfig({
       'build',
       '.svelte-kit',
       'tests/e2e/**', // E2E tests use Playwright
+      'src/**/*.test.ts',
+      'src/**/*.spec.ts',
+      'src/**/*.integration.test.ts',
     ],
     
     // Global test setup
@@ -43,7 +53,6 @@ export default defineConfig({
     
     // Number of parallel workers
     maxWorkers: 8,
-    minWorkers: 1,
     
     // Run tests in parallel
     isolate: true,
@@ -56,19 +65,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json'],
       reportsDirectory: './coverage',
-      
-      // Coverage thresholds (80% overall)
       thresholds: {
         statements: 80,
         branches: 80,
         functions: 80,
         lines: 80,
       },
-      
-      // Per-file thresholds for critical paths
-      perFile: true,
-      
-      // Exclude patterns from coverage
       exclude: [
         'node_modules/',
         'dist/',
