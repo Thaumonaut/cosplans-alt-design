@@ -40,9 +40,9 @@
   const dateAdded = $derived(idea.createdAt)
 
   const difficultyColors = {
-    easy: 'bg-[var(--theme-success)] text-[var(--theme-foreground)] shadow-lg',
-    medium: 'bg-[var(--theme-warning)] text-[var(--theme-foreground)] shadow-lg',
-    hard: 'bg-[var(--theme-error)] text-[var(--theme-foreground)] shadow-lg',
+    easy: 'bg-[var(--theme-success)] text-white shadow-lg border-transparent',
+    medium: 'bg-[var(--theme-warning)] text-white shadow-lg border-transparent',
+    hard: 'bg-[var(--theme-error)] text-white shadow-lg border-transparent',
   }
 </script>
 
