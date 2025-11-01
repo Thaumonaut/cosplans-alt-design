@@ -105,19 +105,26 @@ class SupabaseAuthService implements AuthenticationService {
         }
       }
 
-      // Build callback URL - Supabase will redirect here after OAuth
-      const callbackUrl = new URL(`${window.location.origin}/auth/callback`)
+      // Build callback URL using current origin (works for localhost, staging, production)
+      // Supabase will validate this against allowed redirect URLs in dashboard
+      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      
+      console.log('[OAuth] Initiating OAuth flow:', {
+        provider,
+        origin: window.location.origin,
+        redirectTo: destination,
+        callbackUrl: callbackUrl.toString()
+      });
       
       // Also include in query params as fallback (some providers preserve it)
       if (redirectTo) {
-        callbackUrl.searchParams.set('next', redirectTo)
-      } else {
-        callbackUrl.searchParams.set('next', '/dashboard')
+        callbackUrl.searchParams.set('next', redirectTo);
       }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
+          // Use the full callback URL - Supabase validates this against allowed URLs
           redirectTo: callbackUrl.toString(),
           // Use queryParams to pass through custom data that Supabase will preserve
           queryParams: {

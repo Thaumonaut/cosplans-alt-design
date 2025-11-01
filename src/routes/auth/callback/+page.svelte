@@ -7,30 +7,41 @@
 
   onMount(() => {
     // Check multiple sources for redirect destination (in order of preference):
-    // 1. Server-side data (from query params that were preserved)
-    // 2. localStorage (stored before OAuth redirect)
+    // 1. localStorage (most reliable - stored before OAuth redirect, survives query param stripping)
+    // 2. Server-side data (from query params that were preserved)
     // 3. Default to dashboard
     
     let redirectPath = '/dashboard';
     
-    if (data?.redirectTo) {
-      redirectPath = data.redirectTo;
-    } else {
-      // Check localStorage as fallback (OAuth providers may strip query params)
-      try {
-        const storedPath = localStorage.getItem('oauth_redirect_to');
-        if (storedPath) {
-          redirectPath = storedPath;
-          // Clear it after use
-          localStorage.removeItem('oauth_redirect_to');
-        }
-      } catch (e) {
-        console.warn('Failed to read OAuth redirect from localStorage:', e);
+    // Prioritize localStorage first - it contains the original destination
+    // OAuth providers may strip query parameters, so this is the most reliable source
+    try {
+      const storedPath = localStorage.getItem('oauth_redirect_to');
+      if (storedPath) {
+        redirectPath = storedPath;
+        // Clear it after use
+        localStorage.removeItem('oauth_redirect_to');
+        console.log('[OAuth Callback] Using redirect from localStorage:', redirectPath);
+      } else if (data?.redirectTo && data.redirectTo !== '/dashboard') {
+        // Only use server-side data if localStorage doesn't have it and it's not the default
+        redirectPath = data.redirectTo;
+        console.log('[OAuth Callback] Using redirect from server data:', redirectPath);
+      } else {
+        console.log('[OAuth Callback] No stored redirect, using default:', redirectPath);
+      }
+    } catch (e) {
+      console.warn('[OAuth Callback] Failed to read localStorage, falling back to server data:', e);
+      // Fallback to server data if localStorage fails
+      if (data?.redirectTo) {
+        redirectPath = data.redirectTo;
       }
     }
 
-    // Redirect to the intended destination
-    goto(redirectPath, { invalidateAll: true });
+    // Small delay to ensure auth state is updated
+    setTimeout(() => {
+      // Redirect to the intended destination
+      goto(redirectPath, { invalidateAll: true });
+    }, 100);
   });
 </script>
 
