@@ -94,6 +94,7 @@
         </div>
         
         {#each teamList as team}
+          {@const TeamIcon = getIcon(team.type)}
           <DropdownMenuItem
             onclick={() => handleTeamSwitch(team)}
             class={cn(
@@ -102,7 +103,6 @@
             )}
           >
             <div class="flex items-center gap-3 flex-1 min-w-0">
-              {@const TeamIcon = getIcon(team.type)}
               <TeamIcon class="size-4 shrink-0 text-muted-foreground" />
               <span class="font-medium truncate">{team.name}</span>
             </div>
