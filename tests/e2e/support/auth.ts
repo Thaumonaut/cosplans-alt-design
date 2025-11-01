@@ -5,8 +5,20 @@ import { Page, expect } from '@playwright/test';
  * 
  * Checks if user is authenticated, and if not, performs login using environment variables.
  * Handles redirects from protected routes to login page.
+ * 
+ * Environment variables are loaded from `.env.test` (configured in playwright.config.ts).
+ * Supports the following variable names:
+ * - E2E_EMAIL or TEST_USER_EMAIL
+ * - E2E_PASSWORD or TEST_USER_PASSWORD
+ * 
+ * Example .env.test:
+ * ```
+ * E2E_EMAIL=alice@test.com
+ * E2E_PASSWORD=AliceTest123!
+ * ```
  */
 export async function loginIfNeeded(page: Page): Promise<boolean> {
+  // Read from process.env (loaded from .env.test by playwright.config.ts)
   const email = process.env.E2E_EMAIL || process.env.TEST_USER_EMAIL;
   const password = process.env.E2E_PASSWORD || process.env.TEST_USER_PASSWORD;
 

@@ -6,17 +6,24 @@ End-to-end tests using Playwright for the Cosplay Tracker application.
 
 ### Required Environment Variables
 
-The E2E tests require authentication credentials. Set these in your environment or CI:
+The E2E tests require authentication credentials. Add these to your `.env.test` file:
 
 ```bash
-# Required for tests that need authentication
+# .env.test
+SUPABASE_TEST_URL=https://your-project.supabase.co
+SUPABASE_TEST_KEY=your-anon-key-here
+TEST_BASE_URL=http://localhost:5173
+
+# E2E Test User Credentials (required for tests that need authentication)
 E2E_EMAIL=alice@test.com
 E2E_PASSWORD=AliceTest123!
-
-# Or use these alternative names
-TEST_USER_EMAIL=alice@test.com
-TEST_USER_PASSWORD=AliceTest123!
 ```
+
+**Note:** The `.env.test` file is automatically loaded by `playwright.config.ts`, so you just need to add these variables to that file.
+
+**Alternative variable names** (also supported):
+- `TEST_USER_EMAIL` instead of `E2E_EMAIL`
+- `TEST_USER_PASSWORD` instead of `E2E_PASSWORD`
 
 ### Test User Setup
 
