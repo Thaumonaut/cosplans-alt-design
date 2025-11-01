@@ -53,7 +53,7 @@
             onOpenChange?.(false)
           }
         }}
-        class="fixed z-40 bg-black/10 transition-opacity duration-500 w-full h-full border-0 p-0 cursor-default"
+        class="fixed z-40 bg-[color-mix(in_srgb,var(--theme-foreground)_10%,transparent)] transition-opacity duration-500 w-full h-full border-0 p-0 cursor-default"
         style="top: {HEADER_HEIGHT}px; left: 16rem; right: 0; bottom: 0;"
       ></button>
 

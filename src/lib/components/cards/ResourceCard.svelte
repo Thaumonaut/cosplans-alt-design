@@ -23,13 +23,13 @@
   }
 
   const categoryColors: Record<string, string> = {
-    prop: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20',
-    fabric: 'bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-500/20',
-    wig: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
-    pattern: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20',
-    'costume-piece': 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20',
-    accessory: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20',
-    material: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20',
+    prop: 'bg-[color-mix(in_srgb,var(--theme-primary)_20%,transparent)] text-[var(--theme-primary)] border-[color-mix(in_srgb,var(--theme-primary)_30%,transparent)]',
+    fabric: 'bg-[color-mix(in_srgb,var(--theme-accent)_20%,transparent)] text-[var(--theme-accent)] border-[color-mix(in_srgb,var(--theme-accent)_30%,transparent)]',
+    wig: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] text-[var(--theme-info)] border-[color-mix(in_srgb,var(--theme-info)_30%,transparent)]',
+    pattern: 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] text-[var(--theme-warning)] border-[color-mix(in_srgb,var(--theme-warning)_30%,transparent)]',
+    'costume-piece': 'bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] text-[var(--theme-success)] border-[color-mix(in_srgb,var(--theme-success)_30%,transparent)]',
+    accessory: 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] text-[var(--theme-warning)] border-[color-mix(in_srgb,var(--theme-warning)_30%,transparent)]',
+    material: 'bg-[color-mix(in_srgb,var(--theme-sidebar-muted)_20%,transparent)] text-[var(--theme-sidebar-muted)] border-[color-mix(in_srgb,var(--theme-border)_30%,transparent)]',
   }
 
 

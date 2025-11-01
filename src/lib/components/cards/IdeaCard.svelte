@@ -40,9 +40,9 @@
   const dateAdded = $derived(idea.createdAt)
 
   const difficultyColors = {
-    easy: 'bg-emerald-600/95 text-white dark:bg-emerald-700/95 dark:text-white shadow-lg',
-    medium: 'bg-amber-600/95 text-white dark:bg-amber-700/95 dark:text-white shadow-lg',
-    hard: 'bg-rose-600/95 text-white dark:bg-rose-700/95 dark:text-white shadow-lg',
+    easy: 'bg-[var(--theme-success)] text-[var(--theme-foreground)] shadow-lg',
+    medium: 'bg-[var(--theme-warning)] text-[var(--theme-foreground)] shadow-lg',
+    hard: 'bg-[var(--theme-error)] text-[var(--theme-foreground)] shadow-lg',
   }
 </script>
 
@@ -60,7 +60,7 @@
     }}
   >
     <div class="flex gap-4 p-4">
-      <div class="relative size-32 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+      <div class="relative size-32 shrink-0 overflow-hidden rounded-lg bg-[var(--theme-section-bg)]">
         {#if image && !imageError}
           <img 
             src={image} 
