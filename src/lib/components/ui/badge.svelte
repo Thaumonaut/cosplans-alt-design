@@ -10,7 +10,7 @@
           default:
             'border-transparent bg-[var(--theme-primary)] text-white [a&]:hover:bg-[var(--theme-primary-hover)]',
           secondary:
-            'border-transparent bg-[color-mix(in_srgb,var(--theme-secondary)_80%,white)] text-[var(--theme-foreground)] [a&]:hover:bg-[color-mix(in_srgb,var(--theme-secondary)_90%,white)]',
+            'border-transparent bg-[color-mix(in_srgb,var(--theme-muted)_30%,transparent)] text-[var(--theme-foreground)] border-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)] [a&]:hover:bg-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)]',
           destructive:
             'border-transparent bg-[var(--theme-error)] text-white [a&]:hover:bg-[color-mix(in_srgb,var(--theme-error)_90%,black)] focus-visible:ring-[var(--theme-error)]/20 dark:focus-visible:ring-[var(--theme-error)]/40',
           outline:
