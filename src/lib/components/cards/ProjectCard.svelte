@@ -12,10 +12,10 @@
   let { project, onclick }: Props = $props()
 
   const statusColors = {
-    planning: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
-    'in-progress': 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20',
-    completed: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20',
-    archived: 'bg-gray-500/10 text-gray-700 dark:text-gray-300 border-gray-500/20',
+    planning: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] text-[var(--theme-info)] border-[color-mix(in_srgb,var(--theme-info)_30%,transparent)]',
+    'in-progress': 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] text-[var(--theme-warning)] border-[color-mix(in_srgb,var(--theme-warning)_30%,transparent)]',
+    completed: 'bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] text-[var(--theme-success)] border-[color-mix(in_srgb,var(--theme-success)_30%,transparent)]',
+    archived: 'bg-[color-mix(in_srgb,var(--theme-muted)_20%,transparent)] text-[var(--theme-sidebar-muted)] border-[color-mix(in_srgb,var(--theme-border)_30%,transparent)]',
   }
 
   const statusLabels = {
@@ -84,17 +84,17 @@
         <span class="text-muted-foreground">Progress</span>
         <span class="font-medium text-foreground">{project.progress}%</span>
       </div>
-      <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div class="h-2 w-full overflow-hidden rounded-full bg-[var(--theme-section-bg)]">
         <div
           class={cn(
             'h-full rounded-full transition-all',
             project.progress === 100
-              ? 'bg-green-500'
+              ? 'bg-[var(--theme-success)]'
               : project.progress >= 75
-                ? 'bg-blue-500'
+                ? 'bg-[var(--theme-info)]'
                 : project.progress >= 50
-                  ? 'bg-yellow-500'
-                  : 'bg-gray-500'
+                  ? 'bg-[var(--theme-warning)]'
+                  : 'bg-[var(--theme-sidebar-muted)]'
           )}
           style="width: {project.progress}%"
         ></div>
