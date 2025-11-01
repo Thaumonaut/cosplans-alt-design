@@ -149,17 +149,14 @@ class SupabaseAuthService implements AuthenticationService {
           callbackUrl,
           hint: 'Verify callbackUrl exactly matches a URL in Supabase Redirect URLs list'
         });
-      } else {
-        console.log('[OAuth] OAuth flow initiated successfully, redirecting to provider...');
-      }
-
-      if (error) {
         return {
           user: null,
           session: null,
           error: error.message,
         };
       }
+      
+      console.log('[OAuth] OAuth flow initiated successfully, redirecting to provider...');
 
       // OAuth redirects, so we won't have immediate user/session data
       return {
