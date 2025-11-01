@@ -31,6 +31,7 @@
 
   let isOpen = $state(false);
   let dropdownElement: HTMLDivElement;
+  let triggerElement: HTMLDivElement;
 
   function toggleDropdown() {
     isOpen = !isOpen;
@@ -95,6 +96,7 @@
 <div class="relative" bind:this={dropdownElement}>
   <!-- Trigger - can be button or other element from snippet -->
   <div
+    bind:this={triggerElement}
     onclick={toggleDropdown}
     onkeydown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -113,16 +115,19 @@
   {#if isOpen}
     <div
       class={cn(
-        "absolute bg-popover text-popover-foreground border shadow-lg rounded-lg p-1.5 min-w-[10rem] z-[9999] list-none",
-        // Position based on placement prop
-        placement === "top-start" && "bottom-full left-0 mb-1",
-        placement === "top-end" && "bottom-full right-0 mb-1", 
-        placement === "bottom-start" && "top-full left-0 mt-1",
-        placement === "bottom-end" && "top-full right-0 mt-1",
-        placement === "left-start" && "right-full top-0 mr-1",
-        placement === "right-start" && "left-full top-0 ml-1",
+        "absolute bg-muted/95 backdrop-blur-sm text-foreground border shadow-xl p-1.5 z-[9999] list-none",
+        // Match trigger width exactly
+        "w-full",
+        // Position based on placement prop - no gaps, extends from button
+        placement === "top-start" && "bottom-full left-0 rounded-b-none rounded-t-lg",
+        placement === "top-end" && "bottom-full right-0 rounded-b-none rounded-t-lg", 
+        placement === "bottom-start" && "top-full left-0 rounded-t-none rounded-b-lg",
+        placement === "bottom-end" && "top-full right-0 rounded-t-none rounded-b-lg",
+        placement === "left-start" && "right-full top-0 rounded-r-none rounded-l-lg",
+        placement === "right-start" && "left-full top-0 rounded-l-none rounded-r-lg",
         className,
       )}
+      style={triggerElement ? `width: ${triggerElement.offsetWidth}px;` : ''}
       role="list"
     >
       {@render children?.()}
