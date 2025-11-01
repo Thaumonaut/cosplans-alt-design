@@ -38,11 +38,6 @@
 		}
 	},
 	
-	// Site configuration for Cloudflare Pages
-	"site": {
-		"bucket": ".svelte-kit/cloudflare"
-	},
-	
 	// Build configuration
 	"build": {
 		"command": "pnpm run build",
