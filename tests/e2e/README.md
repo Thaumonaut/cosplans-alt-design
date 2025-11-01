@@ -6,7 +6,7 @@ End-to-end tests using Playwright for the Cosplay Tracker application.
 
 ### Required Environment Variables
 
-The E2E tests require authentication credentials. Add these to your `.env.test` file:
+The E2E tests require authentication credentials. Add these to your `.env.test` file using whatever variable names you already have:
 
 ```bash
 # .env.test
@@ -14,16 +14,18 @@ SUPABASE_TEST_URL=https://your-project.supabase.co
 SUPABASE_TEST_KEY=your-anon-key-here
 TEST_BASE_URL=http://localhost:5173
 
-# E2E Test User Credentials (required for tests that need authentication)
-E2E_EMAIL=alice@test.com
-E2E_PASSWORD=AliceTest123!
+# Test User Credentials (use whatever variable names you have)
+TEST_EMAIL=your-test-user@example.com
+TEST_PASSWORD=your-test-password
 ```
 
-**Note:** The `.env.test` file is automatically loaded by `playwright.config.ts`, so you just need to add these variables to that file.
+**Note:** The auth helper supports multiple variable name patterns:
+- `TEST_EMAIL` / `TEST_PASSWORD`
+- `EMAIL` / `PASSWORD`
+- `TEST_USER_EMAIL` / `TEST_USER_PASSWORD`
+- `E2E_EMAIL` / `E2E_PASSWORD`
 
-**Alternative variable names** (also supported):
-- `TEST_USER_EMAIL` instead of `E2E_EMAIL`
-- `TEST_USER_PASSWORD` instead of `E2E_PASSWORD`
+Just use whatever email/password variables you already have in `.env.test` - the code will find them automatically.
 
 ### Test User Setup
 
@@ -69,8 +71,7 @@ The GitHub Actions workflow automatically:
 Ensure these secrets are configured:
 - `SUPABASE_TEST_URL`
 - `SUPABASE_TEST_KEY`
-- `E2E_EMAIL` (optional, defaults to `alice@test.com`)
-- `E2E_PASSWORD` (optional, defaults to `AliceTest123!`)
+- Test user credentials (using any supported variable name pattern, same as `.env.test`)
 
 ## Test Structure
 
