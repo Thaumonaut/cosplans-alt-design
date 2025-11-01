@@ -44,6 +44,11 @@
     medium: '!bg-[var(--theme-warning)] !text-white shadow-lg border-transparent',
     hard: '!bg-[var(--theme-error)] !text-white shadow-lg border-transparent',
   }
+
+  const difficultyStyle = $derived((d: string) => {
+    const colorVar = d === 'easy' ? '--theme-success' : d === 'medium' ? '--theme-warning' : '--theme-error'
+    return `background-color: var(${colorVar}); color: white;`
+  })
 </script>
 
 {#if variant === 'list'}
@@ -181,7 +186,7 @@
         </div>
       {/if}
       <div class="absolute right-3 top-3 flex gap-2 z-10">
-        <Badge class="{difficultyColors[difficulty]}" style="background-color: var(--theme-{difficulty === 'easy' ? 'success' : difficulty === 'medium' ? 'warning' : 'error'}); color: white;">{difficulty}</Badge>
+        <Badge class={difficultyColors[difficulty]} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
       </div>
       <Button
         color="light"
