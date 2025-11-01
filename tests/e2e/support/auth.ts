@@ -26,9 +26,22 @@ export async function loginIfNeeded(page: Page): Promise<boolean> {
     process.env.TEST_USER_PASSWORD || 
     process.env.E2E_PASSWORD;
 
+  // Log which variables were found (for debugging/validation)
+  const foundVars = [];
+  if (process.env.TEST_EMAIL) foundVars.push('TEST_EMAIL');
+  else if (process.env.EMAIL) foundVars.push('EMAIL');
+  else if (process.env.TEST_USER_EMAIL) foundVars.push('TEST_USER_EMAIL');
+  else if (process.env.E2E_EMAIL) foundVars.push('E2E_EMAIL');
+  
+  if (email && password) {
+    console.log(`[loginIfNeeded] Using credentials from: ${foundVars.join(' / ')}`);
+    console.log(`[loginIfNeeded] Email: ${email.replace(/(.{2})(.*)(@.*)/, '$1***$3')}`); // Mask email but show first 2 chars
+  }
+
   // If no creds provided, skip login (tests may work without auth)
   if (!email || !password) {
-    console.warn('[loginIfNeeded] No E2E credentials provided, skipping login');
+    console.warn('[loginIfNeeded] No E2E credentials found. Checked: TEST_EMAIL, EMAIL, TEST_USER_EMAIL, E2E_EMAIL');
+    console.warn('[loginIfNeeded] Skipping login - tests may fail if authentication is required');
     return false;
   }
 
