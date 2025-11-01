@@ -106,32 +106,52 @@ class SupabaseAuthService implements AuthenticationService {
       }
 
       // Build callback URL using current origin (works for localhost, staging, production)
-      // Supabase will validate this against allowed redirect URLs in dashboard
-      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      // CRITICAL: This URL must EXACTLY match an entry in Supabase Redirect URLs list
+      // - Must include the protocol (http:// or https://)
+      // - Must match the exact path (/auth/callback)
+      // - No trailing slashes
+      const origin = window.location.origin;
+      const callbackUrl = `${origin}/auth/callback`;
+      
+      // Add query params for the final destination (where to redirect after auth)
+      const finalCallbackUrl = new URL(callbackUrl);
+      if (redirectTo) {
+        finalCallbackUrl.searchParams.set('next', redirectTo);
+      }
       
       console.log('[OAuth] Initiating OAuth flow:', {
         provider,
-        origin: window.location.origin,
-        redirectTo: destination,
-        callbackUrl: callbackUrl.toString()
+        currentOrigin: origin,
+        callbackUrl: callbackUrl, // Without query params (for Supabase validation)
+        finalCallbackUrl: finalCallbackUrl.toString(), // With query params
+        destination: destination,
+        warning: 'Make sure callbackUrl EXACTLY matches Supabase Redirect URLs list'
       });
-      
-      // Also include in query params as fallback (some providers preserve it)
-      if (redirectTo) {
-        callbackUrl.searchParams.set('next', redirectTo);
-      }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          // Use the full callback URL - Supabase validates this against allowed URLs
-          redirectTo: callbackUrl.toString(),
-          // Use queryParams to pass through custom data that Supabase will preserve
+          // CRITICAL: Use the exact callback URL (without query params for Supabase validation)
+          // This must match EXACTLY one of the URLs in Supabase dashboard Redirect URLs
+          // Supabase will append the code and other params itself
+          redirectTo: callbackUrl, // Use base URL without query params - Supabase validates this
+          // Pass the final destination as a query param that Supabase will preserve
           queryParams: {
             ...(redirectTo && { next: redirectTo })
           },
         },
       });
+      
+      if (error) {
+        console.error('[OAuth] Supabase OAuth error:', {
+          error: error.message,
+          provider,
+          callbackUrl,
+          hint: 'Verify callbackUrl exactly matches a URL in Supabase Redirect URLs list'
+        });
+      } else {
+        console.log('[OAuth] OAuth flow initiated successfully, redirecting to provider...');
+      }
 
       if (error) {
         return {
