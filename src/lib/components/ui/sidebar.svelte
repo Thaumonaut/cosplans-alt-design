@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { setSidebarContext } from './sidebar-context.svelte.ts';
+  import { setSidebarContext } from './sidebar-context.svelte';
   import Sheet from './sheet.svelte';
   import { cn } from '$lib/utils';
 
