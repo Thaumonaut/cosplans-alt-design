@@ -40,9 +40,9 @@
   const dateAdded = $derived(idea.createdAt)
 
   const difficultyColors = {
-    easy: 'bg-[var(--theme-success)] text-white shadow-lg border-transparent',
-    medium: 'bg-[var(--theme-warning)] text-white shadow-lg border-transparent',
-    hard: 'bg-[var(--theme-error)] text-white shadow-lg border-transparent',
+    easy: '!bg-[var(--theme-success)] !text-white shadow-lg border-transparent',
+    medium: '!bg-[var(--theme-warning)] !text-white shadow-lg border-transparent',
+    hard: '!bg-[var(--theme-error)] !text-white shadow-lg border-transparent',
   }
 </script>
 
@@ -181,7 +181,7 @@
         </div>
       {/if}
       <div class="absolute right-3 top-3 flex gap-2 z-10">
-        <Badge class="{difficultyColors[difficulty]} !bg-opacity-100 shadow-md">{difficulty}</Badge>
+        <Badge class="{difficultyColors[difficulty]}" style="background-color: var(--theme-{difficulty === 'easy' ? 'success' : difficulty === 'medium' ? 'warning' : 'error'}); color: white;">{difficulty}</Badge>
       </div>
       <Button
         color="light"
