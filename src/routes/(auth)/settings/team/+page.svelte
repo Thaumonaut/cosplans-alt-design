@@ -354,18 +354,18 @@
           </CardContent>
         </Card>
       {:else}
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
           {#each allTeams as team (team.id)}
             <button 
               type="button"
-              class="w-full text-left"
+              class="w-full text-left h-full"
               onclick={() => handleSwitchTeam(team)}
               aria-label="Select team {team.name}"
             >
             <Card 
-              class="transition-all hover:shadow-md {currentTeamData?.id === team.id ? 'ring-2 ring-primary' : ''}"
+              class="transition-all hover:shadow-md h-full flex flex-col {currentTeamData?.id === team.id ? 'ring-2 ring-primary' : ''}"
             >
-          <CardHeader>
+          <CardHeader class="flex-shrink-0">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <CardTitle class="text-lg">{team.name}</CardTitle>
@@ -375,10 +375,10 @@
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent class="flex-shrink-0 mt-auto">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                    <Badge variant="secondary">{team.type === 'personal' ? 'Personal' : 'Team'}</Badge>
+                    <Badge variant="secondary" class="h-[22px]">{team.type === 'personal' ? 'Personal' : 'Team'}</Badge>
               </div>
               <div class="flex items-center gap-1 text-sm text-muted-foreground">
                 <Users class="size-4" />
