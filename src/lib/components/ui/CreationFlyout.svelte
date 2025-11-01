@@ -60,7 +60,7 @@
   <!-- Flyout Panel - Functional layout -->
   <div
     class={cn(
-      'fixed right-0 z-50 bg-[var(--theme-section-bg)] flex flex-col',
+      'fixed right-0 z-50 bg-[var(--theme-content-bg)] flex flex-col',
       'transition-transform duration-500 ease-out',
       'w-full sm:w-[680px]',
       open ? 'translate-x-0' : 'translate-x-full'
@@ -72,7 +72,7 @@
     tabindex="-1"
   >
     <!-- Header - Minimal, functional -->
-    <header class="flex-shrink-0 flex items-center justify-between border-b border-[var(--theme-border)] bg-[color-mix(in_srgb,var(--theme-section-bg)_60%,transparent)] backdrop-blur-md px-10 py-8">
+    <header class="flex-shrink-0 flex items-center justify-between border-b border-[var(--theme-border)] bg-[var(--theme-content-bg)] backdrop-blur-md px-10 py-8">
       <h2 id="flyout-title" class="text-xl font-normal text-[var(--theme-foreground)]">{title}</h2>
       <div class="flex items-center gap-3">
         {#if onFullScreen}
@@ -104,7 +104,7 @@
 
     <!-- Footer - Fixed at bottom (from snippet prop) -->
     {#if footer !== undefined && footer !== null}
-      <footer class="flex-shrink-0 border-t border-[var(--theme-border)] bg-[color-mix(in_srgb,var(--theme-section-bg)_60%,transparent)] backdrop-blur-md px-10 py-4 z-20">
+      <footer class="flex-shrink-0 border-t border-[var(--theme-border)] bg-[var(--theme-content-bg)] backdrop-blur-md px-10 py-4 z-20">
         {@render footer()}
       </footer>
     {/if}
