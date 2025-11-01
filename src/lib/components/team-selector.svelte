@@ -85,7 +85,8 @@
     {#if $teams.items.length === 0}
       <DropdownMenuItem disabled>No teams available</DropdownMenuItem>
     {:else}
-      {#each Object.entries(groupedTeams) as [type, teamList]}
+      {@const groupEntries = Object.entries(groupedTeams)}
+      {#each groupEntries as [type, teamList], i}
         {@const TypeIcon = typeIcons[type as keyof typeof typeIcons] || Users}
         {@const Icon = TypeIcon}
         <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -111,7 +112,7 @@
           </DropdownMenuItem>
         {/each}
         
-        {#if $index < Object.keys(groupedTeams).length - 1}
+        {#if i < groupEntries.length - 1}
           <div class="border-t border-[var(--theme-border)] my-1"></div>
         {/if}
       {/each}
