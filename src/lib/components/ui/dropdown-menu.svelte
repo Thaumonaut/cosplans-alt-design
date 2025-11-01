@@ -155,9 +155,16 @@
     }
   }
 
+  let dropdownMenuElement = $state<HTMLElement | undefined>(undefined);
+
   function handleClickOutside(event: MouseEvent) {
-    if (isOpen && dropdownElement && !dropdownElement.contains(event.target as Node)) {
-      closeDropdown();
+    if (isOpen) {
+      const target = event.target as Node;
+      const clickedInsideDropdown = dropdownMenuElement?.contains(target);
+      const clickedOnTrigger = triggerElement?.contains(target);
+      if (!clickedInsideDropdown && !clickedOnTrigger) {
+        closeDropdown();
+      }
     }
   }
 
@@ -170,8 +177,13 @@
   function handleBlur(event: FocusEvent) {
     // Use setTimeout to allow for focus to move to child elements
     setTimeout(() => {
-      if (isOpen && dropdownElement && !dropdownElement.contains(document.activeElement)) {
-        closeDropdown();
+      if (isOpen) {
+        const activeElement = document.activeElement;
+        const focusedInsideDropdown = dropdownMenuElement?.contains(activeElement);
+        const focusedOnTrigger = triggerElement?.contains(activeElement);
+        if (!focusedInsideDropdown && !focusedOnTrigger) {
+          closeDropdown();
+        }
       }
     }, 0);
   }
@@ -225,6 +237,7 @@
 {#if isOpen && portalContainer}
   {#key portalContainer}
     <div
+      bind:this={dropdownMenuElement}
       class={cn(
         "fixed backdrop-blur-md border shadow-xl p-1.5 list-none pointer-events-auto",
         "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
