@@ -94,12 +94,24 @@ class SupabaseAuthService implements AuthenticationService {
 
   async signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<AuthResult> {
     try {
-      // Build callback URL with next parameter to preserve redirect destination
+      // Store the redirect destination in localStorage before OAuth redirect
+      // OAuth providers may strip query parameters, so we need a reliable way to preserve this
+      const destination = redirectTo || '/dashboard';
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('oauth_redirect_to', destination);
+        } catch (e) {
+          console.warn('Failed to store OAuth redirect destination:', e);
+        }
+      }
+
+      // Build callback URL - Supabase will redirect here after OAuth
       const callbackUrl = new URL(`${window.location.origin}/auth/callback`)
+      
+      // Also include in query params as fallback (some providers preserve it)
       if (redirectTo) {
         callbackUrl.searchParams.set('next', redirectTo)
       } else {
-        // Default to dashboard if no redirect specified
         callbackUrl.searchParams.set('next', '/dashboard')
       }
 
@@ -107,6 +119,10 @@ class SupabaseAuthService implements AuthenticationService {
         provider,
         options: {
           redirectTo: callbackUrl.toString(),
+          // Use queryParams to pass through custom data that Supabase will preserve
+          queryParams: {
+            ...(redirectTo && { next: redirectTo })
+          },
         },
       });
 
