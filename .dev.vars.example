@@ -1,0 +1,22 @@
+# Cloudflare Wrangler Local Development Environment Variables
+# Copy this file to .dev.vars and fill in your actual values
+# .dev.vars is gitignored and should never be committed
+#
+# Usage:
+#   1. cp .dev.vars.example .dev.vars
+#   2. Fill in your Supabase credentials
+#   3. Run: wrangler dev
+#
+# Note: These variables are only available when running locally with wrangler dev
+# For production, set these in Cloudflare Dashboard or use: wrangler secret put
+
+# Supabase Configuration (required)
+PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Optional: Node environment
+NODE_ENV=development
+
+# Optional: Debug mode
+DEBUG=false
+

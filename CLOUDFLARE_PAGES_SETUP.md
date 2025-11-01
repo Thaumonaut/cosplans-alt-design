@@ -20,8 +20,31 @@ Add these in Cloudflare Pages dashboard under Settings → Environment Variables
 ## Important Notes
 
 1. The SvelteKit Cloudflare adapter outputs to `.svelte-kit/cloudflare/`, not `build/`
-2. The `wrangler.jsonc` file is for Cloudflare Workers, not Pages
-3. For Pages, you don't need wrangler - just connect the GitHub repo and set the build settings above
+2. The `wrangler.jsonc` file is primarily for Cloudflare Workers, but also documents configuration
+3. For Pages, environment variables are set in the dashboard (Settings → Environment Variables)
+4. For Workers, use `wrangler secret put` command to set sensitive variables
+
+## Using Wrangler for Local Development
+
+If you want to test locally with Wrangler:
+
+1. **Create `.dev.vars` file** (copy from `.dev.vars.example`):
+   ```bash
+   cp .dev.vars.example .dev.vars
+   # Edit .dev.vars with your Supabase credentials
+   ```
+
+2. **Run locally with Wrangler**:
+   ```bash
+   pnpm run build
+   wrangler pages dev .svelte-kit/cloudflare
+   ```
+
+3. **Set secrets for production** (Workers only):
+   ```bash
+   wrangler secret put PUBLIC_SUPABASE_URL
+   wrangler secret put PUBLIC_SUPABASE_ANON_KEY
+   ```
 
 ## Troubleshooting
 
