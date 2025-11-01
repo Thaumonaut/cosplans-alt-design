@@ -1,6 +1,24 @@
 <script lang="ts">
   import { cn } from "$lib/utils";
 
+  // Svelte action to append element to portal container
+  function portal(node: HTMLElement, container: HTMLElement) {
+    container.appendChild(node);
+    return {
+      update(newContainer: HTMLElement) {
+        if (newContainer !== container) {
+          container.removeChild(node);
+          newContainer.appendChild(node);
+        }
+      },
+      destroy() {
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      }
+    };
+  }
+
   interface Props {
     open?: boolean;
     placement?:
@@ -33,6 +51,7 @@
   let dropdownElement: HTMLDivElement;
   let triggerElement = $state<HTMLDivElement | undefined>(undefined);
   let dropdownPosition = $state({ top: 0, left: 0, right: 0, bottom: 0, width: 0 });
+  let portalContainer: HTMLDivElement | undefined = undefined;
   
   // Calculate dropdown width from trigger element
   const dropdownWidth = $derived(triggerElement?.offsetWidth ?? null);
@@ -85,17 +104,40 @@
     dropdownPosition = { top, left, right, bottom, width: dropdownWidth ?? 280 };
   }
 
+  // Create portal container and manage it
   $effect(() => {
-    if (isOpen && triggerElement) {
-      updateDropdownPosition();
-      // Recalculate on scroll/resize
-      const handleUpdate = () => updateDropdownPosition();
-      window.addEventListener('scroll', handleUpdate, true);
-      window.addEventListener('resize', handleUpdate);
-      return () => {
-        window.removeEventListener('scroll', handleUpdate, true);
-        window.removeEventListener('resize', handleUpdate);
-      };
+    if (isOpen) {
+      // Create portal container if it doesn't exist
+      if (!portalContainer) {
+        portalContainer = document.createElement('div');
+        portalContainer.id = 'dropdown-portal';
+        portalContainer.style.position = 'fixed';
+        portalContainer.style.top = '0';
+        portalContainer.style.left = '0';
+        portalContainer.style.width = '100%';
+        portalContainer.style.height = '100%';
+        portalContainer.style.pointerEvents = 'none';
+        portalContainer.style.zIndex = '99999';
+        document.body.appendChild(portalContainer);
+      }
+      
+      if (triggerElement) {
+        updateDropdownPosition();
+        // Recalculate on scroll/resize
+        const handleUpdate = () => updateDropdownPosition();
+        window.addEventListener('scroll', handleUpdate, true);
+        window.addEventListener('resize', handleUpdate);
+        return () => {
+          window.removeEventListener('scroll', handleUpdate, true);
+          window.removeEventListener('resize', handleUpdate);
+        };
+      }
+    } else {
+      // Clean up portal container when dropdown closes
+      if (portalContainer && portalContainer.parentNode) {
+        portalContainer.parentNode.removeChild(portalContainer);
+        portalContainer = undefined;
+      }
     }
   });
 
@@ -177,11 +219,15 @@
     {@render trigger?.()}
   </div>
 
-  <!-- Dropdown menu positioned correctly - use fixed to escape stacking contexts -->
-  {#if isOpen}
+</div>
+
+<!-- Render dropdown in portal to escape all stacking contexts -->
+{#if isOpen && portalContainer}
+  {@const portal = portalContainer}
+  {#key portal}
     <div
       class={cn(
-        "fixed backdrop-blur-md border shadow-xl p-1.5 z-[99999] list-none",
+        "fixed backdrop-blur-md border shadow-xl p-1.5 list-none pointer-events-auto",
         "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
         className,
       )}
@@ -191,11 +237,13 @@
         right: ${dropdownPosition.right ? `${dropdownPosition.right}px` : 'auto'};
         bottom: ${dropdownPosition.bottom ? `${dropdownPosition.bottom}px` : 'auto'};
         min-width: 280px;
+        z-index: 99999;
         ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}
       `}
       role="list"
+      use:portal
     >
       {@render children?.()}
     </div>
-  {/if}
-</div>
+  {/key}
+{/if}
