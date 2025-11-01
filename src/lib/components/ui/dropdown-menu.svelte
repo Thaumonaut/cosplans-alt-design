@@ -31,7 +31,10 @@
 
   let isOpen = $state(false);
   let dropdownElement: HTMLDivElement;
-  let triggerElement: HTMLDivElement;
+  let triggerElement = $state<HTMLDivElement | undefined>(undefined);
+  
+  // Calculate dropdown width from trigger element
+  const dropdownWidth = $derived(triggerElement?.offsetWidth ?? null);
 
   function toggleDropdown() {
     isOpen = !isOpen;
@@ -127,7 +130,7 @@
         placement === "right-start" && "left-full top-0 rounded-l-none rounded-r-lg",
         className,
       )}
-      style={triggerElement ? `width: ${triggerElement.offsetWidth}px;` : ''}
+      style={dropdownWidth ? `width: ${dropdownWidth}px;` : ''}
       role="list"
     >
       {@render children?.()}
