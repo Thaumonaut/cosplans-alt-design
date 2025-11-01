@@ -119,7 +119,7 @@
     <div
       class={cn(
         "absolute backdrop-blur-sm border shadow-xl p-1.5 z-[9999] list-none",
-        "bg-[var(--theme-card-bg,theme(card.DEFAULT))] text-[var(--theme-foreground)]",
+        "bg-[var(--theme-card-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)]",
         // Position based on placement prop - slight offset for modern spacing
         placement === "top-start" && "bottom-full left-0 mb-1.5 rounded-lg",
         placement === "top-end" && "bottom-full right-0 mb-1.5 rounded-lg", 
