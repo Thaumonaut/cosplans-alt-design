@@ -44,8 +44,8 @@ jobs:
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps
 
-      - name: Run E2E smoke tests
-        run: bunx playwright test -g "smoke"
+      - name: Run E2E tests
+        run: bunx playwright test
         env:
           CI: true
           SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}

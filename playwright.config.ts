@@ -94,8 +94,13 @@ export default defineConfig({
   
   // Run local dev server before starting tests
   webServer: {
-    command: 'pnpm run dev',
+    // Use bun in CI, pnpm locally (detected from packageManager in package.json)
+    command: process.env.CI ? 'bun run dev' : 'pnpm run dev',
     url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+    stdout: 'ignore',
+    stderr: 'pipe',
     env: {
       // Ensure PATH includes node from nvm for spawned processes (set before spreading process.env)
       PATH: process.env.PATH || '/home/jek/.nvm/versions/node/v22.20.0/bin:/usr/bin:/bin',
@@ -104,8 +109,6 @@ export default defineConfig({
       PUBLIC_SUPABASE_URL: process.env.SUPABASE_TEST_URL || process.env.PUBLIC_SUPABASE_URL || '',
       PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_TEST_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || '',
     },
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
   },
   
   // Global setup and teardown

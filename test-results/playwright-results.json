@@ -10,9 +10,7 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "reporter": [
       [
@@ -46,9 +44,7 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -62,9 +58,7 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "firefox",
         "name": "firefox",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -78,9 +72,7 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "webkit",
         "name": "webkit",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -94,9 +86,7 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -110,9 +100,7 @@
         "outputDir": "/home/jek/Downloads/cosplay-tracker/test-results",
         "repeatEach": 1,
         "retries": 3,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "Mobile Safari",
         "name": "Mobile Safari",
         "testDir": "/home/jek/Downloads/cosplay-tracker/tests/e2e",
@@ -129,7 +117,7 @@
     "version": "1.56.1",
     "workers": 4,
     "webServer": {
-      "command": "pnpm run dev",
+      "command": "bun run dev",
       "url": "http://localhost:5173",
       "env": {
         "PATH": "/home/jek/Downloads/cosplay-tracker/node_modules/.bin:/home/jek/.cache/node/corepack/v1/pnpm/10.20.0/dist/node-gyp-bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.local/bin:/home/jek/snap/bun-js/79/.bun/bin:/home/jek/.bun/bin:/home/jek/.bun/bin:/home/jek/snap/bun-js/78/.bun/bin:/home/jek/.nvm/versions/node/v22.20.0/bin:/home/jek/.cargo/bin:/home/jek/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin",
@@ -249,55 +237,17 @@
       "timeout": 120000
     }
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "smoke.spec.ts",
-      "file": "smoke.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "smoke: e2e launches browser",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 120000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 179,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2025-11-01T08:36:28.173Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4219922fea2e2bd3c691-3256fb2beee4aa47f7a2",
-          "file": "smoke.spec.ts",
-          "line": 3,
-          "column": 1
-        }
-      ]
+      "message": "Error: http://localhost:5173 is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.",
+      "stack": "Error: http://localhost:5173 is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer."
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2025-11-01T08:36:15.074Z",
-    "duration": 13418.929,
-    "expected": 1,
+    "startTime": "2025-11-01T08:45:44.350Z",
+    "duration": 161.25099999999998,
+    "expected": 0,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
