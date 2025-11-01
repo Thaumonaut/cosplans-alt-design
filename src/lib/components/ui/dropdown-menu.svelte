@@ -110,7 +110,7 @@
       // Create portal container if it doesn't exist
       if (!portalContainer) {
         portalContainer = document.createElement('div');
-        portalContainer.id = 'dropdown-portal';
+        portalContainer.id = 'dropdown-portal-' + Date.now();
         portalContainer.style.position = 'fixed';
         portalContainer.style.top = '0';
         portalContainer.style.left = '0';
@@ -118,6 +118,7 @@
         portalContainer.style.height = '100%';
         portalContainer.style.pointerEvents = 'none';
         portalContainer.style.zIndex = '99999';
+        portalContainer.style.isolation = 'isolate';
         document.body.appendChild(portalContainer);
       }
       
@@ -134,11 +135,19 @@
       }
     } else {
       // Clean up portal container when dropdown closes
-      if (portalContainer && portalContainer.parentNode) {
+      if (portalContainer?.parentNode) {
         portalContainer.parentNode.removeChild(portalContainer);
         portalContainer = undefined;
       }
     }
+    
+    return () => {
+      // Cleanup on component destroy
+      if (portalContainer?.parentNode) {
+        portalContainer.parentNode.removeChild(portalContainer);
+        portalContainer = undefined;
+      }
+    };
   });
 
   function toggleDropdown() {
