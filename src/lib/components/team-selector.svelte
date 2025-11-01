@@ -3,7 +3,6 @@
   import { goto } from '$app/navigation'
   import { Check, ChevronDown, Users, Lock } from 'lucide-svelte'
   import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '$lib/components/ui'
-  import { cn } from '$lib/utils'
   import { teams, currentTeam } from '$lib/stores/teams'
   import { user } from '$lib/stores/auth-store'
   import { get } from 'svelte/store'
@@ -15,8 +14,8 @@
   }
 
   const typeLabels = {
-    personal: 'PERSONAL',
-    private: 'PUBLIC',
+    personal: 'Personal',
+    private: 'Private',
   }
 
   onMount(async () => {
@@ -82,40 +81,53 @@
   {/snippet}
 
   {#snippet children()}
-    {#if $teams.items.length === 0}
-      <DropdownMenuItem disabled>No teams available</DropdownMenuItem>
-    {:else}
-      {@const groupEntries = Object.entries(groupedTeams)}
-      {#each groupEntries as [type, teamList], i}
-        {@const TypeIcon = typeIcons[type as keyof typeof typeIcons] || Users}
-        {@const Icon = TypeIcon}
-        <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {typeLabels[type as keyof typeof typeLabels] || type}
-        </div>
-        
-        {#each teamList as team}
-          {@const TeamIcon = getIcon(team.type)}
-          <DropdownMenuItem
-            onclick={() => handleTeamSwitch(team)}
-            class={cn(
-              "flex items-center justify-between",
-              $currentTeam?.id === team.id && "bg-[color-mix(in_srgb,var(--theme-primary)_12%,transparent)]"
-            )}
-          >
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <TeamIcon class="size-4 shrink-0 text-muted-foreground" />
-              <span class="font-medium truncate">{team.name}</span>
-            </div>
-            {#if $currentTeam?.id === team.id}
-              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
-            {/if}
-          </DropdownMenuItem>
+    <div class="py-1.5">
+      {#if $teams.items.length === 0}
+        <DropdownMenuItem disabled>
+          <span class="px-2 text-sm text-muted-foreground">No teams available</span>
+        </DropdownMenuItem>
+      {:else}
+        {#each Object.entries(groupedTeams) as [type, teamList]}
+          <!-- Section Header -->
+          <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {typeLabels[type as keyof typeof typeLabels] || type.toUpperCase()}
+          </div>
+          
+          <!-- Team Items with Icons -->
+          {#each teamList as team}
+            {@const TeamIcon = getIcon(team.type)}
+            <DropdownMenuItem
+              onclick={() => handleTeamSwitch(team)}
+            >
+              <div class="flex w-full items-center justify-between gap-3 px-2">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <TeamIcon class="size-4 shrink-0 text-muted-foreground" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">{team.name}</div>
+                  </div>
+                </div>
+                {#if $currentTeam?.id === team.id}
+                  <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+                {/if}
+              </div>
+            </DropdownMenuItem>
+          {/each}
+          
+          {#if teamList !== Object.values(groupedTeams)[Object.values(groupedTeams).length - 1]}
+            <div class="border-t border-[var(--theme-border)] my-1"></div>
+          {/if}
         {/each}
-        
-        {#if i < groupEntries.length - 1}
-          <div class="border-t border-[var(--theme-border)] my-1"></div>
-        {/if}
-      {/each}
-    {/if}
+      {/if}
+      
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
+      
+      <!-- Manage Teams -->
+      <DropdownMenuItem onclick={() => goto('/teams')}>
+        <div class="flex w-full items-center gap-3 px-2">
+          <Users class="size-4 shrink-0 text-muted-foreground" />
+          <div class="text-sm font-medium">Manage Teams</div>
+        </div>
+      </DropdownMenuItem>
+    </div>
   {/snippet}
 </DropdownMenu>

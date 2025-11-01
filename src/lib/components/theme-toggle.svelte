@@ -45,41 +45,40 @@
 
   {#snippet children()}
     <div class="py-1.5">
-      <!-- Default Light at top -->
+      <!-- Default Light and Default Dark at top -->
       {#if defaultLight}
         <DropdownMenuItem onclick={() => selectTheme(defaultLight.id)}>
           <div class="flex w-full items-center justify-between gap-3 px-2">
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <Sun class="size-4 shrink-0 text-muted-foreground" />
               <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{defaultLight.label}</div>
+                <div class="text-sm font-medium truncate">{defaultLight.label}</div>
               </div>
             </div>
             {#if themeState.activeId === defaultLight.id}
-              <Check class="size-4 shrink-0" />
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
             {/if}
           </div>
         </DropdownMenuItem>
-        <div class="border-t border-[var(--theme-border)] my-1"></div>
       {/if}
-
-      <!-- Default Dark -->
+      
       {#if defaultDark}
         <DropdownMenuItem onclick={() => selectTheme(defaultDark.id)}>
           <div class="flex w-full items-center justify-between gap-3 px-2">
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <Moon class="size-4 shrink-0 text-muted-foreground" />
               <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{defaultDark.label}</div>
+                <div class="text-sm font-medium truncate">{defaultDark.label}</div>
               </div>
             </div>
             {#if themeState.activeId === defaultDark.id}
-              <Check class="size-4 shrink-0" />
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
             {/if}
           </div>
         </DropdownMenuItem>
-        <div class="border-t border-[var(--theme-border)] my-1"></div>
       {/if}
+      
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
 
       <!-- Light Themes Section -->
       <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -91,14 +90,11 @@
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <Sun class="size-4 shrink-0 text-muted-foreground" />
               <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{variant.label}</div>
-                {#if variant.description}
-                  <div class="text-xs text-muted-foreground truncate">{variant.description}</div>
-                {/if}
+                <div class="text-sm font-medium truncate">{variant.label}</div>
               </div>
             </div>
             {#if themeState.activeId === variant.id}
-              <Check class="size-4 shrink-0" />
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
             {/if}
           </div>
         </DropdownMenuItem>
@@ -116,14 +112,11 @@
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <Moon class="size-4 shrink-0 text-muted-foreground" />
               <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">{variant.label}</div>
-                {#if variant.description}
-                  <div class="text-xs text-muted-foreground truncate">{variant.description}</div>
-                {/if}
+                <div class="text-sm font-medium truncate">{variant.label}</div>
               </div>
             </div>
             {#if themeState.activeId === variant.id}
-              <Check class="size-4 shrink-0" />
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
             {/if}
           </div>
         </DropdownMenuItem>
@@ -133,9 +126,9 @@
 
       <!-- Create Custom Theme -->
       <DropdownMenuItem onclick={createCustomTheme}>
-        <div class="flex w-full items-center gap-3 px-2 text-[var(--theme-primary)]">
-          <Sparkles class="size-4 shrink-0" />
-          <div class="font-medium">Create Custom Theme</div>
+        <div class="flex w-full items-center gap-3 px-2">
+          <Sparkles class="size-4 shrink-0 text-[var(--theme-primary)]" />
+          <div class="text-sm font-medium text-[var(--theme-primary)]">Create Custom Theme</div>
         </div>
       </DropdownMenuItem>
     </div>

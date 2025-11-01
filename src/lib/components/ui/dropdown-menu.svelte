@@ -118,8 +118,8 @@
   {#if isOpen}
     <div
       class={cn(
-        "absolute border shadow-xl p-1.5 z-[9999] list-none",
-        "bg-white text-[var(--theme-foreground)] border-[var(--theme-border)]",
+        "absolute backdrop-blur-sm border shadow-xl p-1.5 z-[9999] list-none",
+        "bg-[var(--theme-card-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)]",
         // Position based on placement prop - slight offset for modern spacing
         placement === "top-start" && "bottom-full left-0 mb-1.5 rounded-lg",
         placement === "top-end" && "bottom-full right-0 mb-1.5 rounded-lg", 
@@ -129,7 +129,7 @@
         placement === "right-start" && "left-full top-0 ml-1.5 rounded-lg",
         className,
       )}
-      style={`min-width: 240px; ${dropdownWidth && dropdownWidth > 240 ? `width: ${dropdownWidth}px;` : ''}`}
+      style={`min-width: 280px; ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}`}
       role="list"
     >
       {@render children?.()}
