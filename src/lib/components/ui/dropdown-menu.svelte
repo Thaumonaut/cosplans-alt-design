@@ -119,13 +119,13 @@
     <div
       class={cn(
         "absolute bg-muted/95 backdrop-blur-sm text-foreground border shadow-xl p-1.5 z-[9999] list-none",
-        // Position based on placement prop - no gaps, extends from button
-        placement === "top-start" && "bottom-full left-0 rounded-b-none rounded-t-lg",
-        placement === "top-end" && "bottom-full right-0 rounded-b-none rounded-t-lg", 
-        placement === "bottom-start" && "top-full left-0 rounded-t-none rounded-b-lg",
-        placement === "bottom-end" && "top-full right-0 rounded-t-none rounded-b-lg",
-        placement === "left-start" && "right-full top-0 rounded-r-none rounded-l-lg",
-        placement === "right-start" && "left-full top-0 rounded-l-none rounded-r-lg",
+        // Position based on placement prop - slight offset for modern spacing
+        placement === "top-start" && "bottom-full left-0 mb-1.5 rounded-lg",
+        placement === "top-end" && "bottom-full right-0 mb-1.5 rounded-lg", 
+        placement === "bottom-start" && "top-full left-0 mt-1.5 rounded-lg",
+        placement === "bottom-end" && "top-full right-0 mt-1.5 rounded-lg",
+        placement === "left-start" && "right-full top-0 mr-1.5 rounded-lg",
+        placement === "right-start" && "left-full top-0 ml-1.5 rounded-lg",
         className,
       )}
       style={dropdownWidth ? `width: ${dropdownWidth}px;` : ''}
