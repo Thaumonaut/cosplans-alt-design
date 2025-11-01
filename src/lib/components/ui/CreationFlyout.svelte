@@ -60,7 +60,7 @@
   <!-- Flyout Panel - Functional layout -->
   <div
     class={cn(
-      'fixed right-0 z-50 bg-background flex flex-col',
+      'fixed right-0 z-50 bg-[var(--theme-card-bg)] flex flex-col',
       'transition-transform duration-500 ease-out',
       'w-full sm:w-[680px]',
       open ? 'translate-x-0' : 'translate-x-full'
@@ -72,8 +72,8 @@
     tabindex="-1"
   >
     <!-- Header - Minimal, functional -->
-    <header class="flex-shrink-0 flex items-center justify-between border-b px-10 py-8">
-      <h2 id="flyout-title" class="text-xl font-normal">{title}</h2>
+    <header class="flex-shrink-0 flex items-center justify-between border-b border-[var(--theme-border)] bg-[var(--theme-header-bg)] px-10 py-8">
+      <h2 id="flyout-title" class="text-xl font-normal text-[var(--theme-foreground)]">{title}</h2>
       <div class="flex items-center gap-3">
         {#if onFullScreen}
           <button
@@ -104,7 +104,7 @@
 
     <!-- Footer - Fixed at bottom (from snippet prop) -->
     {#if footer !== undefined && footer !== null}
-      <footer class="flex-shrink-0 border-t bg-background/95 px-10 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 z-20">
+      <footer class="flex-shrink-0 border-t border-[var(--theme-border)] bg-[var(--theme-card-bg)] px-10 py-4 backdrop-blur z-20">
         {@render footer()}
       </footer>
     {/if}

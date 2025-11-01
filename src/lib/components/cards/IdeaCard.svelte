@@ -181,7 +181,7 @@
         </div>
       {/if}
       <div class="absolute right-3 top-3 flex gap-2 z-10">
-        <Badge class="{difficultyColors[difficulty]} backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 shadow-md">{difficulty}</Badge>
+        <Badge class="{difficultyColors[difficulty]} !bg-opacity-100 shadow-md">{difficulty}</Badge>
       </div>
       <Button
         color="light"

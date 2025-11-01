@@ -118,7 +118,7 @@
   {#if isOpen}
     <div
       class={cn(
-        "absolute backdrop-blur-md border shadow-xl p-1.5 z-[9999] list-none",
+        "absolute backdrop-blur-md border shadow-xl p-1.5 z-[10000] list-none",
         "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)]",
         // Position based on placement prop - slight offset for modern spacing
         placement === "top-start" && "bottom-full left-0 mb-1.5 rounded-lg",
