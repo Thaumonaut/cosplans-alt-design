@@ -119,8 +119,6 @@
     <div
       class={cn(
         "absolute bg-muted/95 backdrop-blur-sm text-foreground border shadow-xl p-1.5 z-[9999] list-none",
-        // Match trigger width exactly
-        "w-full",
         // Position based on placement prop - no gaps, extends from button
         placement === "top-start" && "bottom-full left-0 rounded-b-none rounded-t-lg",
         placement === "top-end" && "bottom-full right-0 rounded-b-none rounded-t-lg", 
