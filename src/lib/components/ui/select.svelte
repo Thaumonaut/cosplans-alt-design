@@ -108,15 +108,16 @@
   {#if isOpen}
     <div
       data-slot="select-content"
-      class="bg-popover text-popover-foreground absolute top-full left-0 z-50 mt-1 max-h-60 min-w-full overflow-auto rounded-md border shadow-md animate-in fade-in-0 zoom-in-95"
+      class="bg-popover text-popover-foreground absolute top-full left-0 z-50 mt-1 max-h-60 min-w-full overflow-auto rounded-lg border shadow-lg animate-in fade-in-0 zoom-in-95"
     >
-      <div class="p-1">
+      <div class="p-1.5 list-none">
         {#each options as option (option.value)}
           <button
             type="button"
             data-slot="select-item"
             class={cn(
-              "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+              "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-3 rounded-md py-2.5 pr-10 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+              'list-none', // Remove list decorations
               option.disabled && 'pointer-events-none opacity-50',
               value === option.value && 'bg-accent text-accent-foreground'
             )}
@@ -125,7 +126,7 @@
           >
             {option.label}
             {#if value === option.value}
-              <span class="absolute right-2 flex size-3.5 items-center justify-center">
+              <span class="absolute right-3 flex size-4 items-center justify-center text-primary font-medium">
                 ✓
               </span>
             {/if}

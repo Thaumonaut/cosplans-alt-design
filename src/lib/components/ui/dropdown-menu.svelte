@@ -113,7 +113,7 @@
   {#if isOpen}
     <div
       class={cn(
-        "absolute bg-popover text-popover-foreground border shadow-lg rounded-md p-1 min-w-[8rem] z-[9999]",
+        "absolute bg-popover text-popover-foreground border shadow-lg rounded-lg p-1.5 min-w-[10rem] z-[9999] list-none",
         // Position based on placement prop
         placement === "top-start" && "bottom-full left-0 mb-1",
         placement === "top-end" && "bottom-full right-0 mb-1", 
@@ -123,6 +123,7 @@
         placement === "right-start" && "left-full top-0 ml-1",
         className,
       )}
+      role="list"
     >
       {@render children?.()}
     </div>
