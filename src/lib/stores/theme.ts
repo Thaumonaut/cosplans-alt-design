@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 
 import type { ThemeState, ThemeVariant } from "$lib/types/theme";
 import { DEFAULT_THEME_ID, THEME_VARIANTS, getThemeVariantById } from "$lib/utils/theme-variants";
@@ -157,3 +157,21 @@ function createThemeStore() {
 }
 
 export const theme = createThemeStore();
+
+/**
+ * Helper function to toggle between light and dark themes
+ * Cycles between light-default and dark-default
+ */
+export function toggleTheme() {
+  const currentState = get(theme);
+  const nextThemeId = currentState.resolvedMode === 'light' ? 'dark-default' : 'light-default';
+  theme.setTheme(nextThemeId);
+}
+
+/**
+ * Helper function to set a specific theme
+ * @param id Theme ID (e.g., 'light-default', 'dark-cozy')
+ */
+export function setTheme(id: string) {
+  theme.setTheme(id);
+}
