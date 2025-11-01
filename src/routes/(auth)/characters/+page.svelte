@@ -24,10 +24,10 @@
   let loading = $state(true);
 
   const difficultyColors = {
-    easy: "bg-green-500/10 text-green-700 dark:text-green-400",
-    medium: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
-    hard: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-    expert: "bg-red-500/10 text-red-700 dark:text-red-400",
+    easy: 'bg-[var(--theme-success)] text-white border-transparent',
+    medium: 'bg-[var(--theme-warning)] text-white border-transparent',
+    hard: 'bg-[var(--theme-error)] text-white border-transparent',
+    expert: 'bg-[var(--theme-primary)] text-white border-transparent',
   };
 
   const statusColors = {
