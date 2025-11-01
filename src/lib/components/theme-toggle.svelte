@@ -35,7 +35,7 @@
   }
 </script>
 
-<DropdownMenu placement="bottom-end" class="min-w-[280px]">
+<DropdownMenu placement="bottom-end">
   {#snippet trigger()}
     <Button variant="ghost" size="sm" class="gap-2">
       <Palette class="size-4" />
@@ -45,7 +45,25 @@
 
   {#snippet children()}
     <div class="py-1.5">
-      <!-- Default Dark at top -->
+      <!-- Default Light at top -->
+      {#if defaultLight}
+        <DropdownMenuItem onclick={() => selectTheme(defaultLight.id)}>
+          <div class="flex w-full items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <Sun class="size-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">{defaultLight.label}</div>
+              </div>
+            </div>
+            {#if themeState.activeId === defaultLight.id}
+              <Check class="size-4 shrink-0" />
+            {/if}
+          </div>
+        </DropdownMenuItem>
+        <div class="border-t border-[var(--theme-border)] my-1"></div>
+      {/if}
+
+      <!-- Default Dark -->
       {#if defaultDark}
         <DropdownMenuItem onclick={() => selectTheme(defaultDark.id)}>
           <div class="flex w-full items-center justify-between gap-3 px-2">

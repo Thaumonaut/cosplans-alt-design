@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation'
   import { Check, ChevronDown, Users, Lock } from 'lucide-svelte'
   import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '$lib/components/ui'
+  import { cn } from '$lib/utils'
   import { teams, currentTeam } from '$lib/stores/teams'
   import { user } from '$lib/stores/auth-store'
   import { get } from 'svelte/store'
@@ -14,8 +15,8 @@
   }
 
   const typeLabels = {
-    personal: 'Personal',
-    private: 'Private',
+    personal: 'PERSONAL',
+    private: 'PUBLIC',
   }
 
   onMount(async () => {
@@ -81,38 +82,39 @@
   {/snippet}
 
   {#snippet children()}
-    <DropdownMenuLabel>Switch Team</DropdownMenuLabel>
-    <DropdownMenuSeparator />
-    
     {#if $teams.items.length === 0}
       <DropdownMenuItem disabled>No teams available</DropdownMenuItem>
     {:else}
       {#each Object.entries(groupedTeams) as [type, teamList]}
         {@const TypeIcon = typeIcons[type as keyof typeof typeIcons] || Users}
         {@const Icon = TypeIcon}
-        <DropdownMenuLabel class="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon class="size-3" />
+        <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {typeLabels[type as keyof typeof typeLabels] || type}
-        </DropdownMenuLabel>
+        </div>
         
         {#each teamList as team}
           <DropdownMenuItem
             onclick={() => handleTeamSwitch(team)}
-            class="flex items-center justify-between"
+            class={cn(
+              "flex items-center justify-between",
+              $currentTeam?.id === team.id && "bg-[color-mix(in_srgb,var(--theme-primary)_12%,transparent)]"
+            )}
           >
-            <span class="truncate">{team.name}</span>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              {@const TeamIcon = getIcon(team.type)}
+              <TeamIcon class="size-4 shrink-0 text-muted-foreground" />
+              <span class="font-medium truncate">{team.name}</span>
+            </div>
             {#if $currentTeam?.id === team.id}
-              <Check class="size-4 shrink-0" />
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
             {/if}
           </DropdownMenuItem>
         {/each}
+        
+        {#if $index < Object.keys(groupedTeams).length - 1}
+          <div class="border-t border-[var(--theme-border)] my-1"></div>
+        {/if}
       {/each}
     {/if}
-    
-    <DropdownMenuSeparator />
-    <DropdownMenuItem onclick={() => goto('/teams')}>
-      <Users class="mr-2 size-4" />
-      Manage Teams
-    </DropdownMenuItem>
   {/snippet}
 </DropdownMenu>
