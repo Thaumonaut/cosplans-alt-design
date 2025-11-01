@@ -18,16 +18,19 @@
   const lightThemes = $derived(THEME_VARIANTS.filter(v => v.mode === 'light'));
   const darkThemes = $derived(THEME_VARIANTS.filter(v => v.mode === 'dark'));
 
+  // Get current theme label
+  const currentTheme = $derived(THEME_VARIANTS.find(v => v.id === themeState.activeId) || THEME_VARIANTS[0]);
+
   function selectTheme(themeId: string) {
     theme.setTheme(themeId);
   }
 </script>
 
-<DropdownMenu placement="bottom-end">
+<DropdownMenu placement="bottom-end" class="min-w-[280px]">
   {#snippet trigger()}
-    <Button variant="ghost" size="icon">
-      <Palette class="size-5" />
-      <span class="sr-only">Select theme</span>
+    <Button variant="ghost" size="sm" class="gap-2">
+      <Palette class="size-4" />
+      <span class="hidden sm:inline">{currentTheme.label}</span>
     </Button>
   {/snippet}
 

@@ -129,7 +129,7 @@
         placement === "right-start" && "left-full top-0 ml-1.5 rounded-lg",
         className,
       )}
-      style={dropdownWidth ? `width: ${dropdownWidth}px;` : ''}
+      style={`min-width: 280px; ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}`}
       role="list"
     >
       {@render children?.()}
