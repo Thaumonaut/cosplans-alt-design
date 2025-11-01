@@ -51,7 +51,7 @@
   let dropdownElement: HTMLDivElement;
   let triggerElement = $state<HTMLDivElement | undefined>(undefined);
   let dropdownPosition = $state({ top: 0, left: 0, right: 0, bottom: 0, width: 0 });
-  let portalContainer: HTMLDivElement | undefined = undefined;
+  let portalContainer = $state<HTMLDivElement | undefined>(undefined);
   
   // Calculate dropdown width from trigger element
   const dropdownWidth = $derived(triggerElement?.offsetWidth ?? null);
@@ -223,8 +223,7 @@
 
 <!-- Render dropdown in portal to escape all stacking contexts -->
 {#if isOpen && portalContainer}
-  {@const portal = portalContainer}
-  {#key portal}
+  {#key portalContainer}
     <div
       class={cn(
         "fixed backdrop-blur-md border shadow-xl p-1.5 list-none pointer-events-auto",
@@ -241,7 +240,7 @@
         ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}
       `}
       role="list"
-      use:portal
+      use:portal={portalContainer}
     >
       {@render children?.()}
     </div>
