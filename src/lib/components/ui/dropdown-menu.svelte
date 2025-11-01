@@ -96,7 +96,7 @@
   });
 </script>
 
-<div class="relative" bind:this={dropdownElement}>
+<div class="relative w-full" bind:this={dropdownElement}>
   <!-- Trigger - can be button or other element from snippet -->
   <div
     bind:this={triggerElement}
@@ -107,7 +107,7 @@
         toggleDropdown()
       }
     }}
-    class="inline-flex items-center justify-center cursor-pointer"
+    class="flex items-center justify-center cursor-pointer w-full"
     role="button"
     tabindex="0"
   >
