@@ -32,9 +32,49 @@
   let isOpen = $state(false);
   let dropdownElement: HTMLDivElement;
   let triggerElement = $state<HTMLDivElement | undefined>(undefined);
+  let dropdownPosition = $state({ top: 0, left: 0, right: 0, bottom: 0, width: 0 });
   
   // Calculate dropdown width from trigger element
   const dropdownWidth = $derived(triggerElement?.offsetWidth ?? null);
+
+  // Calculate position for fixed dropdown
+  function updateDropdownPosition() {
+    if (!triggerElement || !isOpen) return;
+    
+    const rect = triggerElement.getBoundingClientRect();
+    const dropdownRect = { top: 0, left: 0, right: 0, bottom: 0, width: dropdownWidth ?? 280 };
+    
+    if (placement.includes('bottom')) {
+      dropdownRect.top = rect.bottom + 6; // 1.5 * 4px = 6px (mt-1.5)
+    } else if (placement.includes('top')) {
+      dropdownRect.bottom = window.innerHeight - rect.top + 6;
+    }
+    
+    if (placement.includes('end') || placement === 'bottom-end' || placement === 'top-end') {
+      dropdownRect.right = window.innerWidth - rect.right;
+    } else if (placement.includes('start') || placement === 'bottom-start' || placement === 'top-start') {
+      dropdownRect.left = rect.left;
+    } else {
+      // center or default
+      dropdownRect.left = rect.left;
+    }
+    
+    dropdownPosition = dropdownRect;
+  }
+
+  $effect(() => {
+    if (isOpen && triggerElement) {
+      updateDropdownPosition();
+      // Recalculate on scroll/resize
+      const handleUpdate = () => updateDropdownPosition();
+      window.addEventListener('scroll', handleUpdate, true);
+      window.addEventListener('resize', handleUpdate);
+      return () => {
+        window.removeEventListener('scroll', handleUpdate, true);
+        window.removeEventListener('resize', handleUpdate);
+      };
+    }
+  });
 
   function toggleDropdown() {
     isOpen = !isOpen;
@@ -114,22 +154,22 @@
     {@render trigger?.()}
   </div>
 
-  <!-- Dropdown menu positioned correctly -->
+  <!-- Dropdown menu positioned correctly - use fixed to escape stacking contexts -->
   {#if isOpen}
     <div
       class={cn(
-        "absolute backdrop-blur-md border shadow-xl p-1.5 z-[10000] list-none",
-        "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)]",
-        // Position based on placement prop - slight offset for modern spacing
-        placement === "top-start" && "bottom-full left-0 mb-1.5 rounded-lg",
-        placement === "top-end" && "bottom-full right-0 mb-1.5 rounded-lg", 
-        placement === "bottom-start" && "top-full left-0 mt-1.5 rounded-lg",
-        placement === "bottom-end" && "top-full right-0 mt-1.5 rounded-lg",
-        placement === "left-start" && "right-full top-0 mr-1.5 rounded-lg",
-        placement === "right-start" && "left-full top-0 ml-1.5 rounded-lg",
+        "fixed backdrop-blur-md border shadow-xl p-1.5 z-[99999] list-none",
+        "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
         className,
       )}
-      style={`min-width: 280px; ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}`}
+      style={`
+        top: ${dropdownPosition.top}px;
+        left: ${dropdownPosition.left ? `${dropdownPosition.left}px` : 'auto'};
+        right: ${dropdownPosition.right ? `${dropdownPosition.right}px` : 'auto'};
+        bottom: ${dropdownPosition.bottom ? `${dropdownPosition.bottom}px` : 'auto'};
+        min-width: 280px;
+        ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}
+      `}
       role="list"
     >
       {@render children?.()}
