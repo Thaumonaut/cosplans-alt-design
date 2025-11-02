@@ -1,7 +1,9 @@
--- This SQL script can be run in Supabase SQL Editor to refresh the schema cache
--- Supabase uses this to rebuild PostgREST's schema cache
+-- Refresh PostgREST Schema Cache
+-- Run this in Supabase SQL Editor after applying migrations
 
--- Notify PostgREST to reload schema
+-- This command notifies PostgREST to reload its schema cache
+-- After running, wait 1-2 minutes (may take up to 5-10 minutes) for cache to update
+
 NOTIFY pgrst, 'reload schema';
 
 -- Alternative: You can also just run this in the SQL editor:

@@ -93,8 +93,8 @@ BEGIN
   -- Verify user has permission (owner or editor)
   -- Check if user is team owner first
   SELECT EXISTS (
-    SELECT 1 FROM public.teams 
-    WHERE id = p_team_id AND owner_id = current_user_id
+    SELECT 1 FROM public.teams t
+    WHERE t.id = p_team_id AND t.owner_id = current_user_id
   ) INTO has_permission;
   
   -- If not owner, check if user has owner/editor role in team_members
@@ -102,19 +102,19 @@ BEGIN
     -- Try checking with status column first (if it exists)
     BEGIN
       SELECT EXISTS (
-        SELECT 1 FROM public.team_members 
-        WHERE team_id = p_team_id 
-          AND user_id = current_user_id 
-          AND role IN ('owner', 'editor')
-          AND status = 'active'
+        SELECT 1 FROM public.team_members tm
+        WHERE tm.team_id = p_team_id 
+          AND tm.user_id = current_user_id 
+          AND tm.role IN ('owner', 'editor')
+          AND tm.status = 'active'
       ) INTO has_permission;
     EXCEPTION WHEN OTHERS THEN
       -- Status column doesn't exist or error - just check role
       SELECT EXISTS (
-        SELECT 1 FROM public.team_members 
-        WHERE team_id = p_team_id 
-          AND user_id = current_user_id 
-          AND role IN ('owner', 'editor')
+        SELECT 1 FROM public.team_members tm
+        WHERE tm.team_id = p_team_id 
+          AND tm.user_id = current_user_id 
+          AND tm.role IN ('owner', 'editor')
       ) INTO has_permission;
     END;
   END IF;
