@@ -94,6 +94,12 @@
     loadResources()
   }
 
+  const emptyMessage = $derived(
+    searchQuery.trim() || categoryFilter !== 'all'
+      ? "Try adjusting your search or filters to find what you're looking for."
+      : 'Get started by creating your first resource. Resources can be reused across multiple projects.'
+  )
+
   const categoryCounts = $derived({
     all: resources.length,
     prop: resources.filter((r) => r.metadata?.category === 'prop').length,
@@ -166,11 +172,7 @@
     <LoadingState
       empty={true}
       emptyIcon={Package}
-      emptyMessage={
-        searchQuery.trim() || categoryFilter !== 'all'
-          ? 'Try adjusting your search or filters to find what you're looking for.'
-          : 'Get started by creating your first resource. Resources can be reused across multiple projects.'
-      }
+      {emptyMessage}
       emptyAction={{
         label: 'Create First Resource',
         onclick: handleNewResource
