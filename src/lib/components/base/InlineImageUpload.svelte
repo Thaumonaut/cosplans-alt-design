@@ -85,9 +85,9 @@
 <div
   role="button"
   tabindex="0"
-  class="border-2 border-dashed rounded p-4"
-  class:border-blue-400={dragActive}
-  class:border-gray-300={!dragActive}
+  class="border-2 border-dashed rounded-lg p-8 bg-[var(--theme-input-bg)] backdrop-blur-sm transition-colors"
+  class:border-[var(--theme-primary)]={dragActive}
+  class:border-[var(--theme-border)]={!dragActive}
   ondragover={handleDragOver}
   ondragleave={handleDragLeave}
   ondrop={handleDrop}
@@ -101,22 +101,27 @@
     class="hidden"
     id="image-upload"
   />
-  <label for="image-upload" class="cursor-pointer block">
+  <label for="image-upload" class="cursor-pointer block text-center">
     {#if isUploading}
       <div class="space-y-2">
-        <div>Uploading... {Math.round(uploadProgress)}%</div>
-        <div class="w-full bg-gray-200 rounded-full h-2">
-          <div class="bg-blue-600 h-2 rounded-full transition-all" style="width: {uploadProgress}%"></div>
+        <div class="text-[var(--theme-foreground)]">Uploading... {Math.round(uploadProgress)}%</div>
+        <div class="w-full bg-[var(--theme-muted)] rounded-full h-2">
+          <div class="bg-[var(--theme-primary)] h-2 rounded-full transition-all" style="width: {uploadProgress}%"></div>
         </div>
       </div>
     {:else}
-      {images.length ? `Edit images (${images.length})` : 'Upload images'}
+      <div class="flex flex-col items-center gap-2">
+        <svg class="size-12 text-[var(--theme-muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <span class="text-sm text-[var(--theme-muted-foreground)]">{images.length ? `Edit images (${images.length})` : 'Upload images'}</span>
+      </div>
     {/if}
   </label>
 </div>
 
 {#if error}
-  <span class="text-sm text-red-600">{error}</span>
+  <span class="text-sm text-[var(--theme-error)]">{error}</span>
 {/if}
 
 {#if images.length}
