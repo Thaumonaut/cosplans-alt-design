@@ -3,6 +3,29 @@ import type { Task, TaskCreate, TaskUpdate } from '$lib/types/domain/task'
 
 export const taskService = {
   /**
+   * List all tasks for the current team (across all projects)
+   * RLS policies automatically filter by team through project relationship
+   */
+  async listAll(filters?: { completed?: boolean; priority?: string }): Promise<Task[]> {
+    let query = supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (filters?.completed !== undefined) {
+      query = query.eq('completed', filters.completed)
+    }
+    if (filters?.priority) {
+      query = query.eq('priority', filters.priority)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return (data || []).map(mapTaskFromDb)
+  },
+
+  /**
    * List tasks for a project (optionally filter by resource)
    */
   async list(filters: { projectId: string; resourceId?: string }): Promise<Task[]> {
@@ -68,7 +91,7 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert(insertData)
+      .insert(insertData as any)
       .select()
       .single()
 
@@ -102,7 +125,7 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .update(updateData)
+      .update(updateData as Record<string, unknown>)
       .eq('id', id)
       .select()
       .single()
