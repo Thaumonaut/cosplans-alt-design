@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Card, Badge, Button } from 'flowbite-svelte'
+  import { Card, Button } from 'flowbite-svelte'
+  import { Badge } from '$lib/components/ui'
   import { Calendar, DollarSign, Clock, ArrowRight, Star } from 'lucide-svelte'
   import type { Idea } from '$lib/types/domain/idea'
   import { formatCurrencyFromCents } from '$lib/utils'
@@ -16,6 +17,15 @@
   const series = $derived(idea.series)
   const image = $derived(idea.images?.[0] || '')
   const difficulty = $derived(idea.difficulty === 'beginner' ? 'easy' : idea.difficulty === 'intermediate' ? 'medium' : 'hard')
+  const isFavorite = $derived(false) // TODO: Add favorite field to Idea type when implementing favorite functionality
+  
+  async function handleFavoriteToggle(e: MouseEvent) {
+    e.stopPropagation()
+    e.preventDefault()
+    // TODO: Implement favorite toggle when favorite field is added to Idea type
+    // For now, this prevents the flyout from opening
+    console.log('Favorite toggle - to be implemented')
+  }
   
   // Track image loading state
   let imageError = $state(false)
@@ -47,13 +57,19 @@
 
   const difficultyStyle = $derived((d: string) => {
     const colorVar = d === 'easy' ? '--theme-success' : d === 'medium' ? '--theme-warning' : '--theme-error'
-    return `background-color: var(${colorVar}); color: white;`
+    return `background-color: var(${colorVar}) !important; color: white !important;`
+  })
+  
+  const difficultyBadgeClass = $derived((d: string) => {
+    const baseClasses = difficultyColors[d as keyof typeof difficultyColors] || difficultyColors.easy
+    const bgClass = d === 'easy' ? '!bg-[var(--theme-success)]' : d === 'medium' ? '!bg-[var(--theme-warning)]' : '!bg-[var(--theme-error)]'
+    return `${baseClasses} ${bgClass}`
   })
 </script>
 
 {#if variant === 'list'}
   <Card 
-    class="group overflow-hidden transition-all hover:shadow-md cursor-pointer" 
+    class="group overflow-hidden transition-all hover:shadow-md cursor-pointer bg-[var(--theme-card-bg)]" 
     onclick={onclick}
     role="button"
     tabindex={0}
@@ -84,14 +100,14 @@
           />
         {/if}
         {#if (!image || imageError)}
-          <div class="absolute inset-0 size-full bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+          <div class="absolute inset-0 size-full bg-[var(--theme-input-bg)] flex flex-col items-center justify-center">
             {#if isBlobUrl()}
-              <svg class="mb-1 size-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mb-1 size-8 text-[var(--theme-muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              <span class="text-xs text-gray-400 dark:text-gray-500 text-center px-1">Unavailable</span>
+              <span class="text-xs text-[var(--theme-muted-foreground)] text-center px-1">Unavailable</span>
             {:else}
-              <span class="text-gray-400 dark:text-gray-500 text-xs">No image</span>
+              <span class="text-[var(--theme-muted-foreground)] text-xs">No image</span>
             {/if}
           </div>
         {/if}
@@ -100,20 +116,20 @@
         <div>
           <div class="mb-2 flex items-start justify-between">
             <div>
-              <h3 class="text-balance font-semibold leading-tight">{character}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{series}</p>
+              <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">{character}</h3>
+              <p class="text-sm text-[var(--theme-muted-foreground)]">{series}</p>
             </div>
-            <Badge class={difficultyColors[difficulty]} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
+            <Badge variant="default" class={difficultyBadgeClass(difficulty)} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
           </div>
-          <p class="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{notes}</p>
+          <p class="mb-3 line-clamp-2 text-sm text-[var(--theme-muted-foreground)]">{notes}</p>
           <div class="flex flex-wrap gap-1.5">
             {#each tags.slice(0, 3) as tag}
-              <Badge color="gray" class="text-xs">{tag}</Badge>
+              <Badge variant="outline" class="text-xs">{tag}</Badge>
             {/each}
           </div>
         </div>
         <div class="mt-3 flex items-center justify-between">
-          <div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+          <div class="flex gap-4 text-sm text-[var(--theme-muted-foreground)]">
             <div class="flex items-center gap-1.5">
               <DollarSign class="size-4" />
               <span>{formatCurrencyFromCents(estimatedCost)}</span>
@@ -128,8 +144,20 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <Button color="light" size="sm" class="!p-2">
-              <Star class="size-4" />
+            <Button 
+              color="light" 
+              size="sm" 
+              class="!p-2"
+              onclick={handleFavoriteToggle}
+              onkeydown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleFavoriteToggle(e as any)
+                }
+              }}
+            >
+              <Star class="size-4 transition-colors {isFavorite ? 'fill text-[var(--theme-primary)]' : ''}" />
             </Button>
             <Button size="sm">
               Start Planning
@@ -142,7 +170,7 @@
   </Card>
 {:else}
   <Card 
-    class="group overflow-hidden transition-all hover:shadow-lg cursor-pointer" 
+    class="group overflow-hidden transition-all hover:shadow-lg cursor-pointer bg-[var(--theme-card-bg)]" 
     onclick={onclick}
     role="button"
     tabindex={0}
@@ -153,7 +181,7 @@
       }
     }}
   >
-    <div class="relative aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-t-lg">
+    <div class="relative aspect-[4/3] overflow-hidden bg-[var(--theme-input-bg)] rounded-t-lg">
       {#if image && !imageError}
         <img
           src={image}
@@ -173,47 +201,55 @@
         />
       {/if}
       {#if (!image || imageError)}
-        <div class="absolute inset-0 size-full bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+        <div class="absolute inset-0 size-full bg-[var(--theme-input-bg)] flex flex-col items-center justify-center">
           {#if isBlobUrl()}
-            <svg class="mb-2 size-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="mb-2 size-12 text-[var(--theme-muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <span class="text-xs text-gray-400 dark:text-gray-500 text-center px-2">Image unavailable</span>
-            <span class="text-xs text-gray-300 dark:text-gray-600 text-center px-2 mt-1">Please re-upload</span>
+            <span class="text-xs text-[var(--theme-muted-foreground)] text-center px-2">Image unavailable</span>
+            <span class="text-xs text-[var(--theme-muted-foreground)] text-center px-2 mt-1">Please re-upload</span>
           {:else}
-            <span class="text-gray-400 dark:text-gray-500 text-sm">No image</span>
+            <span class="text-[var(--theme-muted-foreground)] text-sm">No image</span>
           {/if}
         </div>
       {/if}
       <div class="absolute right-3 top-3 flex gap-2 z-10">
-        <Badge class={difficultyColors[difficulty]} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
+        <Badge variant="default" class={difficultyBadgeClass(difficulty)} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
       </div>
       <Button
         color="light"
         size="sm"
-        class="absolute left-3 top-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur hover:bg-white dark:hover:bg-gray-800 !p-2"
+        class="absolute left-3 top-3 bg-[var(--theme-card-bg)]/80 backdrop-blur hover:bg-[var(--theme-card-bg)] !p-2 z-10"
+        onclick={handleFavoriteToggle}
+        onkeydown={(e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            handleFavoriteToggle(e as any)
+          }
+        }}
       >
-        <Star class="size-4" />
+        <Star class="size-4 transition-colors {isFavorite ? 'fill text-[var(--theme-primary)]' : ''}" />
       </Button>
     </div>
-    <div class="p-4">
+    <div class="p-4 bg-[var(--theme-card-bg)]">
       <div class="space-y-3">
         <div>
-          <h3 class="text-balance font-semibold leading-tight">{character}</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{series}</p>
+          <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">{character}</h3>
+          <p class="text-sm text-[var(--theme-muted-foreground)]">{series}</p>
         </div>
 
-        <p class="line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{notes}</p>
+        <p class="line-clamp-2 text-sm text-[var(--theme-muted-foreground)]">{notes}</p>
 
         <div class="flex flex-wrap gap-1.5">
           {#each tags.slice(0, 3) as tag}
-            <Badge color="gray" class="text-xs">{tag}</Badge>
+            <Badge variant="outline" class="text-xs">{tag}</Badge>
           {/each}
         </div>
       </div>
     </div>
-    <div class="flex flex-col gap-3 border-t bg-gray-50 dark:bg-gray-900 p-4">
-      <div class="flex w-full items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+    <div class="flex flex-col gap-3 border-t bg-[var(--theme-section-bg)] p-4">
+      <div class="flex w-full items-center justify-between text-sm text-[var(--theme-muted-foreground)]">
         <div class="flex items-center gap-1.5">
           <DollarSign class="size-4" />
           <span>${estimatedCost}</span>

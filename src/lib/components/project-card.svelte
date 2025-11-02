@@ -20,10 +20,10 @@
   let { id, title, character, series, image, progress, budget, deadline, status }: Props = $props();
   
   const statusColors = {
-    idea: 'bg-[color-mix(in_srgb,var(--theme-primary)_20%,transparent)] text-[var(--theme-primary)]',
-    planning: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] text-[var(--theme-info)]',
-    'in-progress': 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] text-[var(--theme-warning)]',
-    completed: 'bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] text-[var(--theme-success)]',
+    idea: 'bg-[color-mix(in_srgb,var(--theme-primary)_20%,transparent)] backdrop-blur-sm text-[var(--theme-primary)]',
+    planning: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] backdrop-blur-sm text-[var(--theme-info)]',
+    'in-progress': 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] backdrop-blur-sm text-[var(--theme-warning)]',
+    completed: 'bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] backdrop-blur-sm text-[var(--theme-success)]',
   };
 </script>
 

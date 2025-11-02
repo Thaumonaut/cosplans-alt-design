@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Photoshoot } from '$lib/types/domain/photoshoot'
-  import { Badge } from 'flowbite-svelte'
-  import { Calendar, MapPin, Camera } from 'lucide-svelte'
-  import { cn } from '$lib/utils'
+  import { Badge } from '$lib/components/ui'
+  import { Calendar, MapPin, Camera, Clapperboard } from 'lucide-svelte'
 
   interface Props {
     photoshoot: Photoshoot
@@ -19,9 +18,9 @@
   }
 
   const statusColors: Record<string, string> = {
-    planning: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 border-yellow-500/20',
-    scheduled: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
-    completed: 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/20',
+    planning: 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] backdrop-blur-sm text-[var(--theme-warning)] border-[color-mix(in_srgb,var(--theme-warning)_30%,transparent)]',
+    scheduled: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] backdrop-blur-sm text-[var(--theme-info)] border-[color-mix(in_srgb,var(--theme-info)_30%,transparent)]',
+    completed: 'bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] backdrop-blur-sm text-[var(--theme-success)] border-[color-mix(in_srgb,var(--theme-success)_30%,transparent)]',
   }
 
   function formatDate(dateString: string | null | undefined): string {
@@ -36,46 +35,49 @@
   tabindex="0"
   onclick={onclick}
   onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="group relative overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
+  class="group relative overflow-hidden rounded-xl border bg-[var(--theme-card-bg)] transition-all hover:shadow-lg cursor-pointer"
 >
-  <!-- Content -->
-  <div class="p-4">
-    <!-- Header -->
-    <div class="mb-3">
-      <h3 class="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-        {photoshoot.title}
-      </h3>
-      {#if photoshoot.description}
-        <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{photoshoot.description}</p>
-      {/if}
-    </div>
-
-    <!-- Status Badge -->
-    <div class="mb-3">
-      <Badge class="border px-3 py-1 {statusColors[photoshoot.status] || statusColors.planning}">
+  <!-- Hero Image Area - Placeholder with gradient background -->
+  <div class="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[var(--theme-primary)]/20 via-[var(--theme-accent)]/20 to-[var(--theme-info)]/20 flex items-center justify-center">
+    <Clapperboard class="size-12 text-[var(--theme-muted-foreground)] opacity-50" />
+    <div class="absolute right-3 top-3">
+      <Badge class={statusColors[photoshoot.status] || statusColors.planning} variant="secondary">
         {statusLabels[photoshoot.status] || photoshoot.status}
       </Badge>
     </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4 bg-[var(--theme-card-bg)]">
+    <!-- Header -->
+    <div class="mb-3">
+      <h3 class="text-lg font-semibold text-[var(--theme-foreground)] group-hover:text-[var(--theme-primary)] transition-colors line-clamp-1">
+        {photoshoot.title}
+      </h3>
+      {#if photoshoot.description}
+        <p class="mt-1.5 line-clamp-2 text-sm text-[var(--theme-muted-foreground)]">{photoshoot.description}</p>
+      {/if}
+    </div>
 
     <!-- Meta Info -->
-    <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">
+    <div class="flex flex-wrap items-center gap-3 text-xs text-[var(--theme-muted-foreground)]">
       {#if photoshoot.date}
-        <div class="flex items-center gap-1">
-          <Calendar class="size-3" />
+        <div class="flex items-center gap-1.5">
+          <Calendar class="size-3.5 shrink-0" />
           <span>{formatDate(photoshoot.date)}</span>
         </div>
       {/if}
 
       {#if photoshoot.location}
-        <div class="flex items-center gap-1">
-          <MapPin class="size-3" />
+        <div class="flex items-center gap-1.5">
+          <MapPin class="size-3.5 shrink-0" />
           <span class="truncate max-w-[150px]">{photoshoot.location}</span>
         </div>
       {/if}
 
       {#if linkedProjects !== undefined && linkedProjects > 0}
-        <div class="flex items-center gap-1">
-          <Camera class="size-3" />
+        <div class="flex items-center gap-1.5">
+          <Camera class="size-3.5 shrink-0" />
           <span>{linkedProjects} {linkedProjects === 1 ? 'project' : 'projects'}</span>
         </div>
       {/if}
