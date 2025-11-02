@@ -25,13 +25,13 @@
   {disabled}
   onclick={onclick || (() => {})}
   class={cn(
-    'relative flex w-full cursor-default items-center gap-3 rounded-md px-3 py-2.5 text-sm outline-hidden select-none',
+    'relative flex w-full cursor-default items-center justify-start gap-3 rounded-md px-3 py-2 text-sm text-left outline-hidden select-none',
     'bg-transparent hover:bg-[var(--theme-sidebar-hover)] focus:bg-[var(--theme-sidebar-hover)]',
     'text-[var(--theme-foreground)] focus:text-[var(--theme-foreground)]',
     'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
     'list-none', // Remove list decorations
     inset && 'pl-8',
-    variant === 'destructive' && 'text-[var(--theme-error)] hover:bg-[color-mix(in_srgb,var(--theme-error)_10%,transparent)] focus:bg-[color-mix(in_srgb,var(--theme-error)_10%,transparent)]',
+    variant === 'destructive' && 'text-[var(--theme-error)] hover:bg-[color-mix(in_srgb,var(--theme-error)_10%,transparent)] hover:backdrop-blur-sm focus:bg-[color-mix(in_srgb,var(--theme-error)_10%,transparent)] focus:backdrop-blur-sm',
     '[&_svg:not([class*="text-"])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
     className
   )}

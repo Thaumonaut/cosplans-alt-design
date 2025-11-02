@@ -248,7 +248,7 @@
     <div
       bind:this={dropdownMenuElement}
       class={cn(
-        "fixed backdrop-blur-md border shadow-xl p-1.5 list-none pointer-events-auto",
+        "fixed backdrop-blur-md border shadow-xl p-1 list-none pointer-events-auto",
         "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
         className,
       )}

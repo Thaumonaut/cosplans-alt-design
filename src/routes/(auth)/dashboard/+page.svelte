@@ -16,10 +16,12 @@
   } from "lucide-svelte";
   import ProjectDetail from "$lib/components/projects/ProjectDetail.svelte";
   import IdeaDetail from "$lib/components/ideas/IdeaDetail.svelte";
+  import TaskDetail from "$lib/components/tasks/TaskDetail.svelte";
+  import ResourceDetail from "$lib/components/resources/ResourceDetail.svelte";
   import { projectService } from '$lib/api/services/projectService';
   import { photoshootService } from '$lib/api/services/photoshootService';
   import { userService } from '$lib/api/services/userService';
-  import { tasks, loadTasks } from '$lib/stores';
+  import { taskService } from '$lib/api/services/taskService';
   import { projects as projectsStore } from '$lib/stores/projects';
   import { ideas } from '$lib/stores/ideas';
   import { onMount } from 'svelte';
@@ -36,12 +38,53 @@
   // Dashboard state
   let showNewProjectFlyout = $state(false);
   let showNewIdeaFlyout = $state(false);
+  let showProjectDetailFlyout = $state(false);
+  let showTaskDetailFlyout = $state(false);
+  let showResourceDetailFlyout = $state(false);
   let selectedProjectId = $state<string | null>(null);
+  let selectedTaskId = $state<string | null>(null);
+  let selectedResourceId = $state<string | null>(null);
+  let parentProjectId = $state<string | null>(null);
   let dbProjects: DomainProject[] = $state([]);
   let dbIdeas: import('$lib/types/domain/idea').Idea[] = $state([]);
   let dbPhotoshoots: import('$lib/types/domain/photoshoot').Photoshoot[] = $state([]);
   let userProfile: UserProfile | null = $state(null);
   let loading = $state(false);
+
+  // Watch for resource flyout closing and reopen parent if needed
+  $effect(() => {
+    if (!showResourceDetailFlyout && parentProjectId && !showProjectDetailFlyout) {
+      // Resource flyout just closed, reopen parent
+      selectedProjectId = parentProjectId
+      showProjectDetailFlyout = true
+      parentProjectId = null
+      selectedResourceId = null
+    }
+  });
+  
+  // Handlers for opening detail flyouts
+  function handleProjectClick(projectId: string) {
+    selectedProjectId = projectId;
+    showProjectDetailFlyout = true;
+  }
+  
+  function handleTaskClick(taskId: string) {
+    selectedTaskId = taskId;
+    showTaskDetailFlyout = true;
+  }
+  
+  function handleTimelineItemClick(item: typeof timelineItems[0]) {
+    if (item.type === 'task' && item.id.startsWith('task-')) {
+      const taskId = item.id.replace('task-', '');
+      handleTaskClick(taskId);
+    } else if (item.type === 'deadline' && item.id.startsWith('deadline-')) {
+      const projectId = item.id.replace('deadline-', '');
+      handleProjectClick(projectId);
+    } else if (item.type === 'event' && item.id.startsWith('photoshoot-')) {
+      // Navigate to photoshoot page or open flyout if we add it later
+      goto('/photoshoots');
+    }
+  }
 
   // Get display name with fallback logic
   const displayName = $derived.by(() => {
@@ -92,8 +135,8 @@
       }
       
       // Get tasks for this project
-      const projectTasks = get(tasks).filter(t => t.projectId !== undefined && String(t.projectId) === p.id);
-      const tasksCompleted = projectTasks.filter(t => t.completed).length;
+      const projectTasks = allTasks.filter((t: any) => t.projectId !== undefined && String(t.projectId) === p.id);
+      const tasksCompleted = projectTasks.filter((t: any) => t.completed).length;
       
       return {
         id: p.id,
@@ -115,9 +158,10 @@
     });
   });
 
-  // Group tasks by status - using real data from tasks store
+  let allTasks = $state<any[]>([]);
+
+  // Group tasks by status - using real data from API
   const tasksByStatus = $derived.by(() => {
-    const allTasks = get(tasks);
     const now = new Date();
     
     // Filter out completed tasks for in-progress and to-do
@@ -195,7 +239,7 @@
     }> = [];
     
     // Add completed tasks
-    get(tasks).filter(t => t.completed).slice(0, 3).forEach(task => {
+    allTasks.filter((t: any) => t.completed).slice(0, 3).forEach((task: any) => {
       const dueDate = task.dueDate as string | Date | null | undefined;
       if (dueDate) {
         try {
@@ -320,14 +364,15 @@
       
       // Only load projects if we have a team
       if (team) {
-        const [loadedProjects, loadedPhotoshoots] = await Promise.all([
+        const [loadedProjects, loadedPhotoshoots, loadedTasks] = await Promise.all([
           projectService.list({ status: undefined }),
           photoshootService.list().catch(() => []), // Fail gracefully if photoshoots service has issues
-          loadTasks({ completed: false }),
+          taskService.listAll({ completed: false }).catch(() => []), // Load tasks from API
           ideas.load(team.id)
         ]);
         dbProjects = loadedProjects.filter((p: DomainProject) => p.status !== 'completed' && p.status !== 'archived').slice(0, 3);
         dbPhotoshoots = loadedPhotoshoots || [];
+        allTasks = loadedTasks || [];
         // Get recently added ideas (sorted by createdAt, most recent first)
         const allIdeas = get(ideas);
         dbIdeas = allIdeas.items
@@ -336,7 +381,11 @@
           .slice(0, 5); // Show 5 most recent
       } else {
         // No team available, just load tasks (they might not need a team)
-        await loadTasks({ completed: false });
+        try {
+          allTasks = await taskService.listAll({ completed: false }) || [];
+        } catch {
+          allTasks = [];
+        }
         dbProjects = []; // No projects without a team
         dbIdeas = [];
         dbPhotoshoots = [];
@@ -365,11 +414,9 @@
     </div>
   </div>
 
-  <div class="grid gap-8 xl:grid-cols-3">
-    <!-- Left Column: Active Projects -->
-    <div class="xl:col-span-2 space-y-8">
-      <!-- Active Projects -->
-      <div>
+  <div class="space-y-8">
+    <!-- Active Projects -->
+    <div>
         <div class="mb-6 flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-semibold">Active Projects</h2>
@@ -394,7 +441,18 @@
           {:else}
             {#each displayProjects as project (project.id)}
               <Card class="overflow-hidden">
-                <div class="flex gap-4">
+                <div 
+                  class="flex gap-4 cursor-pointer transition-all hover:shadow-lg"
+                  onclick={() => handleProjectClick(project.id)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleProjectClick(project.id);
+                    }
+                  }}
+                >
                   <div class="relative h-32 w-32 flex-shrink-0 overflow-hidden">
                     <img src={project.image} alt={project.character} class="h-full w-full object-cover" />
                   </div>
@@ -488,10 +546,9 @@
           </div>
         </div>
       {/if}
-    </div>
-
-    <!-- Right Column: Sidebar Widgets -->
-    <div class="space-y-6">
+    
+    <!-- Sidebar Widgets -->
+    <div class="grid gap-6 md:grid-cols-2">
       <!-- My Tasks -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-3">
@@ -507,12 +564,29 @@
               <p class="mb-2 text-xs font-medium text-muted-foreground">IN PROGRESS ({tasksByStatus.inProgress.length} tasks)</p>
               <div class="space-y-2">
                 {#each tasksByStatus.inProgress as task}
-                  <div class="flex items-start gap-2">
-                    <Checkbox checked={task.completed} class="mt-1" />
+                  <div 
+                    class="flex items-start gap-2 cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task.id);
+                    }}
+                    role="button"
+                    tabindex="0"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleTaskClick(task.id);
+                      }
+                    }}
+                  >
+                    <div onclick={(e: MouseEvent) => e.stopPropagation()} role="presentation">
+                      <Checkbox checked={task.completed} class="mt-1" />
+                    </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium">{task.title}</p>
                       <div class="flex items-center gap-2 mt-1">
-                        <Badge class="{priorityColors[task.priority]} text-xs" variant="secondary">
+                        <Badge class="{priorityColors[task.priority as keyof typeof priorityColors] || priorityColors.medium} text-xs" variant="secondary">
                           {task.priority}
                         </Badge>
                         <span class="text-xs text-muted-foreground">
@@ -532,12 +606,29 @@
               <p class="mb-2 text-xs font-medium text-muted-foreground">TO DO ({tasksByStatus.toDo.length} task)</p>
               <div class="space-y-2">
                 {#each tasksByStatus.toDo as task}
-                  <div class="flex items-start gap-2">
-                    <Checkbox checked={task.completed} class="mt-1" />
+                  <div 
+                    class="flex items-start gap-2 cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task.id);
+                    }}
+                    role="button"
+                    tabindex="0"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleTaskClick(task.id);
+                      }
+                    }}
+                  >
+                    <div onclick={(e: MouseEvent) => e.stopPropagation()} role="presentation">
+                      <Checkbox checked={task.completed} class="mt-1" />
+                    </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium">{task.title}</p>
                       <div class="flex items-center gap-2 mt-1">
-                        <Badge class="{priorityColors[task.priority]} text-xs" variant="secondary">
+                        <Badge class="{priorityColors[task.priority as keyof typeof priorityColors] || priorityColors.medium} text-xs" variant="secondary">
                           {task.priority}
                         </Badge>
                         <span class="text-xs text-muted-foreground">
@@ -557,12 +648,29 @@
               <p class="mb-2 text-xs font-medium text-muted-foreground">UPCOMING ({tasksByStatus.upcoming.length} task)</p>
               <div class="space-y-2">
                 {#each tasksByStatus.upcoming as task}
-                  <div class="flex items-start gap-2">
-                    <Checkbox checked={task.completed} class="mt-1" />
+                  <div 
+                    class="flex items-start gap-2 cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      handleTaskClick(task.id);
+                    }}
+                    role="button"
+                    tabindex="0"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleTaskClick(task.id);
+                      }
+                    }}
+                  >
+                    <div onclick={(e: MouseEvent) => e.stopPropagation()} role="presentation">
+                      <Checkbox checked={task.completed} class="mt-1" />
+                    </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium">{task.title}</p>
                       <div class="flex items-center gap-2 mt-1">
-                        <Badge class="{priorityColors[task.priority]} text-xs" variant="secondary">
+                        <Badge class="{priorityColors[task.priority as keyof typeof priorityColors] || priorityColors.medium} text-xs" variant="secondary">
                           {task.priority}
                         </Badge>
                         <span class="text-xs text-muted-foreground">
@@ -580,7 +688,7 @@
             <p class="text-sm text-muted-foreground text-center py-4">No tasks</p>
           {/if}
 
-          <Button variant="ghost" size="sm" class="w-full text-xs">
+          <Button variant="ghost" size="sm" class="w-full text-xs" onclick={() => goto('/tasks')}>
             <Plus class="mr-2 size-3" />
             Add task
           </Button>
@@ -613,7 +721,18 @@
           {#if timelineItems.length > 0}
             {@const nextEvent = timelineItems.filter(item => item.type === 'deadline' || item.type === 'event')[0]}
             {#if nextEvent}
-              <div class="mt-4 flex items-center gap-2 text-sm">
+              <div 
+                class="mt-4 flex items-center gap-2 text-sm cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+                onclick={() => handleTimelineItemClick(nextEvent)}
+                role="button"
+                tabindex="0"
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTimelineItemClick(nextEvent);
+                  }
+                }}
+              >
                 <div class="size-2 rounded-full bg-primary"></div>
                 <div>
                   <p class="font-medium">{nextEvent.title}</p>
@@ -643,7 +762,18 @@
         </CardHeader>
         <CardContent class="space-y-4">
           {#each displayProjects as project}
-            <div class="space-y-1">
+            <div 
+              class="space-y-1 cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+              onclick={() => handleProjectClick(project.id)}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleProjectClick(project.id);
+                }
+              }}
+            >
               <div class="flex items-center justify-between text-sm">
                 <span class="font-medium">{project.character}</span>
                 <span class="text-muted-foreground">{formatCurrencyFromCents(project.budget.spent * 100)} of {formatCurrencyFromCents(project.budget.total * 100)} spent</span>
@@ -678,7 +808,18 @@
             <p class="text-sm text-muted-foreground text-center py-4">No timeline items</p>
           {:else}
             {#each timelineItems.slice(0, 6) as item}
-            <div class="flex items-start gap-3">
+            <div 
+              class="flex items-start gap-3 cursor-pointer rounded-md p-2 -m-2 hover-sidebar"
+              onclick={() => handleTimelineItemClick(item)}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleTimelineItemClick(item);
+                }
+              }}
+            >
               {#if item.completed}
                 <CheckSquare2 class="mt-0.5 size-4 text-muted-foreground" />
               {:else if item.type === 'deadline'}
@@ -727,7 +868,7 @@
   </div>
 </div>
 
-<!-- Project Detail Flyout -->
+<!-- New Project Detail Flyout -->
 {#if showNewProjectFlyout}
   {@const flyoutOpen = showNewProjectFlyout}
   {@const setFlyoutOpen = (val: boolean) => {
@@ -769,6 +910,105 @@
       }}
     />
 </CreationFlyout>
+{/if}
+
+<!-- Project Detail Flyout (for viewing/editing existing projects) -->
+{#if showProjectDetailFlyout && selectedProjectId}
+  <CreationFlyout
+    bind:open={showProjectDetailFlyout}
+    title="Project"
+    onFullScreen={() => {
+      goto(`/projects/${selectedProjectId}`)
+      showProjectDetailFlyout = false
+    }}
+  >
+    <ProjectDetail
+      projectId={selectedProjectId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={async (id) => {
+        // If id is empty, project was deleted or converted - close flyout
+        if (!id || id === '') {
+          showProjectDetailFlyout = false
+          selectedProjectId = null
+          // Reload projects list
+          const team = get(currentTeam)
+          if (team) {
+            const loadedProjects = await projectService.list({ status: undefined })
+            dbProjects = loadedProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').slice(0, 3)
+          }
+          return
+        }
+        
+        // Project was updated, reload projects list
+        const team = get(currentTeam)
+        if (team) {
+          const loadedProjects = await projectService.list({ status: undefined })
+          dbProjects = loadedProjects.filter(p => p.status !== 'completed' && p.status !== 'archived').slice(0, 3)
+        }
+      }}
+      onOpenResourceDetail={(resourceId) => {
+        // Close project flyout and open resource flyout
+        showProjectDetailFlyout = false
+        selectedResourceId = resourceId
+        showResourceDetailFlyout = true
+        parentProjectId = selectedProjectId
+      }}
+    />
+  </CreationFlyout>
+{/if}
+
+<!-- Task Detail Flyout -->
+{#if showTaskDetailFlyout && selectedTaskId}
+  <CreationFlyout
+    bind:open={showTaskDetailFlyout}
+    title="Task"
+    onFullScreen={() => {
+      goto('/tasks')
+      showTaskDetailFlyout = false
+    }}
+  >
+    <TaskDetail
+      taskId={selectedTaskId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={async (taskId) => {
+        showTaskDetailFlyout = false
+        selectedTaskId = null
+        // Reload tasks
+        const team = get(currentTeam)
+        if (team) {
+          try {
+            allTasks = await taskService.listAll({ completed: false }) || []
+          } catch {
+            allTasks = []
+          }
+        }
+      }}
+    />
+  </CreationFlyout>
+{/if}
+
+<!-- Resource Detail Flyout -->
+{#if showResourceDetailFlyout && selectedResourceId}
+  <CreationFlyout
+    bind:open={showResourceDetailFlyout}
+    title="Resource"
+    onFullScreen={() => {
+      goto(`/resources/${selectedResourceId}`)
+      showResourceDetailFlyout = false
+    }}
+  >
+    <ResourceDetail
+      resourceId={selectedResourceId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={async () => {
+        // Just close the flyout, the $effect will handle reopening parent
+        showResourceDetailFlyout = false
+      }}
+    />
+  </CreationFlyout>
 {/if}
 
 <!-- Idea Detail Flyout -->

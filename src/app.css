@@ -94,6 +94,16 @@
 }
 
 @layer utilities {
+  .hover-sidebar {
+    transition: background-color 0.2s;
+  }
+  .hover-sidebar:hover {
+    background-color: var(--theme-sidebar-hover) !important;
+  }
+  .button-hover-sidebar:hover {
+    background-color: var(--theme-sidebar-hover) !important;
+    color: var(--theme-foreground) !important;
+  }
   .line-clamp-1 {
     overflow: hidden;
     display: -webkit-box;

@@ -9,6 +9,7 @@
   import ProjectCard from '$lib/components/cards/ProjectCard.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import ProjectDetail from '$lib/components/projects/ProjectDetail.svelte'
+  import ResourceDetail from '$lib/components/resources/ResourceDetail.svelte'
   import Fuse from 'fuse.js'
   import { get } from 'svelte/store'
 
@@ -17,9 +18,23 @@
   let showNewProjectFlyout = $state(false)
   let selectedProjectId = $state<string | null>(null)
   let showProjectDetailFlyout = $state(false)
+  let showResourceDetailFlyout = $state(false)
+  let selectedResourceId = $state<string | null>(null)
+  let parentProjectId = $state<string | null>(null)
 
   import type { PageData } from './$types'
   let { data }: { data: PageData } = $props()
+
+  // Watch for resource flyout closing and reopen parent if needed
+  $effect(() => {
+    if (!showResourceDetailFlyout && parentProjectId && !showProjectDetailFlyout) {
+      // Resource flyout just closed, reopen parent
+      selectedProjectId = parentProjectId
+      showProjectDetailFlyout = true
+      parentProjectId = null
+      selectedResourceId = null
+    }
+  })
   
   // If we got projects from load function, use them
   $effect(() => {
@@ -271,7 +286,36 @@
         projects.load()
       }
     }}
+    onOpenResourceDetail={(resourceId) => {
+      // Close project flyout and open resource flyout
+      showProjectDetailFlyout = false
+      selectedResourceId = resourceId
+      showResourceDetailFlyout = true
+      parentProjectId = selectedProjectId
+    }}
   />
+  </CreationFlyout>
+{/if}
+
+<!-- Resource Detail Flyout -->
+{#if showResourceDetailFlyout && selectedResourceId}
+  <CreationFlyout
+    bind:open={showResourceDetailFlyout}
+    title="Resource"
+    onFullScreen={() => {
+      goto(`/resources/${selectedResourceId}`)
+      showResourceDetailFlyout = false
+    }}
+  >
+    <ResourceDetail
+      resourceId={selectedResourceId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={async () => {
+        // Just close the flyout, the $effect will handle reopening parent
+        showResourceDetailFlyout = false
+      }}
+    />
   </CreationFlyout>
 {/if}
 
