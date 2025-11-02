@@ -10,7 +10,7 @@
           default:
             'border-transparent bg-[var(--theme-primary)] text-white [a&]:hover:bg-[var(--theme-primary-hover)]',
           secondary:
-            'border-transparent bg-[color-mix(in_srgb,var(--theme-muted)_30%,transparent)] text-[var(--theme-foreground)] border-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)] [a&]:hover:bg-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)]',
+            'border-transparent bg-[color-mix(in_srgb,var(--theme-muted)_30%,transparent)] backdrop-blur-sm text-[var(--theme-foreground)] border-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)] [a&]:hover:bg-[color-mix(in_srgb,var(--theme-muted)_40%,transparent)]',
           destructive:
             'border-transparent bg-[var(--theme-error)] text-white [a&]:hover:bg-[color-mix(in_srgb,var(--theme-error)_90%,black)] focus-visible:ring-[var(--theme-error)]/20 dark:focus-visible:ring-[var(--theme-error)]/40',
           outline:
@@ -28,6 +28,7 @@
     element?: 'span' | 'a'
     class?: string
     href?: string
+    style?: string
   }
 
   let {
@@ -35,6 +36,7 @@
     element = 'span',
     class: className = '',
     href,
+    style,
     children,
     ...restProps
   }: BadgeProps & { children?: any } = $props()
@@ -48,6 +50,7 @@
     {href}
     data-slot="badge"
     class={cn(badgeVariants({ variant }), className)}
+    style={style}
     {...restProps}
   >
     {@render children?.()}
@@ -56,6 +59,7 @@
   <span
     data-slot="badge"
     class={cn(badgeVariants({ variant }), className)}
+    style={style}
     {...restProps}
   >
     {@render children?.()}

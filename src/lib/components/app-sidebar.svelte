@@ -64,6 +64,7 @@
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, ready: true },
     { title: "Ideas", url: "/ideas", icon: Sparkles, ready: true },
     { title: "Projects", url: "/projects", icon: Folder, ready: true },
+    { title: "Tasks", url: "/tasks", icon: CheckSquare, ready: true },
     { title: "Resources", url: "/resources", icon: Package, ready: true },
     { title: "Tools", url: "/tools", icon: Hammer, ready: true },
     { title: "Photoshoots", url: "/photoshoots", icon: Clapperboard, ready: true },

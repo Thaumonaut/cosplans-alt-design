@@ -53,14 +53,14 @@
             onOpenChange?.(false)
           }
         }}
-        class="fixed z-40 bg-[color-mix(in_srgb,var(--theme-foreground)_10%,transparent)] transition-opacity duration-500 w-full h-full border-0 p-0 cursor-default"
+        class="fixed z-40 bg-[color-mix(in_srgb,var(--theme-foreground)_10%,transparent)] backdrop-blur-sm transition-opacity duration-500 w-full h-full border-0 p-0 cursor-default"
         style="top: {HEADER_HEIGHT}px; left: 16rem; right: 0; bottom: 0;"
       ></button>
 
   <!-- Flyout Panel - Functional layout -->
   <div
     class={cn(
-      'fixed right-0 z-50 bg-[var(--theme-card-bg)] flex flex-col',
+      'fixed right-0 z-50 bg-[var(--theme-card-bg)] backdrop-blur-md flex flex-col overflow-y-auto',
       'transition-transform duration-500 ease-out',
       'w-full sm:w-[680px]',
       open ? 'translate-x-0' : 'translate-x-full'
@@ -71,7 +71,7 @@
     aria-labelledby="flyout-title"
     tabindex="-1"
   >
-    <!-- Header - Minimal, functional -->
+    <!-- Header - Scrolls with content -->
     <header class="flex-shrink-0 flex items-center justify-between border-b border-[var(--theme-border)] bg-[var(--theme-card-bg)] backdrop-blur-md px-10 py-8">
       <h2 id="flyout-title" class="text-xl font-normal text-[var(--theme-foreground)]">{title}</h2>
       <div class="flex items-center gap-3">
@@ -95,16 +95,16 @@
       </div>
     </header>
 
-    <!-- Content - Structured layout with proper overflow handling -->
-    <main class="flex-1 overflow-y-auto overflow-x-hidden" style="min-height: 0; display: flex; flex-direction: column;">
+    <!-- Content -->
+    <main class="flex-1">
       {#if children}
         {@render children()}
       {/if}
     </main>
 
-    <!-- Footer - Fixed at bottom (from snippet prop) -->
+    <!-- Footer - Scrolls with content -->
     {#if footer !== undefined && footer !== null}
-      <footer class="flex-shrink-0 border-t border-[var(--theme-border)] bg-[var(--theme-card-bg)] backdrop-blur-md px-10 py-4 z-20">
+      <footer class="flex-shrink-0 border-t border-[var(--theme-border)] bg-[var(--theme-card-bg)] backdrop-blur-md px-10 py-4">
         {@render footer()}
       </footer>
     {/if}
