@@ -70,6 +70,12 @@
     goto(`/tools/${toolId}`)
   }
 
+  const emptyMessage = $derived(
+    searchQuery.trim() || categoryFilter !== 'all'
+      ? "Try adjusting your search or filters to find what you're looking for."
+      : 'Get started by creating your first tool. Track crafting tools and photoshoot equipment.'
+  )
+
   const categoryCounts = $derived({
     all: tools.length,
     'crafting-tool': tools.filter((t) => t.metadata?.category === 'crafting-tool').length,
@@ -137,11 +143,7 @@
     <LoadingState
       empty={true}
       emptyIcon={Wrench}
-      emptyMessage={
-        searchQuery.trim() || categoryFilter !== 'all'
-          ? 'Try adjusting your search or filters to find what you're looking for.'
-          : 'Get started by creating your first tool. Track crafting tools and photoshoot equipment.'
-      }
+      {emptyMessage}
       emptyAction={{
         label: 'Create First Tool',
         onclick: handleNewTool
