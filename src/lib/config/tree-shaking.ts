@@ -24,7 +24,8 @@ export {
   Sidebar,
   SidebarItem,
   SidebarGroup,
-  SidebarWrapper
+  SidebarWrapper,
+  Datepicker
 } from 'flowbite-svelte';
 
 // Lucide icons - import only used icons

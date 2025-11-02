@@ -97,34 +97,8 @@ export function loadSampleData() {
   // This should be handled through the database seed instead
   // sampleProjects.forEach(project => addProjectLocal(project))
 
-  // Add sample tasks using local functions
-  const sampleTasks = [
-    {
-      title: 'Order bamboo muzzle prop',
-      description: 'Find and order the bamboo muzzle for Nezuko cosplay',
-      completed: false,
-      projectId: 1,
-      dueDate: new Date('2025-11-15'),
-      priority: 'high' as const
-    },
-    {
-      title: 'Sew kimono sleeves',
-      description: 'Complete the kimono sleeves with proper measurements',
-      completed: true,
-      projectId: 1,
-      priority: 'medium' as const
-    },
-    {
-      title: 'Style wig',
-      description: 'Cut and style the white wig for Gojo',
-      completed: false,
-      projectId: 3,
-      dueDate: new Date('2025-12-01'),
-      priority: 'medium' as const
-    }
-  ]
-
-  sampleTasks.forEach(task => addTaskLocal(task))
+  // Sample tasks removed - tasks should be loaded from API or created by users
+  // sampleTasks.forEach(task => addTaskLocal(task))
 
   // Add sample events using local functions
   const sampleEvents = [
