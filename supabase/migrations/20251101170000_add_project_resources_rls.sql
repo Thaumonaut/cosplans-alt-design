@@ -12,7 +12,7 @@ CREATE POLICY project_resources_select ON public.project_resources FOR SELECT US
     WHERE p.id = project_resources.project_id
     AND (
       -- User is team owner (always allowed)
-      p.team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+      p.team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
       OR
       -- User is active team member (any role for viewing)
       EXISTS (
@@ -34,7 +34,7 @@ CREATE POLICY project_resources_insert ON public.project_resources FOR INSERT WI
     WHERE p.id = project_resources.project_id
     AND (
       -- User is team owner (always allowed)
-      p.team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+      p.team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
       OR
       -- User is owner/editor member
       EXISTS (
@@ -57,7 +57,7 @@ CREATE POLICY project_resources_update ON public.project_resources FOR UPDATE US
     WHERE p.id = project_resources.project_id
     AND (
       -- User is team owner (always allowed)
-      p.team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+      p.team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
       OR
       -- User is owner/editor member
       EXISTS (
@@ -80,7 +80,7 @@ CREATE POLICY project_resources_delete ON public.project_resources FOR DELETE US
     WHERE p.id = project_resources.project_id
     AND (
       -- User is team owner (always allowed)
-      p.team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+      p.team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
       OR
       -- User is owner/editor member
       EXISTS (

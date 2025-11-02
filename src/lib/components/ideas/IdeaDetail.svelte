@@ -18,6 +18,7 @@
   import DifficultySelector from '$lib/components/base/DifficultySelector.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
+  import NotFound from '$lib/components/base/NotFound.svelte'
   import { processImage } from '$lib/utils/image'
   import { uploadImageToStorage } from '$lib/utils/storage'
   import type { Idea, IdeaCreate } from '$lib/types/domain/idea'
@@ -622,10 +623,7 @@
     <div class="text-sm text-muted-foreground">Loading idea...</div>
   </div>
 {:else if error && currentMode() !== 'create' && !idea}
-  <div class="space-y-4 p-8">
-    <p class="text-sm text-destructive">{error}</p>
-    <Button variant="outline" onclick={() => goto('/ideas')}>Back to Ideas</Button>
-  </div>
+  <NotFound entityType="idea" backUrl="/ideas" searchUrl="/ideas" />
 {:else}
   <div class="flex h-full flex-col">
     <!-- Header with Title and Quick Info -->

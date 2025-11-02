@@ -4,14 +4,14 @@
   import { Datepicker } from 'flowbite-svelte'
 
   interface Props {
-    value: string
+    value: string | null
     editable?: boolean
     onSave: (value: string) => Promise<void>
     placeholder?: string
     class?: string
   }
 
-  let { value = $bindable(''), editable = true, onSave, placeholder = 'Select date', class: className }: Props = $props()
+  let { value = $bindable(null as string | null), editable = true, onSave, placeholder = 'Select date', class: className }: Props = $props()
 
   let isSaving = $state(false)
   let error = $state<string | null>(null)
@@ -20,7 +20,7 @@
 
   // Convert string value to Date for Datepicker
   $effect(() => {
-    if (value) {
+    if (value && value.trim() !== '') {
       try {
         // Parse YYYY-MM-DD format
         const [year, month, day] = value.split('-').map(Number)
@@ -63,23 +63,24 @@
     if (!editable || isSaving) return
     
     const newValue = dateToString(datepickerValue)
+    const newValueStr = newValue || ''
     
     // Don't save if value hasn't changed
-    if (newValue === lastSavedValue || !newValue) {
-      if (newValue !== value) value = newValue
+    if (newValueStr === lastSavedValue || !newValue) {
+      if (newValueStr !== (value || '')) value = newValue
       return
     }
 
     // Update value immediately for UI
     value = newValue
-    lastSavedValue = newValue
+    lastSavedValue = newValueStr
     isSaving = true
     error = null
     
     try {
-      await onSave(newValue)
+      await onSave(newValueStr)
     } catch (err: any) {
-      value = lastSavedValue
+      value = lastSavedValue || null
       datepickerValue = lastSavedValue ? (() => {
         const [year, month, day] = lastSavedValue.split('-').map(Number)
         return new Date(year, month - 1, day)
@@ -117,7 +118,6 @@
   {:else}
     <!-- Editable date picker with popup calendar -->
     <div class="relative inline-flex items-center gap-2">
-      <Calendar class="size-4 text-[var(--theme-muted-foreground)] shrink-0" />
       <div class="relative">
         <Datepicker
           bind:value={datepickerValue}

@@ -8,6 +8,7 @@
   import PhotoshootCard from '$lib/components/cards/PhotoshootCard.svelte'
   import PhotoshootDetail from '$lib/components/photoshoots/PhotoshootDetail.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import type { Photoshoot, PhotoshootStatus } from '$lib/types/domain/photoshoot'
 
@@ -76,6 +77,13 @@
       return new Date(b.date).getTime() - new Date(a.date).getTime()
     })
   })
+
+  // Empty state message
+  const emptyMessage = $derived(
+    searchQuery.trim() || statusFilter !== 'all'
+      ? 'Try adjusting your search or filters to find what you\'re looking for.'
+      : 'Get started by creating your first photoshoot. Plan shots, manage crew, and track your cosplay photography.'
+  )
 
   function handleNewPhotoshoot() {
     selectedPhotoshootId = null
@@ -161,28 +169,17 @@
 
   <!-- Photoshoots List -->
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-        <p class="text-sm text-[var(--theme-muted-foreground)]">Loading photoshoots...</p>
-      </div>
-    </div>
+    <LoadingState loading={true} />
   {:else if sorted.length === 0}
-    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-[var(--theme-section-bg)] py-16">
-      <Camera class="mb-4 size-12 text-[var(--theme-muted-foreground)] opacity-50" />
-      <h3 class="mb-2 text-lg font-semibold text-[var(--theme-foreground)]">No photoshoots found</h3>
-      <p class="mb-6 text-center text-sm text-[var(--theme-muted-foreground)] max-w-md">
-        {#if searchQuery.trim() || statusFilter !== 'all'}
-          Try adjusting your search or filters to find what you're looking for.
-        {:else}
-          Get started by creating your first photoshoot. Plan shots, manage crew, and track your cosplay photography.
-        {/if}
-      </p>
-      <Button onclick={handleNewPhotoshoot}>
-        <Plus class="mr-2 size-4" />
-        Create First Photoshoot
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyIcon={Camera}
+      emptyMessage={emptyMessage}
+      emptyAction={{
+        label: 'Create First Photoshoot',
+        onclick: handleNewPhotoshoot
+      }}
+    />
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#each sorted() as photoshoot (photoshoot.id)}

@@ -22,6 +22,7 @@
   import CommentBox from '$lib/components/base/CommentBox.svelte'
   import ResourceDetail from '$lib/components/resources/ResourceDetail.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import NotFound from '$lib/components/base/NotFound.svelte'
   import type { Project, ProjectCreate } from '$lib/types/domain/project'
   import { get } from 'svelte/store'
 
@@ -413,10 +414,7 @@
     <div class="text-sm text-muted-foreground">Loading project...</div>
   </div>
 {:else if error && currentMode() !== 'create' && !project}
-  <div class="space-y-4 p-8">
-    <p class="text-sm text-destructive">{error}</p>
-    <Button variant="outline" onclick={() => goto('/projects')}>Back to Projects</Button>
-  </div>
+  <NotFound entityType="project" backUrl="/projects" searchUrl="/projects" />
 {:else}
   <div class="flex h-full flex-col">
     <!-- Header with Image, Title and Metadata -->

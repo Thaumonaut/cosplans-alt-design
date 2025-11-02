@@ -10,7 +10,13 @@
     MoreVertical, 
     Settings, 
     Users,
-    Loader2
+    Loader2,
+    Link2,
+    Copy,
+    Check,
+    X,
+    Sparkles,
+    RefreshCw
   } from 'lucide-svelte';
   import { 
     Button, 
@@ -31,9 +37,10 @@
     DropdownMenuItem,
     DropdownMenuSeparator,
     Dialog,
+    DialogFooter,
     Select
   } from '$lib/components/ui';
-  import { teamService, type Team, type TeamMember } from '$lib/api/services/teamService';
+  import { teamService, type Team, type TeamMember, type TeamJoinLink } from '$lib/api/services/teamService';
   import { teams, currentTeam } from '$lib/stores/teams';
   import { user, authActions } from '$lib/stores/auth-store';
   import { toast } from '$lib/stores/toast';
@@ -44,16 +51,86 @@
   let isLoadingInProgress = $state(false);
   let showCreateTeamDialog = $state(false);
   let showInviteMemberDialog = $state(false);
+  let showRemoveMemberDialog = $state(false);
+  let memberToRemove = $state<TeamMember | null>(null);
   
   let allTeams = $state<Team[]>([]);
   let currentTeamData = $state<Team | null>(null);
   let teamMembers = $state<TeamMember[]>([]);
   let pendingInvites = $state<any[]>([]); // For future implementation
+  
+  // Join links
+  let joinLinks = $state<TeamJoinLink[]>([]);
+  let showJoinLinksDialog = $state(false);
+  let newLinkRole: 'editor' | 'viewer' = $state('viewer');
+  let loadingLinks = $state(false);
 
   // Create team form
   let newTeamName = $state('');
   let newTeamType = $state<'personal' | 'private'>('private');
   let newTeamDescription = $state('');
+  let suggestedTeamName = $state('');
+
+  // Generate team name based on user's name
+  function generateTeamNameFromUser(): string {
+    const currentUser = get(user);
+    if (!currentUser) {
+      // Fallback to generic name
+      return `My ${newTeamType === 'personal' ? 'Personal' : 'Private'} Team`;
+    }
+    
+    // Try to get name from user metadata first, then email
+    const firstName = currentUser.user_metadata?.first_name || 
+                      currentUser.user_metadata?.name?.split(' ')[0] ||
+                      currentUser.email?.split('@')[0] || 
+                      'User';
+    
+    if (newTeamType === 'personal') {
+      return `${firstName}'s Personal Team`;
+    } else {
+      // For private teams, generate something like "John's Team" or "John's Cosplay Team"
+      return `${firstName}'s Team`;
+    }
+  }
+
+  // Generate a unique team name with random suffix
+  function generateUniqueTeamName(): string {
+    const currentUser = get(user);
+    const userName = currentUser?.user_metadata?.first_name || 
+                     currentUser?.user_metadata?.name?.split(' ')[0] ||
+                     currentUser?.email?.split('@')[0] || 
+                     'Team';
+    
+    // Generate random suffix (2-3 words from a list)
+    const adjectives = ['Epic', 'Awesome', 'Creative', 'Amazing', 'Fantastic', 'Brilliant', 'Stellar', 'Dynamic'];
+    const nouns = ['Squad', 'Group', 'Collective', 'Circle', 'Guild', 'Crew', 'Assembly'];
+    
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    
+    if (newTeamType === 'personal') {
+      return `${userName}'s ${randomAdjective} Team`;
+    } else {
+      return `${randomAdjective} ${randomNoun}`;
+    }
+  }
+
+  // Auto-suggest name when dialog opens or team type changes
+  function updateSuggestedName() {
+    suggestedTeamName = generateTeamNameFromUser();
+    // Auto-fill if name is empty
+    if (!newTeamName.trim()) {
+      newTeamName = suggestedTeamName;
+    }
+  }
+
+  // Watch for team type changes and update suggested name
+  $effect(() => {
+    if (showCreateTeamDialog && newTeamType) {
+      // Update suggested name when type changes
+      updateSuggestedName();
+    }
+  });
 
   // Invite member form
   let inviteEmail = $state('');
@@ -97,6 +174,7 @@
       // Load members for current team
       if (currentTeamData) {
         await loadTeamMembers(currentTeamData.id);
+        await loadJoinLinks(currentTeamData.id);
       } else {
         console.warn('[TeamSettings] No team available to load members');
       }
@@ -195,16 +273,29 @@
     }
   }
 
-  async function handleRemoveMember(member: TeamMember) {
-    if (!currentTeamData) return;
-    
-    if (!confirm(`Are you sure you want to remove ${member.user?.name || member.user?.email || 'this member'} from the team?`)) {
+  function openRemoveMemberDialog(member: TeamMember) {
+    memberToRemove = member;
+    showRemoveMemberDialog = true;
+  }
+
+  async function handleRemoveMember() {
+    if (!currentTeamData || !memberToRemove) return;
+
+    // Check if removing the last owner
+    const ownerCount = teamMembers.filter(m => m.role === 'owner').length;
+    if (memberToRemove.role === 'owner' && ownerCount <= 1) {
+      toast.error(
+        'Cannot Remove Last Owner',
+        'You cannot remove the last owner from the team. Please transfer ownership to another member first, or add another owner before removing this one.'
+      );
       return;
     }
 
     try {
-      await teamService.removeMember(currentTeamData.id, member.userId);
+      await teamService.removeMember(currentTeamData.id, memberToRemove.userId);
       toast.success('Member Removed', 'Member has been removed from the team');
+      showRemoveMemberDialog = false;
+      memberToRemove = null;
       await loadTeamMembers(currentTeamData.id);
     } catch (error: any) {
       console.error('Failed to remove member:', error);
@@ -225,9 +316,74 @@
     }
   }
 
+  async function loadJoinLinks(teamId: string) {
+    try {
+      loadingLinks = true;
+      joinLinks = await teamService.listJoinLinks(teamId);
+    } catch (error: any) {
+      console.error('Failed to load join links:', error);
+      toast.error('Failed to Load Join Links', error?.message || 'Could not load join links');
+    } finally {
+      loadingLinks = false;
+    }
+  }
+
+  async function handleCreateJoinLink() {
+    if (!currentTeamData) return;
+
+    try {
+      const newLink = await teamService.createJoinLink(currentTeamData.id, newLinkRole);
+      toast.success('Join Link Created', `Code: ${newLink.code}`);
+      await loadJoinLinks(currentTeamData.id);
+      showJoinLinksDialog = false;
+      newLinkRole = 'viewer';
+    } catch (error: any) {
+      console.error('Failed to create join link:', error);
+      toast.error('Failed to Create Join Link', error?.message || 'Could not create join link');
+    }
+  }
+
+  async function handleDeleteJoinLink(linkId: string) {
+    try {
+      await teamService.deleteJoinLink(linkId);
+      toast.success('Join Link Deleted', 'The join link has been removed');
+      if (currentTeamData) {
+        await loadJoinLinks(currentTeamData.id);
+      }
+    } catch (error: any) {
+      console.error('Failed to delete join link:', error);
+      toast.error('Failed to Delete Join Link', error?.message || 'Could not delete join link');
+    }
+  }
+
+  async function handleToggleJoinLink(link: TeamJoinLink) {
+    try {
+      await teamService.updateJoinLink(link.id, { active: !link.is_active });
+      toast.success(link.is_active ? 'Join Link Deactivated' : 'Join Link Activated');
+      if (currentTeamData) {
+        await loadJoinLinks(currentTeamData.id);
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle join link:', error);
+      toast.error('Failed to Update Join Link', error?.message || 'Could not update join link');
+    }
+  }
+
+  function copyJoinCode(code: string) {
+    navigator.clipboard.writeText(code);
+    toast.success('Code Copied', `Join code "${code}" copied to clipboard`);
+  }
+
+  function copyJoinLink(code: string) {
+    const url = `${window.location.origin}/teams/join?code=${code}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link Copied', 'Join link copied to clipboard');
+  }
+
   async function handleSwitchTeam(team: Team) {
     currentTeamData = team;
     await loadTeamMembers(team.id);
+    await loadJoinLinks(team.id);
     // Update current team in store
     await teams.setCurrent(team.id);
   }
@@ -326,7 +482,10 @@
       <h1 class="text-3xl font-bold">Team Settings</h1>
       <p class="text-muted-foreground">Manage your teams and collaboration settings</p>
     </div>
-    <Button onclick={() => showCreateTeamDialog = true}>
+    <Button onclick={() => {
+      showCreateTeamDialog = true;
+      updateSuggestedName();
+    }}>
       <Plus class="mr-2 size-4" />
       Create Team
     </Button>
@@ -480,7 +639,7 @@
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               variant="destructive"
-                              onclick={() => handleRemoveMember(member)}
+                              onclick={() => openRemoveMemberDialog(member)}
                             >
                               Remove from Team
                             </DropdownMenuItem>
@@ -493,6 +652,112 @@
         </div>
       {/if}
           </div>
+
+      <!-- Join Links Section -->
+      <div class="border-t pt-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="font-semibold">Join Links & Codes</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onclick={() => {
+              showJoinLinksDialog = true;
+              newLinkRole = 'viewer';
+            }}
+          >
+            <Link2 class="mr-2 size-4" />
+            Create Join Link
+          </Button>
+        </div>
+        <p class="mb-4 text-sm text-muted-foreground">
+          Create shareable links and codes that allow others to join your team directly.
+        </p>
+        {#if loadingLinks}
+          <div class="flex items-center justify-center py-8">
+            <Loader2 class="mr-2 size-5 animate-spin text-muted-foreground" />
+            <span class="text-sm text-muted-foreground">Loading join links...</span>
+          </div>
+        {:else if joinLinks.length === 0}
+          <div class="rounded-lg border border-dashed p-6 text-center">
+            <Link2 class="mx-auto mb-2 size-8 text-muted-foreground" />
+            <p class="mb-2 text-sm font-medium">No join links yet</p>
+            <p class="mb-4 text-xs text-muted-foreground">Create a join link to let others join your team with a code or link</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onclick={() => {
+                showJoinLinksDialog = true;
+                newLinkRole = 'viewer';
+              }}
+            >
+              <Link2 class="mr-2 size-4" />
+              Create Join Link
+            </Button>
+          </div>
+        {:else}
+          <div class="space-y-2">
+            {#each joinLinks as link (link.id)}
+              <div class="flex items-center justify-between rounded-lg border p-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <code class="rounded bg-muted px-2 py-1 text-sm font-mono font-semibold">{link.code}</code>
+                    <Badge variant={link.is_active ? 'default' : 'secondary'}>
+                      {link.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Badge variant="outline">{link.role}</Badge>
+                  </div>
+                  <p class="text-xs text-muted-foreground">
+                    Created {new Date(link.created_at).toLocaleDateString()}
+                    {#if link.expires_at}
+                      • Expires {new Date(link.expires_at).toLocaleDateString()}
+                    {:else}
+                      • Never expires
+                    {/if}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    onclick={() => copyJoinCode(link.code)}
+                  >
+                    <Copy class="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    onclick={() => copyJoinLink(link.code)}
+                  >
+                    <Link2 class="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="size-8"
+                    onclick={() => handleToggleJoinLink(link)}
+                  >
+                    {#if link.is_active}
+                      <Check class="size-4" />
+                    {:else}
+                      <X class="size-4" />
+                    {/if}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="size-8 text-destructive hover:text-destructive"
+                    onclick={() => handleDeleteJoinLink(link.id)}
+                  >
+                    <Trash2 class="size-4" />
+                  </Button>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
         </CardContent>
       </Card>
     {:else}
@@ -513,11 +778,48 @@
 >
       <div class="space-y-4">
         <div class="space-y-2">
-          <Label>Team Name</Label>
+          <div class="flex items-center justify-between">
+            <Label>Team Name</Label>
+            <div class="flex gap-2">
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onclick={() => {
+                  newTeamName = generateTeamNameFromUser();
+                }}
+              >
+                <Sparkles class="mr-1 size-3" />
+                Suggest
+              </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onclick={() => {
+                  newTeamName = generateUniqueTeamName();
+                }}
+              >
+                <RefreshCw class="mr-1 size-3" />
+                Generate
+              </Button>
+            </div>
+          </div>
       <Input 
         bind:value={newTeamName}
-        placeholder="Enter team name..." 
+        placeholder={suggestedTeamName || "Enter team name..."}
       />
+          {#if suggestedTeamName && newTeamName !== suggestedTeamName}
+            <p class="text-xs text-muted-foreground">
+              Suggested: <button 
+                type="button"
+                class="text-primary hover:underline"
+                onclick={() => newTeamName = suggestedTeamName}
+              >
+                {suggestedTeamName}
+              </button>
+            </p>
+          {/if}
         </div>
         <div class="space-y-2">
           <Label>Team Type</Label>
@@ -552,6 +854,7 @@
           newTeamName = '';
           newTeamType = 'private';
           newTeamDescription = '';
+          suggestedTeamName = '';
         }}
       >
         Cancel
@@ -607,3 +910,68 @@
       </div>
     </div>
   </Dialog>
+
+  <!-- Remove Member Confirmation Dialog -->
+  <Dialog 
+    bind:open={showRemoveMemberDialog} 
+    title="Remove Team Member" 
+    description={memberToRemove ? `Are you sure you want to remove ${memberToRemove.user?.name || memberToRemove.user?.email || 'this member'} from the team? This action cannot be undone.` : 'Are you sure you want to remove this member from the team?'}
+  >
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onclick={() => {
+          showRemoveMemberDialog = false;
+          memberToRemove = null;
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="destructive"
+        onclick={handleRemoveMember}
+      >
+        Remove Member
+      </Button>
+    </DialogFooter>
+  </Dialog>
+
+  <!-- Create Join Link Dialog -->
+  <Dialog 
+    bind:open={showJoinLinksDialog}
+    title="Create Join Link"
+    description="Generate a code or link that others can use to join your team"
+  >
+    <div class="space-y-4">
+      <div class="space-y-2">
+        <Label>Default Role</Label>
+        <Select 
+          bind:value={newLinkRole}
+          options={[
+            { value: 'editor', label: 'Editor' },
+            { value: 'viewer', label: 'Viewer' }
+          ]}
+        />
+        <p class="text-xs text-muted-foreground">
+          Users joining via this link will be assigned this role
+        </p>
+      </div>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onclick={() => {
+            showJoinLinksDialog = false;
+            newLinkRole = 'viewer';
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onclick={handleCreateJoinLink}
+        >
+          Create Join Link
+        </Button>
+      </DialogFooter>
+    </div>
+  </Dialog>
+  

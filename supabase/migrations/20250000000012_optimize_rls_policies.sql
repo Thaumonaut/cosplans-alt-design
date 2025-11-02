@@ -45,34 +45,60 @@ CREATE POLICY "Owners can delete their teams" ON public.teams FOR DELETE USING (
 );
 
 -- team_members: view members of own teams; manage by owners
+-- Break circular dependency by checking via teams table only
+-- Note: Team creators should be automatically added as team_members when team is created
 DROP POLICY IF EXISTS team_members_select ON public.team_members;
 CREATE POLICY team_members_select ON public.team_members FOR SELECT USING (
-  team_id IN (SELECT team_id FROM public.team_members tm WHERE tm.user_id = (select auth.uid()) AND tm.status = 'active')
+  -- User created the team (team owner via teams.created_by) - can see all members
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User can see their own membership record
+  user_id = (select auth.uid())
 );
 
 DROP POLICY IF EXISTS team_members_insert ON public.team_members;
 CREATE POLICY team_members_insert ON public.team_members FOR INSERT WITH CHECK (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND status = 'active')
+  -- User created the team (can always add members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS team_members_update ON public.team_members;
 CREATE POLICY team_members_update ON public.team_members FOR UPDATE USING (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND status = 'active')
+  -- User created the team (can always update members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS team_members_delete ON public.team_members;
 CREATE POLICY team_members_delete ON public.team_members FOR DELETE USING (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND status = 'active')
+  -- User created the team (can always remove members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS "Team members can view each other" ON public.team_members;
 CREATE POLICY "Team members can view each other" ON public.team_members FOR SELECT USING (
-  team_id IN (SELECT team_id FROM public.team_members tm WHERE tm.user_id = (select auth.uid()) AND tm.status = 'active')
+  -- User created the team (team owner via teams.created_by) - can see all members
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User can see their own membership record
+  user_id = (select auth.uid())
 );
 
 DROP POLICY IF EXISTS "Owners and admins can add members" ON public.team_members;
 CREATE POLICY "Owners and admins can add members" ON public.team_members FOR INSERT WITH CHECK (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND status = 'active')
+  -- User created the team (can always add members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS "Owners and admins can update members" ON public.team_members;
@@ -85,17 +111,19 @@ CREATE POLICY "Owners and admins can remove members" ON public.team_members FOR 
   team_id IN (SELECT team_id FROM public.team_members WHERE user_id = (select auth.uid()) AND role = 'owner' AND status = 'active')
 );
 
-DROP POLICY IF EXISTS "Users can add themselves via active join link" ON public.team_members;
--- Note: This policy might need special handling for join links - keeping original logic for now
-CREATE POLICY "Users can add themselves via active join link" ON public.team_members FOR INSERT WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM public.team_join_links tjl
-    WHERE tjl.team_id = team_members.team_id
-      AND tjl.code = current_setting('app.join_code', true)
-      AND tjl.active = true
-      AND tjl.expires_at > NOW()
-  )
-);
+-- Note: "Users can add themselves via active join link" policy is created in 20251102120000_create_team_join_links.sql
+-- after the team_join_links table is created, to avoid dependency issues.
+-- This policy is commented out here to prevent errors when running migrations in order.
+-- DROP POLICY IF EXISTS "Users can add themselves via active join link" ON public.team_members;
+-- CREATE POLICY "Users can add themselves via active join link" ON public.team_members FOR INSERT WITH CHECK (
+--   EXISTS (
+--     SELECT 1 FROM public.team_join_links tjl
+--     WHERE tjl.team_id = team_members.team_id
+--       AND tjl.code = current_setting('app.join_code', true)
+--       AND tjl.is_active = true
+--       AND tjl.expires_at > NOW()
+--   )
+-- );
 
 -- projects
 DROP POLICY IF EXISTS projects_select ON public.projects;

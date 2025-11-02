@@ -243,7 +243,7 @@
   {/if}
   
   {#if editable && !isFocused && !isSaving}
-    <div class="pointer-events-none absolute inset-0 -inset-x-2 -inset-y-1 rounded-md opacity-0 transition-opacity group-hover:bg-accent/30 group-hover:opacity-100"></div>
+    <div class="pointer-events-none absolute inset-0 -inset-x-2 -inset-y-1 rounded-md opacity-0 transition-opacity group-hover:bg-interactive-hover group-hover:opacity-100"></div>
   {/if}
 </div>
 

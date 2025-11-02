@@ -18,7 +18,7 @@
     Palette,
     Settings,
   } from 'lucide-svelte';
-  import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progress, Textarea, Input, Label } from '$lib/components/ui';
+  import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Progress, Textarea, Input, Label, DatePicker } from '$lib/components/ui';
 
   const workflowTemplates = [
     {
@@ -286,7 +286,7 @@
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="space-y-2">
                 <Label>Schedule Date</Label>
-                <Input type="date" />
+                <DatePicker placeholder="Select date" />
               </div>
               <div class="space-y-2">
                 <Label>Schedule Time</Label>

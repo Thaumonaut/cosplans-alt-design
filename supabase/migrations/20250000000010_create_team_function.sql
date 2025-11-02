@@ -1,6 +1,6 @@
 -- Functions to bypass schema cache issues
 -- These use direct SQL to avoid PostgREST schema cache problems
--- Updated to match actual schema: owner_id (not created_by), is_personal (not type)
+-- Updated to match actual schema: created_by (not owner_id), type (not is_personal)
 
 -- Function to create teams
 CREATE OR REPLACE FUNCTION public.create_team_safe(
@@ -11,8 +11,8 @@ CREATE OR REPLACE FUNCTION public.create_team_safe(
 RETURNS TABLE (
   id UUID,
   name TEXT,
-  owner_id UUID,
-  is_personal BOOLEAN,
+  created_by UUID,
+  type TEXT,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 )
@@ -21,14 +21,10 @@ SECURITY DEFINER
 AS $$
 DECLARE
   new_team_id UUID;
-  is_personal_val BOOLEAN;
 BEGIN
-  -- Convert type string to is_personal boolean
-  is_personal_val := (team_type = 'personal');
-  
   -- Insert team directly using SQL to bypass schema cache
-  INSERT INTO public.teams (name, owner_id, is_personal)
-  VALUES (team_name, creator_id, is_personal_val)
+  INSERT INTO public.teams (name, created_by, type)
+  VALUES (team_name, creator_id, team_type)
   RETURNING teams.id INTO new_team_id;
 
   -- Add creator as owner in team_members
@@ -49,8 +45,8 @@ BEGIN
   SELECT 
     t.id,
     t.name,
-    t.owner_id,
-    t.is_personal,
+    t.created_by,
+    t.type,
     t.created_at,
     t.updated_at
   FROM public.teams t
@@ -65,8 +61,8 @@ CREATE OR REPLACE FUNCTION public.list_user_teams_safe(
 RETURNS TABLE (
   id UUID,
   name TEXT,
-  owner_id UUID,
-  is_personal BOOLEAN,
+  created_by UUID,
+  type TEXT,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
 )
@@ -79,8 +75,8 @@ BEGIN
   SELECT DISTINCT
     t.id,
     t.name,
-    t.owner_id,
-    t.is_personal,
+    t.created_by,
+    t.type,
     t.created_at,
     t.updated_at
   FROM public.teams t

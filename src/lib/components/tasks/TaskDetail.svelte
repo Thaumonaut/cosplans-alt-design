@@ -7,6 +7,7 @@
   import { Calendar, X, Clock, AlertCircle, Flag } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
+  import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
   import type { Task, TaskCreate, TaskPriority } from '$lib/types/domain/task'
 
   interface Props {
@@ -21,7 +22,7 @@
 
   let task: Task | null = $state(null)
   let newTask: TaskCreate = $state({
-    projectId: projectId || '',
+    projectId: projectId || null,
     title: '',
     description: undefined,
     dueDate: undefined,
@@ -141,11 +142,7 @@
       return
     }
 
-    if (!newTask.projectId) {
-      error = 'Project ID is required'
-      return
-    }
-
+    // projectId is now optional - tasks can be standalone or linked to a project
     saving = true
 
     try {
@@ -154,6 +151,9 @@
         onSuccess(created.id)
       } else if (newTask.projectId) {
         goto(`/projects/${newTask.projectId}`)
+      } else {
+        // Standalone task - redirect to tasks page or dashboard
+        goto('/tasks')
       }
     } catch (err: any) {
       error = err?.message || 'Failed to create task'
@@ -288,17 +288,18 @@
             <div class="flex items-center gap-2 text-muted-foreground">
               <Clock class="size-4" />
               {#if !isReadOnly()}
-                <input
-                  type="date"
+                <InlineDatePicker
                   bind:value={dueDateValue}
-                  onchange={() => {
+                  editable={true}
+                  onSave={async (v) => {
                     if (currentMode() === 'create') {
-                      newTask.dueDate = dueDateValue || undefined
+                      newTask.dueDate = v || undefined
                     } else if (task) {
-                      handleSaveField('dueDate', dueDateValue || undefined)
+                      await handleSaveField('dueDate', v || undefined)
                     }
                   }}
-                  class="rounded-md border bg-transparent px-2 py-1 text-sm outline-none focus:border-primary"
+                  placeholder="Select due date"
+                  class="flex-1"
                 />
               {:else if dueDateValue}
                 <span>Due {new Date(dueDateValue).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>

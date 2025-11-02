@@ -15,8 +15,10 @@
   } from 'lucide-svelte'
   import { taskService } from '$lib/api/services/taskService'
   import { projectService } from '$lib/api/services/projectService'
+  import { teamService } from '$lib/api/services/teamService'
   import { tasks as tasksStore } from '$lib/stores/tasks-store'
   import { currentTeam } from '$lib/stores/teams'
+  import type { TeamMember } from '$lib/api/services/teamService'
   import { 
     Button, 
     Card, 
@@ -30,7 +32,7 @@
   } from '$lib/components/ui'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
-  import type { Task } from '$lib/types/domain/task'
+  import type { Task, TaskPriority } from '$lib/types/domain/task'
   import type { Project } from '$lib/types/domain/project'
 
   type ViewMode = "kanban" | "list" | "table"
@@ -42,6 +44,7 @@
   let loading = $state(true)
   let allTasks = $state<Task[]>([])
   let allProjects = $state<Project[]>([])
+  let teamMembers = $state<TeamMember[]>([])
   let showCreateFlyout = $state(false)
   let selectedTaskId = $state<string | null>(null)
   let showTaskDetailFlyout = $state(false)
@@ -68,6 +71,13 @@
 
       allTasks = tasksData
       allProjects = projectsData
+
+      // Load team members for assignment display
+      try {
+        teamMembers = await teamService.getMembers(team.id)
+      } catch (err) {
+        console.error('Failed to load team members:', err)
+      }
     } catch (error) {
       console.error('Failed to load tasks:', error)
     } finally {
@@ -90,13 +100,15 @@
     return filtered
   })
 
-  // Convert tasks to UI format with project names
+  // Convert tasks to UI format with project names and assigned user info
   const uiTasks = $derived(() => {
     return filteredTasks().map(task => {
       const project = allProjects.find(p => p.id === task.projectId)
+      const assignedMember = task.assignedTo ? teamMembers.find(m => m.userId === task.assignedTo) : null
       return {
         ...task,
-        projectName: project ? `${project.character} (${project.series})` : 'Unknown Project',
+        projectName: project ? `${project.character} (${project.series})` : null,
+        assignedUser: assignedMember?.user,
         status: task.completed ? 'done' : (task.priority === 'high' ? 'in-progress' : 'todo') as Status,
         dueDateStr: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
       }
@@ -130,6 +142,68 @@
 
   function getTasksByStatus(status: string) {
     return uiTasks().filter((task) => task.status === status)
+  }
+
+  // Drag and drop handlers
+  let draggedTask = $state<string | null>(null)
+  let dragOverStatus = $state<string | null>(null)
+
+  function handleDragStart(taskId: string, event: DragEvent) {
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/plain', taskId)
+    }
+    draggedTask = taskId
+  }
+
+  function handleDragOver(status: string, event: DragEvent) {
+    event.preventDefault()
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move'
+    }
+    dragOverStatus = status
+  }
+
+  function handleDragLeave() {
+    dragOverStatus = null
+  }
+
+  async function handleDrop(status: string, event: DragEvent) {
+    event.preventDefault()
+    dragOverStatus = null
+    
+    if (!draggedTask) return
+
+    const task = allTasks.find(t => t.id === draggedTask)
+    if (!task) return
+
+    // Determine what updates are needed based on the new status
+    const updates: { completed?: boolean; priority?: TaskPriority } = {}
+    
+    if (status === 'done') {
+      updates.completed = true
+    } else if (status === 'todo') {
+      updates.completed = false
+      // If moving to todo from in-progress, might want to lower priority
+      if (task.priority === 'high') {
+        updates.priority = 'medium'
+      }
+    } else if (status === 'in-progress') {
+      updates.completed = false
+      // If moving to in-progress, might want to raise priority
+      if (task.priority === 'low') {
+        updates.priority = 'medium'
+      }
+    }
+
+    try {
+      await taskService.update(draggedTask, updates)
+      await loadData()
+    } catch (error) {
+      console.error('Failed to update task status:', error)
+    }
+
+    draggedTask = null
   }
 
   async function handleTaskToggle(taskId: string) {
@@ -266,41 +340,62 @@
     {:else}
       <!-- Kanban View -->
       {#if viewMode === "kanban"}
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {#each ["todo", "in-progress", "done"] as statusStr}
             {@const status = statusStr as Status}
-            <Card class="flex flex-col bg-[var(--theme-card-bg)]">
-              <CardHeader class="pb-3">
+            <Card class="flex flex-col bg-[var(--theme-card-bg)] shadow-sm">
+              <CardHeader class="pb-4">
                 <div class="flex items-center justify-between">
-                  <CardTitle class="text-sm font-medium">{statusLabels[status]}</CardTitle>
-                  <Badge variant="secondary" class="text-xs">
+                  <CardTitle class="text-base font-semibold">{statusLabels[status]}</CardTitle>
+                  <Badge variant="secondary" class="text-sm px-2 py-0.5 font-medium">
                     {getTasksByStatus(status).length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent class="flex-1 space-y-2">
+              <CardContent class="flex-1 space-y-3 overflow-y-auto min-h-[200px] p-0">
+                <div
+                  role="region"
+                  aria-label={`${statusLabels[status]} tasks`}
+                  class="h-full space-y-3 p-6 {dragOverStatus === status && draggedTask && getTasksByStatus(status).findIndex(t => t.id === draggedTask) === -1 ? 'opacity-50' : ''}"
+                  ondragover={(e: DragEvent) => handleDragOver(status, e)}
+                  ondragleave={handleDragLeave}
+                  ondrop={(e: DragEvent) => handleDrop(status, e)}
+                >
                 {#each getTasksByStatus(status) as task (task.id)}
                   <div 
-                    class="group cursor-pointer transition-shadow hover:shadow-md bg-[var(--theme-card-bg)] rounded-lg border p-3" 
+                    class="group cursor-pointer transition-all hover:shadow-lg bg-white dark:bg-[var(--theme-card-bg)] rounded-xl border border-[var(--theme-border)] p-5 shadow-sm {draggedTask === task.id ? 'opacity-50' : ''}"
+                    draggable="true"
+                    ondragstart={(e) => handleDragStart(task.id, e)}
+                    ondragend={() => draggedTask = null}
                     onclick={() => handleEditTask(task.id)} 
                     onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') handleEditTask(task.id) }}
                     role="button" 
                     tabindex="0"
                   >
-                    <div class="mb-2 flex items-start justify-between gap-2">
-                      <div class="flex items-start gap-2">
-                        <GripVertical class="mt-0.5 size-4 text-[var(--theme-muted-foreground)] opacity-0 transition-opacity group-hover:opacity-100" />
-                        <div onclick={(e: MouseEvent) => e.stopPropagation()}>
+                    <div class="mb-3 flex items-start justify-between gap-3">
+                      <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <GripVertical class="mt-1 size-4 text-[var(--theme-muted-foreground)] opacity-0 transition-opacity group-hover:opacity-100 shrink-0" />
+                        <div onclick={(e: MouseEvent) => e.stopPropagation()} class="shrink-0 mt-0.5">
                           <Checkbox 
                             checked={task.completed} 
                             onchange={() => handleTaskToggle(task.id)}
                           />
                         </div>
+                        <div class="flex-1 min-w-0">
+                          <h4 class="mb-2 text-base font-semibold leading-snug text-[var(--theme-foreground)] line-clamp-2">{task.title}</h4>
+                          <p class="mb-3 text-sm text-[var(--theme-muted-foreground)] line-clamp-3 leading-relaxed">
+                            {#if task.description}
+                              {task.description}
+                            {:else}
+                              <span class="italic opacity-60">No description provided</span>
+                            {/if}
+                          </p>
+                        </div>
                       </div>
                       <DropdownMenu>
                         {#snippet trigger()}
-                          <Button variant="ghost" size="icon" class="size-6" onclick={(e: MouseEvent) => e.stopPropagation()}>
-                            <MoreVertical class="size-3" />
+                          <Button variant="ghost" size="icon" class="size-7 shrink-0" onclick={(e: MouseEvent) => e.stopPropagation()}>
+                            <MoreVertical class="size-4" />
                           </Button>
                         {/snippet}
                         {#snippet children()}
@@ -309,24 +404,69 @@
                         {/snippet}
                       </DropdownMenu>
                     </div>
-                    <h4 class="mb-1 text-sm font-medium leading-tight text-[var(--theme-foreground)]">{task.title}</h4>
-                    {#if task.description}
-                      <p class="mb-3 text-xs text-[var(--theme-muted-foreground)] line-clamp-2">{task.description}</p>
-                    {/if}
-                    <div class="flex flex-wrap items-center gap-2">
-                      <Badge class={priorityColors[task.priority]} variant="outline">
-                        {task.priority}
-                      </Badge>
-                      {#if task.dueDate}
-                        <div class="flex items-center gap-1 text-xs text-[var(--theme-muted-foreground)]">
-                          <Clock class="size-3" />
-                          <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+                    
+                    <!-- Priority and Due Date -->
+                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Priority:</span>
+                        <Badge class="{priorityColors[task.priority]} text-xs font-medium px-2 py-1" variant="outline">
+                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                        </Badge>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Due:</span>
+                        <div class="flex items-center gap-1.5 text-sm text-[var(--theme-muted-foreground)]">
+                          <Clock class="size-4" />
+                          {#if task.dueDate}
+                            <span class="font-medium">{new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          {:else}
+                            <span class="italic opacity-60">No due date</span>
+                          {/if}
                         </div>
-                      {/if}
+                      </div>
                     </div>
-                    <div class="mt-2 text-xs text-[var(--theme-muted-foreground)]">{task.projectName}</div>
+                    
+                    <!-- Assigned Team Member -->
+                    <div class="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--theme-border-subtle)]">
+                      <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Assigned:</span>
+                      <div class="flex items-center gap-2">
+                        {#if task.assignedUser}
+                          <div class="flex items-center gap-2">
+                            {#if task.assignedUser.avatarUrl}
+                              <img 
+                                src={task.assignedUser.avatarUrl} 
+                                alt={task.assignedUser.name || task.assignedUser.email}
+                                class="size-6 rounded-full object-cover"
+                              />
+                            {:else}
+                              <div class="flex size-6 items-center justify-center rounded-full bg-[var(--theme-primary)] text-[var(--theme-primary-foreground)] text-xs font-medium">
+                                {(task.assignedUser.name || task.assignedUser.email).charAt(0).toUpperCase()}
+                              </div>
+                            {/if}
+                            <span class="text-sm font-medium text-[var(--theme-foreground)]">
+                              {task.assignedUser.name || task.assignedUser.email}
+                            </span>
+                          </div>
+                        {:else}
+                          <span class="text-sm italic opacity-60 text-[var(--theme-muted-foreground)]">Unassigned</span>
+                        {/if}
+                      </div>
+                    </div>
+                    
+                    <!-- Linked Project -->
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Project:</span>
+                      <div class="flex items-center gap-2 text-sm text-[var(--theme-muted-foreground)]">
+                        {#if task.projectName}
+                          <span class="font-medium">{task.projectName}</span>
+                        {:else}
+                          <span class="italic opacity-60">No project linked</span>
+                        {/if}
+                      </div>
+                    </div>
                   </div>
                 {/each}
+                </div>
               </CardContent>
             </Card>
           {/each}

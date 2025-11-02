@@ -15,8 +15,9 @@ export const CRITICAL_ROUTES = [
 export const CRITICAL_RESOURCES = [
 	// Critical CSS (handled by SvelteKit)
 	// Critical images
-	'/placeholder-logo.svg',
-	'/placeholder-user.jpg'
+	'/cosplans_logo_themed.svg',
+	'/placeholder-user.jpg',
+	'/favicon.svg'
 ] as const;
 
 // Lazy-loaded route modules for code splitting (updated for (auth) structure)

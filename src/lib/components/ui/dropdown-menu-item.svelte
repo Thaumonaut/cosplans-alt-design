@@ -25,7 +25,7 @@
   {disabled}
   onclick={onclick || (() => {})}
   class={cn(
-    'relative flex w-full cursor-default items-center justify-start gap-3 rounded-md px-3 py-2 text-sm text-left outline-hidden select-none',
+    'relative flex w-full cursor-default items-center justify-start gap-3 rounded-md px-3 py-1.5 text-sm text-left outline-hidden select-none',
     'bg-transparent hover:bg-[var(--theme-sidebar-hover)] focus:bg-[var(--theme-sidebar-hover)]',
     'text-[var(--theme-foreground)] focus:text-[var(--theme-foreground)]',
     'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',

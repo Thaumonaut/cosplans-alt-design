@@ -58,6 +58,7 @@
     DropdownMenuItem,
   } from "$lib/components/ui";
   import TeamSelector from "./team-selector.svelte";
+  import Logo from "./Logo.svelte";
 
   // MVP Navigation - Only show implemented features
   const mainNav = [
@@ -123,14 +124,12 @@
 <Sidebar>
   <SidebarHeader class="border-b border-[var(--theme-sidebar-border)] px-6 py-4">
     <div class="flex items-center gap-3">
-      <div
-        class="flex size-10 items-center justify-center rounded-xl bg-primary"
-      >
-        <Sparkles class="size-5 text-primary-foreground" />
-      </div>
-      <div class="flex flex-1 flex-col overflow-hidden">
-        <span class="text-lg font-semibold">Cosplans</span>
-      </div>
+      <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Logo size="lg" />
+        <div class="flex flex-1 flex-col overflow-hidden">
+          <span class="text-lg font-semibold">Cosplans</span>
+        </div>
+      </a>
     </div>
     <div class="mt-3">
       <TeamSelector />
@@ -202,7 +201,7 @@
   </SidebarContent>
 
   <SidebarFooter class="border-t border-[var(--theme-sidebar-border)] p-4">
-    <DropdownMenu placement="top-start">
+    <DropdownMenu placement="top">
       {#snippet trigger()}
         <span class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent">
           <Avatar class="size-8">

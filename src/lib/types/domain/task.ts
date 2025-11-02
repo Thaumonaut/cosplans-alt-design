@@ -2,7 +2,7 @@ export type TaskPriority = 'low' | 'medium' | 'high'
 
 export interface Task {
   id: string
-  projectId: string
+  projectId?: string | null // null = standalone task, set = project task
   resourceId?: string | null // null = project-level task, set = resource-level task
   title: string
   description?: string
@@ -15,7 +15,7 @@ export interface Task {
 }
 
 export interface TaskCreate {
-  projectId: string
+  projectId?: string | null // null = standalone task, set = project task
   resourceId?: string
   title: string
   description?: string

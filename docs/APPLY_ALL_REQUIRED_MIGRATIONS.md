@@ -159,3 +159,4 @@ After all migrations are applied:
 2. Try linking it to a project
 3. Check browser console - should have no 404/406 errors
 
+

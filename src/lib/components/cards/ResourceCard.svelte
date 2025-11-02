@@ -165,6 +165,7 @@
         src={resource.images[0]}
         alt={resource.name}
         class="h-full w-full object-cover transition-transform group-hover:scale-105"
+        loading="lazy"
       />
     {:else}
       <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">

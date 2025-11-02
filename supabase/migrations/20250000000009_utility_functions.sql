@@ -108,23 +108,40 @@ CREATE POLICY teams_delete ON public.teams FOR DELETE USING (
 
 -- team_members: view members of own teams; manage by owners
 DROP POLICY IF EXISTS team_members_select ON public.team_members;
+-- Break circular dependency by checking via teams table
 CREATE POLICY team_members_select ON public.team_members FOR SELECT USING (
-  team_id IN (SELECT team_id FROM public.team_members tm WHERE tm.user_id = auth.uid() AND tm.status = 'active')
+  -- User created the team (team owner via teams.created_by) - can see all members
+  team_id IN (SELECT id FROM public.teams WHERE created_by = auth.uid())
+  OR
+  -- User can see their own membership record
+  user_id = auth.uid()
 );
 
 DROP POLICY IF EXISTS team_members_insert ON public.team_members;
 CREATE POLICY team_members_insert ON public.team_members FOR INSERT WITH CHECK (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND status = 'active')
+  -- User created the team (can always add members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = auth.uid())
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS team_members_update ON public.team_members;
 CREATE POLICY team_members_update ON public.team_members FOR UPDATE USING (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND status = 'active')
+  -- User created the team (can always update members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = auth.uid())
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 DROP POLICY IF EXISTS team_members_delete ON public.team_members;
 CREATE POLICY team_members_delete ON public.team_members FOR DELETE USING (
-  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND status = 'active')
+  -- User created the team (can always remove members)
+  team_id IN (SELECT id FROM public.teams WHERE created_by = auth.uid())
+  OR
+  -- User is an existing owner member
+  team_id IN (SELECT team_id FROM public.team_members WHERE user_id = auth.uid() AND role = 'owner' AND COALESCE(status, 'active') = 'active')
 );
 
 -- Content tables generic policies: viewers read; editors/owners write

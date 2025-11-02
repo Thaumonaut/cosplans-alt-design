@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui';
-  import { ArrowRight, Star, Users, Calendar, Zap } from 'lucide-svelte';
+  import { ArrowRight, Users, Calendar, Zap } from 'lucide-svelte';
+  import Logo from '$lib/components/Logo.svelte';
 </script>
 
 <svelte:head>
@@ -12,12 +13,10 @@
 <div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
   <!-- Navigation -->
   <nav class="flex items-center justify-between p-6">
-    <div class="flex items-center gap-2">
-      <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Star class="size-5" />
-      </div>
+    <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <Logo size="md" />
       <span class="text-xl font-bold">Cosplans</span>
-    </div>
+    </a>
     <div class="flex items-center gap-4">
       <Button variant="ghost" href="/dashboard">Sign In</Button>
       <Button href="/dashboard">Get Started</Button>
@@ -116,9 +115,7 @@
     <div class="container mx-auto px-6">
       <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
         <div class="flex items-center gap-2">
-          <div class="flex size-6 items-center justify-center rounded bg-primary text-primary-foreground">
-            <Star class="size-4" />
-          </div>
+          <Logo size="sm" />
           <span class="font-semibold">Cosplans</span>
         </div>
         <p class="text-sm text-muted-foreground">

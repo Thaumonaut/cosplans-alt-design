@@ -124,7 +124,7 @@
           <button
             type="button"
             onclick={() => handleAddTag(searchValue)}
-            class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-interactive-hover hover:text-foreground"
           >
             <Plus class="size-3.5" />
             <span>Create "<span class="font-medium">{searchValue}</span>"</span>
@@ -139,7 +139,7 @@
             <button
               type="button"
               onclick={() => handleAddTag(tag)}
-              class="flex w-full items-center rounded-sm px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              class="flex w-full items-center rounded-sm px-3 py-2 text-sm transition-colors hover:bg-interactive-hover hover:text-foreground"
             >
               {tag}
             </button>

@@ -44,6 +44,7 @@
         src={tool.images[0]}
         alt={tool.name}
         class="h-full w-full object-cover transition-transform group-hover:scale-105"
+        loading="lazy"
       />
     </div>
   {:else}

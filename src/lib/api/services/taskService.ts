@@ -27,15 +27,25 @@ export const taskService = {
 
   /**
    * List tasks for a project (optionally filter by resource)
+   * If projectId is not provided, lists all standalone tasks
    */
-  async list(filters: { projectId: string; resourceId?: string }): Promise<Task[]> {
+  async list(filters?: { projectId?: string | null; resourceId?: string }): Promise<Task[]> {
     let query = supabase
       .from('tasks')
       .select('*')
-      .eq('project_id', filters.projectId)
       .order('created_at', { ascending: false })
 
-    if (filters.resourceId !== undefined) {
+    if (filters?.projectId !== undefined) {
+      if (filters.projectId === null) {
+        // List standalone tasks (no project)
+        query = query.is('project_id', null)
+      } else {
+        // List tasks for a specific project
+        query = query.eq('project_id', filters.projectId)
+      }
+    }
+
+    if (filters?.resourceId !== undefined) {
       // If resourceId is provided (including null), filter by it
       query = filters.resourceId === null
         ? query.is('resource_id', null) // Project-level tasks
@@ -72,12 +82,15 @@ export const taskService = {
   async create(task: TaskCreate): Promise<Task> {
     // Map camelCase to snake_case for database
     const insertData: Record<string, unknown> = {
-      project_id: task.projectId,
       title: task.title,
       description: task.description || null,
       priority: task.priority || 'medium',
     }
 
+    // Only include project_id if provided
+    if (task.projectId !== undefined && task.projectId !== null) {
+      insertData.project_id = task.projectId
+    }
     // Only include optional fields if they have values
     if (task.resourceId !== undefined && task.resourceId !== null) {
       insertData.resource_id = task.resourceId
@@ -125,7 +138,7 @@ export const taskService = {
 
     const { data, error } = await supabase
       .from('tasks')
-      .update(updateData as Record<string, unknown>)
+      .update(updateData as any)
       .eq('id', id)
       .select()
       .single()
@@ -172,8 +185,8 @@ export const taskService = {
 function mapTaskFromDb(row: any): Task {
   return {
     id: row.id,
-    projectId: row.project_id,
-    resourceId: row.resource_id ?? undefined,
+    projectId: row.project_id ?? null,
+    resourceId: row.resource_id ?? null,
     title: row.title,
     description: row.description ?? undefined,
     completed: row.completed ?? false,

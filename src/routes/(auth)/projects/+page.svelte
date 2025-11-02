@@ -10,6 +10,7 @@
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import ProjectDetail from '$lib/components/projects/ProjectDetail.svelte'
   import ResourceDetail from '$lib/components/resources/ResourceDetail.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import { get } from 'svelte/store'
 
@@ -205,32 +206,24 @@
 
   <!-- Projects Grid -->
   {#if $projects.loading}
-    <div class="flex items-center justify-center py-12">
-      <p class="text-sm text-muted-foreground">Loading projects...</p>
-    </div>
+    <LoadingState loading={true} />
   {:else if $projects.error}
-    <div class="flex items-center justify-center py-12">
-      <p class="text-sm text-red-600">{$projects.error}</p>
-    </div>
-  {:else if filtered.length === 0 && searchQuery}
-    <div class="flex flex-col items-center justify-center py-12">
-      <p class="text-sm text-muted-foreground">No projects match your search.</p>
-      <p class="mt-2 text-xs text-muted-foreground">
-        Try adjusting your search terms or filters.
-      </p>
-    </div>
+    <LoadingState error={$projects.error} onRetry={() => projects.load()} />
   {:else if filtered.length === 0}
-    <div class="flex flex-col items-center justify-center py-12">
-      <p class="text-sm text-muted-foreground">
-        {statusFilter === 'all'
-          ? 'No projects yet.'
-          : `No ${statusFilter.replace('-', ' ')} projects.`}
-      </p>
-      <Button onclick={handleNewProject} variant="outline" size="sm" class="mt-4">
-        <Plus class="mr-2 size-4" />
-        Create your first project
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyMessage={
+        searchQuery
+          ? 'No projects match your search. Try adjusting your search terms or filters.'
+          : statusFilter === 'all'
+            ? 'Get started by creating your first project. Track your cosplay progress from planning to completion.'
+            : `No ${statusFilter.replace('-', ' ')} projects.`
+      }
+      emptyAction={{
+        label: 'Create your first project',
+        onclick: handleNewProject
+      }}
+    />
   {:else}
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {#each filtered as project (project.id)}

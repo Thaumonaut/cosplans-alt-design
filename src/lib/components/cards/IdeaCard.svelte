@@ -2,6 +2,7 @@
   import { Card, Button } from 'flowbite-svelte'
   import { Badge } from '$lib/components/ui'
   import { Calendar, DollarSign, Clock, ArrowRight, Star } from 'lucide-svelte'
+  import HighlightedText from '$lib/components/base/HighlightedText.svelte'
   import type { Idea } from '$lib/types/domain/idea'
   import { formatCurrencyFromCents } from '$lib/utils'
 
@@ -9,9 +10,10 @@
     idea: Idea
     variant?: 'grid' | 'list'
     onclick?: () => void
+    searchQuery?: string // Optional search query for highlighting
   }
 
-  let { idea, variant = 'grid', onclick }: Props = $props()
+  let { idea, variant = 'grid', onclick, searchQuery = '' }: Props = $props()
 
   const character = $derived(idea.character)
   const series = $derived(idea.series)
@@ -87,6 +89,7 @@
             src={image} 
             alt={character} 
             class="size-full object-cover"
+            loading="lazy"
             onload={() => {
               imageLoaded = true
               imageError = false
@@ -116,8 +119,20 @@
         <div>
           <div class="mb-2 flex items-start justify-between">
             <div>
-              <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">{character}</h3>
-              <p class="text-sm text-[var(--theme-muted-foreground)]">{series}</p>
+              <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">
+                {#if searchQuery}
+                  <HighlightedText text={character} query={searchQuery} />
+                {:else}
+                  {character}
+                {/if}
+              </h3>
+              <p class="text-sm text-[var(--theme-muted-foreground)]">
+                {#if searchQuery}
+                  <HighlightedText text={series || ''} query={searchQuery} />
+                {:else}
+                  {series}
+                {/if}
+              </p>
             </div>
             <Badge variant="default" class={difficultyBadgeClass(difficulty)} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
           </div>
@@ -187,6 +202,7 @@
           src={image}
           alt={character}
           class="size-full object-cover transition-transform group-hover:scale-105"
+          loading="lazy"
           onload={() => {
             imageLoaded = true
             imageError = false
@@ -235,8 +251,20 @@
     <div class="p-4 bg-[var(--theme-card-bg)]">
       <div class="space-y-3">
         <div>
-          <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">{character}</h3>
-          <p class="text-sm text-[var(--theme-muted-foreground)]">{series}</p>
+          <h3 class="text-balance font-semibold leading-tight text-[var(--theme-foreground)]">
+            {#if searchQuery}
+              <HighlightedText text={character} query={searchQuery} />
+            {:else}
+              {character}
+            {/if}
+          </h3>
+          <p class="text-sm text-[var(--theme-muted-foreground)]">
+            {#if searchQuery}
+              <HighlightedText text={series || ''} query={searchQuery} />
+            {:else}
+              {series}
+            {/if}
+          </p>
         </div>
 
         <p class="line-clamp-2 text-sm text-[var(--theme-muted-foreground)]">{notes}</p>

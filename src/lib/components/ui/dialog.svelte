@@ -43,7 +43,7 @@
   on:close={() => handleOpenChange(false)}
 >
   <div class="flex flex-col gap-4">
-    {#if title || showCloseButton}
+    <!-- {#if title || showCloseButton}
       <div class="flex items-center justify-between">
         {#if title}
           <h3 class="text-lg font-semibold leading-none">{title}</h3>
@@ -60,7 +60,7 @@
           </Button>
         {/if}
       </div>
-    {/if}
+    {/if} -->
 
     {#if description}
       <p class="text-sm text-muted-foreground">{description}</p>

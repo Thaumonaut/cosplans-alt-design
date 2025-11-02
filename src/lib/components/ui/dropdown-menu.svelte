@@ -50,7 +50,7 @@
   let isOpen = $state(false);
   let dropdownElement: HTMLDivElement;
   let triggerElement = $state<HTMLDivElement | undefined>(undefined);
-  let dropdownPosition = $state({ top: 0, left: 0, right: 0, bottom: 0, width: 0 });
+  let dropdownPosition = $state<{ top: number | null, left: number | null, right: number | null, bottom: number | null, width: number }>({ top: null, left: null, right: null, bottom: null, width: 0 });
   let portalContainer = $state<HTMLDivElement | undefined>(undefined);
   
   // Calculate dropdown width from trigger element
@@ -63,42 +63,45 @@
     const rect = triggerElement.getBoundingClientRect();
     const spacing = 6; // 1.5rem = 6px
     
-    let top = 0;
-    let left = 0;
-    let right = 0;
-    let bottom = 0;
+    let top: number | null = null;
+    let left: number | null = null;
+    let right: number | null = null;
+    let bottom: number | null = null;
     
     // Vertical placement
     if (placement.includes('bottom')) {
       top = rect.bottom + spacing;
+      bottom = null;
     } else if (placement.includes('top')) {
       bottom = window.innerHeight - rect.top + spacing;
+      top = null;
     } else {
       // Default to bottom
       top = rect.bottom + spacing;
+      bottom = null;
     }
     
     // Horizontal placement
     if (placement.includes('end') || placement === 'bottom-end' || placement === 'top-end') {
       right = window.innerWidth - rect.right;
-      left = 0;
+      left = null;
     } else if (placement.includes('start') || placement === 'bottom-start' || placement === 'top-start') {
       left = rect.left;
-      right = 0;
+      right = null;
     } else if (placement.includes('left')) {
       right = window.innerWidth - rect.left + spacing;
-      left = 0;
+      left = null;
       top = rect.top;
-      bottom = 0;
+      bottom = null;
     } else if (placement.includes('right')) {
       left = rect.right + spacing;
-      right = 0;
+      right = null;
       top = rect.top;
-      bottom = 0;
+      bottom = null;
     } else {
       // Default: bottom-start
       left = rect.left;
-      right = 0;
+      right = null;
     }
     
     dropdownPosition = { top, left, right, bottom, width: dropdownWidth ?? 280 };
@@ -248,15 +251,15 @@
     <div
       bind:this={dropdownMenuElement}
       class={cn(
-        "fixed backdrop-blur-md border shadow-xl p-1 list-none pointer-events-auto",
+        "fixed backdrop-blur-md border shadow-xl py-5 px-2 list-none pointer-events-auto",
         "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
         className,
       )}
       style={`
-        top: ${dropdownPosition.top}px;
-        left: ${dropdownPosition.left ? `${dropdownPosition.left}px` : 'auto'};
-        right: ${dropdownPosition.right ? `${dropdownPosition.right}px` : 'auto'};
-        bottom: ${dropdownPosition.bottom ? `${dropdownPosition.bottom}px` : 'auto'};
+        ${dropdownPosition.top !== null ? `top: ${dropdownPosition.top}px;` : ''}
+        ${dropdownPosition.left !== null ? `left: ${dropdownPosition.left}px;` : ''}
+        ${dropdownPosition.right !== null ? `right: ${dropdownPosition.right}px;` : ''}
+        ${dropdownPosition.bottom !== null ? `bottom: ${dropdownPosition.bottom}px;` : ''}
         min-width: 280px;
         z-index: 99999;
         ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}

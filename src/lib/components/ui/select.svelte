@@ -76,7 +76,7 @@
     }
   })
 
-  const selectedOption = $derived(options.find(opt => opt.value === value))
+  const selectedOption = $derived(options.find(opt => opt.value === value) || null)
 </script>
 
 <div
@@ -116,10 +116,10 @@
             type="button"
             data-slot="select-item"
             class={cn(
-              "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-3 rounded-md py-2.5 pr-10 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+              "hover:bg-interactive-hover focus:bg-interactive-hover focus:text-foreground relative flex w-full cursor-default items-center gap-3 rounded-md py-2.5 pr-10 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
               'list-none', // Remove list decorations
               option.disabled && 'pointer-events-none opacity-50',
-              value === option.value && 'bg-accent text-accent-foreground'
+              value === option.value && 'bg-interactive-active text-foreground'
             )}
             onclick={() => selectOption(option)}
             disabled={option.disabled}

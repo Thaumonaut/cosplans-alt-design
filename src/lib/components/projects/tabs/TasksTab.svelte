@@ -10,6 +10,8 @@
   import { get } from 'svelte/store'
   import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import { toast } from '$lib/stores/toast'
+  import { supabase } from '$lib/supabase'
   import type { Task, TaskCreate } from '$lib/types/domain/task'
   import type { TeamMember } from '$lib/api/services/teamService'
 
@@ -32,10 +34,20 @@
   let newTaskAssignedTo = $state<string | undefined>(undefined)
   let creating = $state(false)
   let teamMembers = $state<TeamMember[]>([])
+  let currentUserId = $state<string | null>(null)
 
   onMount(async () => {
-    await Promise.all([loadTasks(), loadTeamMembers()])
+    await Promise.all([loadTasks(), loadTeamMembers(), loadCurrentUser()])
   })
+
+  async function loadCurrentUser() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      currentUserId = user?.id || null
+    } catch (err) {
+      console.error('Failed to load current user:', err)
+    }
+  }
 
   async function loadTeamMembers() {
     const team = get(currentTeam)
@@ -61,11 +73,36 @@
 
   async function toggleTask(task: Task) {
     try {
+      const previousAssignedTo = task.assignedTo
       await taskService.update(task.id, { completed: !task.completed })
+      const updatedTask = await taskService.get(task.id)
       await loadTasks()
+      
+      // Check if assignment changed
+      if (updatedTask && updatedTask.assignedTo && updatedTask.assignedTo !== previousAssignedTo) {
+        notifyTaskAssignment(updatedTask, previousAssignedTo)
+      }
+      
       onTaskChange?.()
     } catch (err: any) {
       console.error('Failed to toggle task:', err)
+    }
+  }
+
+  function notifyTaskAssignment(task: Task, previousAssignedTo?: string | null) {
+    if (!task.assignedTo) return
+    
+    // Notify if assigned to current user
+    if (currentUserId && task.assignedTo === currentUserId) {
+      toast.info('Task Assigned', `You've been assigned to: ${task.title}`)
+    } else if (task.assignedTo) {
+      const assignedMember = teamMembers.find((m) => m.userId === task.assignedTo)
+      const assigneeName = assignedMember?.user?.name || assignedMember?.user?.email || 'a team member'
+      if (previousAssignedTo) {
+        toast.info('Task Reassigned', `Task "${task.title}" has been reassigned to ${assigneeName}`)
+      } else {
+        toast.success('Task Assigned', `Task "${task.title}" has been assigned to ${assigneeName}`)
+      }
     }
   }
   
@@ -91,7 +128,9 @@
         assignedTo: newTaskAssignedTo,
       }
 
-      await taskService.create(taskData)
+      const createdTask = await taskService.create(taskData)
+      notifyTaskAssignment(createdTask)
+      
       newTaskTitle = ''
       newTaskDescription = ''
       newTaskPriority = 'medium'

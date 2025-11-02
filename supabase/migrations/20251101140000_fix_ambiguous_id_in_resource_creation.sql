@@ -43,7 +43,7 @@ BEGIN
   -- Check if user is team owner first (with explicit table alias)
   SELECT EXISTS (
     SELECT 1 FROM public.teams t
-    WHERE t.id = p_team_id AND t.owner_id = current_user_id
+    WHERE t.id = p_team_id AND t.created_by = current_user_id
   ) INTO has_permission;
   
   -- If not owner, check if user has owner/editor role in team_members

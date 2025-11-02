@@ -53,6 +53,7 @@
         src={project.coverImage}
         alt={`${project.character} from ${project.series}`}
         class="h-full w-full object-cover transition-transform group-hover:scale-105"
+        loading="lazy"
       />
     </div>
   {:else}

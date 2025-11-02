@@ -125,4 +125,26 @@
   .text-pretty {
     text-wrap: pretty;
   }
+  
+  /* Logo theme colors - make logo use theme primary color */
+  .logo-theme {
+    color: var(--theme-primary, hsl(var(--primary)));
+    filter: none;
+  }
+  
+  /* For SVG logos, ensure they use currentColor */
+  .logo-theme svg,
+  .logo-theme img[src$=".svg"] {
+    color: inherit;
+  }
+  
+  /* Alternative: Use filter to colorize logo to match theme */
+  .logo-theme-filter {
+    filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+  }
+  
+  /* Dark mode logo adjustment */
+  .dark .logo-theme {
+    color: var(--theme-primary, hsl(var(--primary)));
+  }
 }

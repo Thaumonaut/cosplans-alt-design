@@ -6,6 +6,7 @@
   import { Button, Input } from '$lib/components/ui'
   import { Plus, Search, Wrench } from 'lucide-svelte'
   import ToolCard from '$lib/components/cards/ToolCard.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import type { Tool, ToolCategory } from '$lib/types/domain/tool'
 
@@ -131,28 +132,21 @@
 
   <!-- Tools Grid -->
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-        <p class="text-sm text-muted-foreground">Loading tools...</p>
-      </div>
-    </div>
+    <LoadingState loading={true} />
   {:else if filtered.length === 0}
-    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
-      <Wrench class="mb-4 size-12 text-muted-foreground opacity-50" />
-      <h3 class="mb-2 text-lg font-semibold">No tools found</h3>
-      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
-        {#if searchQuery.trim() || categoryFilter !== 'all'}
-          Try adjusting your search or filters to find what you're looking for.
-        {:else}
-          Get started by creating your first tool. Track crafting tools and photoshoot equipment.
-        {/if}
-      </p>
-      <Button onclick={handleNewTool}>
-        <Plus class="mr-2 size-4" />
-        Create First Tool
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyIcon={Wrench}
+      emptyMessage={
+        searchQuery.trim() || categoryFilter !== 'all'
+          ? 'Try adjusting your search or filters to find what you're looking for.'
+          : 'Get started by creating your first tool. Track crafting tools and photoshoot equipment.'
+      }
+      emptyAction={{
+        label: 'Create First Tool',
+        onclick: handleNewTool
+      }}
+    />
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {#each filtered as tool (tool.id)}

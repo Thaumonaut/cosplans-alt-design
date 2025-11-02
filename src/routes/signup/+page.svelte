@@ -1,7 +1,9 @@
 <script lang="ts">
   import { authService } from '$lib/auth/auth-service';
+  import { supabase } from '$lib/supabase';
   import OAuthButtons from '$lib/components/auth/OAuthButtons.svelte';
   import { Eye, EyeOff } from 'lucide-svelte';
+  import Logo from '$lib/components/Logo.svelte';
 
   let isLoading = $state(false);
   let showPassword = $state(false);
@@ -77,6 +79,25 @@
       if (result.error) {
         error = getAuthErrorMessage(result.error);
       } else {
+        // Setup user profile and personal team automatically after successful signup
+        if (result.user) {
+          try {
+            // Call database function to create user profile and personal team
+            // The function defaults to auth.uid(), but we pass explicitly to be sure
+            const { data, error: setupError } = await (supabase.rpc as any)('setup_new_user', {
+              p_user_id: result.user.id
+            });
+            
+            if (setupError) {
+              console.warn('Failed to setup user profile and team on signup:', setupError);
+              // Don't fail signup if setup fails - user can still verify email and login
+            }
+          } catch (setupError) {
+            // Log but don't fail signup if setup fails
+            console.warn('Failed to setup user on signup:', setupError);
+          }
+        }
+        
         success = 'Account created successfully! Please check your email for verification.';
         // Clear form
         email = '';
@@ -112,7 +133,10 @@
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full space-y-8">
-    <div>
+    <div class="text-center">
+      <a href="/" class="inline-flex items-center gap-2 justify-center mb-6 hover:opacity-80 transition-opacity">
+        <Logo size="xl" />
+      </a>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
         Create your account
       </h2>

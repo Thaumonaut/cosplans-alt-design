@@ -9,7 +9,7 @@
 DROP POLICY IF EXISTS resources_select ON public.resources;
 CREATE POLICY resources_select ON public.resources FOR SELECT USING (
   -- User is team owner (always allowed, even if not in team_members)
-  team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
   OR
   -- User is team member (check status if column exists, otherwise just membership)
   -- Note: If status column doesn't exist, the query will still work because we check both conditions
@@ -32,7 +32,7 @@ CREATE POLICY resources_select ON public.resources FOR SELECT USING (
 DROP POLICY IF EXISTS resources_insert ON public.resources;
 CREATE POLICY resources_insert ON public.resources FOR INSERT WITH CHECK (
   -- User is team owner (always allowed)
-  team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
   OR
   -- User is owner/editor member
   EXISTS (
@@ -48,7 +48,7 @@ CREATE POLICY resources_insert ON public.resources FOR INSERT WITH CHECK (
 DROP POLICY IF EXISTS resources_update ON public.resources;
 CREATE POLICY resources_update ON public.resources FOR UPDATE USING (
   -- User is team owner (always allowed)
-  team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
   OR
   -- User is owner/editor member
   EXISTS (
@@ -64,7 +64,7 @@ CREATE POLICY resources_update ON public.resources FOR UPDATE USING (
 DROP POLICY IF EXISTS resources_delete ON public.resources;
 CREATE POLICY resources_delete ON public.resources FOR DELETE USING (
   -- User is team owner (always allowed)
-  team_id IN (SELECT id FROM public.teams WHERE owner_id = (select auth.uid()))
+  team_id IN (SELECT id FROM public.teams WHERE created_by = (select auth.uid()))
   OR
   -- User is owner/editor member
   EXISTS (

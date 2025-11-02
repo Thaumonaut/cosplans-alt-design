@@ -40,23 +40,38 @@
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i]
         
-        // Process the image (compress/resize)
-        const processed = await processImage(file)
-        
-        // Upload the display version to Supabase Storage with team ID
-        const result = await uploadImageToStorage(processed.display, folder, team.id)
-        
-        // Use the public URL from Supabase Storage
-        newUrls.push(result.url)
-        
-        // Update progress
-        uploadProgress = ((i + 1) / totalFiles) * 100
+        try {
+          // Process the image (compress/resize) - validates size and type
+          const processed = await processImage(file)
+          
+          // Upload the display version to Supabase Storage with team ID
+          const result = await uploadImageToStorage(processed.display, folder, team.id)
+          
+          // Use the public URL from Supabase Storage
+          newUrls.push(result.url)
+          
+          // Update progress
+          uploadProgress = ((i + 1) / totalFiles) * 100
+        } catch (err: any) {
+          // Re-throw with clearer error message for image validation errors
+          if (err.name === 'ImageSizeError' || err.message?.includes('10MB')) {
+            throw new Error(`Image "${file.name}": ${err.message}`)
+          }
+          throw err
+        }
       }
 
       const updated = multiple ? [...images, ...newUrls] : newUrls
       await onSave(updated)
     } catch (err: any) {
-      error = err?.message || 'Upload failed'
+      // Show user-friendly error messages
+      if (err.message) {
+        error = err.message
+      } else if (err.name === 'ImageSizeError') {
+        error = err.message || 'Image size exceeds the maximum allowed size of 10MB'
+      } else {
+        error = 'Upload failed. Please try again.'
+      }
       console.error('Upload error:', err)
     } finally {
       isUploading = false
@@ -127,7 +142,12 @@
 {#if images.length}
   <div class="grid grid-cols-3 gap-2 mt-2">
     {#each images as url}
-      <img src={url} alt="Uploaded" class="w-full h-24 object-cover rounded" />
+      <img 
+        src={url} 
+        alt="Uploaded" 
+        class="w-full h-24 object-cover rounded"
+        loading="lazy"
+      />
     {/each}
   </div>
 {/if}

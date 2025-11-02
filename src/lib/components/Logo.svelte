@@ -1,0 +1,38 @@
+<script lang="ts">
+  interface LogoProps {
+    class?: string;
+    size?: 'sm' | 'md' | 'lg' | 'xl';
+  }
+  
+  let { class: className = '', size = 'md' }: LogoProps = $props();
+  
+  const sizeClasses = {
+    sm: 'h-6',
+    md: 'h-8',
+    lg: 'h-10',
+    xl: 'h-12'
+  };
+  
+  const sizeClass = $derived(sizeClasses[size]);
+</script>
+
+<svg 
+  width="100%" 
+  height="100%" 
+  viewBox="0 0 1080 1080" 
+  version="1.1" 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:xlink="http://www.w3.org/1999/xlink" 
+  class="logo-theme {sizeClass} w-auto {className}"
+  style="color: var(--theme-primary, hsl(var(--primary)));"
+>
+  <g id="Artboard1" transform="matrix(1,0,0,1,-233.427,0)">
+    <rect x="233.427" y="0" width="1080" height="1080" style="fill:none;"/>
+    <g transform="matrix(1.88334,0,0,1.88334,-687.717,-447.428)">
+      <path d="M760.976,286.437L760.976,762.153C629.61,762.153 523.117,655.661 523.117,524.295C523.117,392.929 629.61,286.437 760.976,286.437Z" style="fill:currentColor;"/>
+    </g>
+    <g transform="matrix(1.15322e-16,1.88334,-1.88334,1.15322e-16,1788.82,-893.179)">
+      <path d="M760.976,286.437L760.976,524.295L523.117,524.295C523.117,392.929 629.61,286.437 760.976,286.437Z" style="fill:currentColor;"/>
+    </g>
+  </g>
+</svg>
