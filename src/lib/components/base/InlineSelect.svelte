@@ -5,13 +5,23 @@
 	 * Provides inline dropdown editing for "living document" UX.
 	 * Click to edit, save on selection, cancel on Escape.
 	 */
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
-	export let value: string;
-	export let options: Array<{ value: string; label: string; color?: string }>;
-	export let placeholder: string = 'Select...';
-	export let disabled: boolean = false;
-	export let variant: 'default' | 'priority' | 'status' = 'default';
+	interface Props {
+		value: string;
+		options: Array<{ value: string; label: string; color?: string }>;
+		placeholder?: string;
+		disabled?: boolean;
+		variant?: 'default' | 'priority' | 'status';
+	}
+
+	let {
+		value = $bindable(),
+		options,
+		placeholder = 'Select...',
+		disabled = false,
+		variant = 'default'
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		change: string;

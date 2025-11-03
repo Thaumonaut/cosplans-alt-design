@@ -8,8 +8,15 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { TaskViewMode } from '$lib/types/tasks';
 
-	export let value: TaskViewMode;
-	export let disabled: boolean = false;
+	interface Props {
+		value: TaskViewMode;
+		disabled?: boolean;
+	}
+
+	let {
+		value = $bindable(),
+		disabled = false
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		change: TaskViewMode;

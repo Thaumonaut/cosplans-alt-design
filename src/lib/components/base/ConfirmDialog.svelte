@@ -5,15 +5,27 @@
 	 * Modal dialog for confirming destructive actions.
 	 * Keyboard accessible with Escape to cancel, Enter to confirm.
 	 */
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
-	export let open: boolean = false;
-	export let title: string = 'Confirm Action';
-	export let message: string;
-	export let confirmText: string = 'Confirm';
-	export let cancelText: string = 'Cancel';
-	export let variant: 'danger' | 'warning' | 'info' = 'danger';
-	export let loading: boolean = false;
+	interface Props {
+		open?: boolean;
+		title?: string;
+		message: string;
+		confirmText?: string;
+		cancelText?: string;
+		variant?: 'danger' | 'warning' | 'info';
+		loading?: boolean;
+	}
+
+	let {
+		open = $bindable(false),
+		title = 'Confirm Action',
+		message,
+		confirmText = 'Confirm',
+		cancelText = 'Cancel',
+		variant = 'danger',
+		loading = false
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		confirm: void;

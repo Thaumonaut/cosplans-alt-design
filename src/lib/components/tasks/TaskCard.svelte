@@ -12,36 +12,54 @@
 	import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte';
 	import type { DragData } from '$lib/utils/drag-drop';
 
-	// Task data (simplified for card display)
-	export let id: string;
-	export let title: string;
-	export let status_id: string;
-	export let priority: 'low' | 'medium' | 'high' = 'medium';
-	export let due_date: string | null = null;
-	export let assigned_to: string | null = null;
-	export let labels: Array<{ id: string; name: string; color: string }> = [];
-	export let subtask_completion_percentage: number | undefined = undefined;
-	export let total_subtasks: number = 0;
-	export let completed_subtasks: number = 0;
-	
-	// Options for inline editing
-	export let statusOptions: Array<{ value: string; label: string; color?: string }> = [];
-	export let priorityOptions = [
-		{ value: 'low', label: 'Low' },
-		{ value: 'medium', label: 'Medium' },
-		{ value: 'high', label: 'High' },
-	];
-	
-	// Assignee info
-	export let assignee: { id: string; email: string; first_name?: string; last_name?: string; avatar_url?: string } | null = null;
-	
-	// View mode
-	export let viewMode: 'list' | 'board' = 'list';
-	
-	// Interaction flags
-	export let draggable: boolean = true;
-	export let selectable: boolean = false;
-	export let selected: boolean = false;
+	interface Props {
+		// Task data (simplified for card display)
+		id: string;
+		title: string;
+		status_id: string;
+		priority?: 'low' | 'medium' | 'high';
+		due_date?: string | null;
+		assigned_to?: string | null;
+		labels?: Array<{ id: string; name: string; color: string }>;
+		subtask_completion_percentage?: number;
+		total_subtasks?: number;
+		completed_subtasks?: number;
+		// Options for inline editing
+		statusOptions?: Array<{ value: string; label: string; color?: string }>;
+		priorityOptions?: Array<{ value: string; label: string }>;
+		// Assignee info
+		assignee?: { id: string; email: string; first_name?: string; last_name?: string; avatar_url?: string } | null;
+		// View mode
+		viewMode?: 'list' | 'board';
+		// Interaction flags
+		draggable?: boolean;
+		selectable?: boolean;
+		selected?: boolean;
+	}
+
+	let {
+		id,
+		title,
+		status_id,
+		priority = 'medium',
+		due_date = null,
+		assigned_to = null,
+		labels = [],
+		subtask_completion_percentage = undefined,
+		total_subtasks = 0,
+		completed_subtasks = 0,
+		statusOptions = [],
+		priorityOptions = [
+			{ value: 'low', label: 'Low' },
+			{ value: 'medium', label: 'Medium' },
+			{ value: 'high', label: 'High' },
+		],
+		assignee = null,
+		viewMode = 'list',
+		draggable: isDraggable = true,
+		selectable = false,
+		selected = $bindable(false)
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		click: { id: string };
@@ -104,7 +122,7 @@
 	tabindex="0"
 	on:click={handleClick}
 	on:keydown={(e) => e.key === 'Enter' && handleClick(e as unknown as MouseEvent)}
-	use:draggable={draggable ? dragData : undefined}
+	use:draggable={isDraggable ? dragData : undefined}
 >
 	<!-- Header Row -->
 	<div class="flex items-start gap-3 mb-2">

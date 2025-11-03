@@ -7,13 +7,25 @@
 	 */
 	import { createEventDispatcher, onMount } from 'svelte';
 
-	export let message: string;
-	export let title: string = 'Error';
-	export let type: 'error' | 'success' | 'warning' | 'info' = 'error';
-	export let persistent: boolean = false;
-	export let showRetry: boolean = false;
-	export let duration: number = 5000;
-	export let visible: boolean = true;
+	interface Props {
+		message: string;
+		title?: string;
+		type?: 'error' | 'success' | 'warning' | 'info';
+		persistent?: boolean;
+		showRetry?: boolean;
+		duration?: number;
+		visible?: boolean;
+	}
+
+	let {
+		message,
+		title = 'Error',
+		type = 'error',
+		persistent = false,
+		showRetry = false,
+		duration = 5000,
+		visible = $bindable(true)
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		dismiss: void;

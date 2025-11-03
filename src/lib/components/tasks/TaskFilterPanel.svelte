@@ -8,14 +8,24 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { TaskFilters } from '$lib/types/tasks';
 
-	export let filters: TaskFilters = {};
-	export let open: boolean = false;
-	
-	// Options (passed from parent)
-	export let statusOptions: Array<{ value: string; label: string; color?: string }> = [];
-	export let projectOptions: Array<{ value: string; label: string }> = [];
-	export let assigneeOptions: Array<{ value: string; label: string; avatar?: string }> = [];
-	export let labelOptions: Array<{ value: string; label: string; color: string }> = [];
+	interface Props {
+		filters?: TaskFilters;
+		open?: boolean;
+		// Options (passed from parent)
+		statusOptions?: Array<{ value: string; label: string; color?: string }>;
+		projectOptions?: Array<{ value: string; label: string }>;
+		assigneeOptions?: Array<{ value: string; label: string; avatar?: string }>;
+		labelOptions?: Array<{ value: string; label: string; color: string }>;
+	}
+
+	let {
+		filters = {},
+		open = $bindable(false),
+		statusOptions = [],
+		projectOptions = [],
+		assigneeOptions = [],
+		labelOptions = []
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		change: TaskFilters;

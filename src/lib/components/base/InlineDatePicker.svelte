@@ -7,12 +7,23 @@
 	 */
 	import { createEventDispatcher } from 'svelte';
 
-	export let value: string | null = null; // ISO date string
-	export let placeholder: string = 'No date';
-	export let disabled: boolean = false;
-	export let showTime: boolean = false;
-	export let minDate: string | undefined = undefined;
-	export let maxDate: string | undefined = undefined;
+	interface Props {
+		value?: string | null;
+		placeholder?: string;
+		disabled?: boolean;
+		showTime?: boolean;
+		minDate?: string;
+		maxDate?: string;
+	}
+
+	let {
+		value = $bindable(null),
+		placeholder = 'No date',
+		disabled = false,
+		showTime = false,
+		minDate,
+		maxDate
+	}: Props = $props();
 	
 	const dispatch = createEventDispatcher<{
 		change: string | null;
