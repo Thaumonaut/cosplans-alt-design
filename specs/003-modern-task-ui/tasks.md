@@ -104,12 +104,12 @@
 ### Implementation for User Story 1
 
 - [ ] T042 [P] [US1] Create TaskListView component in src/lib/components/tasks/TaskListView.svelte (renders tasks as list with virtual scrolling)
-- [ ] T043 [P] [US1] Create TaskCard component in src/lib/components/tasks/TaskCard.svelte (displays task summary in list/board)
+- [X] T043 [P] [US1] Create TaskCard component in src/lib/components/tasks/TaskCard.svelte (displays task summary in list/board)
 - [ ] T044 [P] [US1] Create TaskBoardView component in src/lib/components/tasks/TaskBoardView.svelte (kanban columns by stage)
 - [ ] T045 [P] [US1] Create TaskCalendarView component in src/lib/components/tasks/TaskCalendarView.svelte (calendar grid with tasks)
-- [ ] T046 [US1] Create ViewModeSelector component in src/lib/components/tasks/ViewModeSelector.svelte (toggle between views)
-- [ ] T047 [US1] Create TaskFilterPanel component in src/lib/components/tasks/TaskFilterPanel.svelte (filter UI)
-- [ ] T048 [US1] Implement view mode state management in src/lib/stores/task-view-store.ts (Svelte store for view state)
+- [X] T046 [US1] Create ViewModeSelector component in src/lib/components/tasks/TaskViewModeSelector.svelte (toggle between views)
+- [X] T047 [US1] Create TaskFilterPanel component in src/lib/components/tasks/TaskFilterPanel.svelte (filter UI)
+- [X] T048 [US1] Implement view mode state management in src/lib/stores/task-view-store.ts (Svelte store for view state)
 - [ ] T049 [US1] Implement filter logic in src/lib/services/task-filter-service.ts (client-side filtering)
 - [ ] T050 [US1] Create main Tasks page route in src/routes/(app)/tasks/+page.svelte
 - [ ] T051 [US1] Load task data in src/routes/(app)/tasks/+page.ts (server-side data loading)
