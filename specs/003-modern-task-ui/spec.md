@@ -26,6 +26,11 @@
 - Q: What permissions model should apply to custom field definitions and values? → A: Team-level permissions only - owner/admin can manage field definitions, all members can view/edit field values on tasks
 - Q: Should custom fields support export/import between teams? → A: Full export/import - field definitions and values can be exported from one team and imported to another
 - Q: How should currency custom fields handle different currencies and symbols? → A: Store currency code separately (USD, EUR, GBP), display with locale-appropriate symbol
+- Q: Should task breakdown assistance use AI/ML or rule-based pattern matching? → A: Rule-based pattern matching with stored patterns for MVP, with option for AI/ML (OpenAI/Claude API) post-MVP when more AI features are added
+- Q: How should "evening prompt" and inactivity reminders be delivered? → A: Daily prompts shown client-side when user opens app (if no tasks completed today); longer-term inactivity (3-7 days without activity) triggers server-side email reminders
+- Q: How should celebration animations be implemented? → A: CSS animations + lightweight confetti library (canvas-confetti ~3KB), with user preference to disable animations for those who prefer reduced motion
+- Q: How should task completion streaks handle missed days? → A: Forgiving approach - streak "pauses" for 1 grace day (shows "🔥 5 day streak (paused)"), breaks after 2 consecutive days with no completed tasks
+- Q: What algorithm should power task breakdown pattern matching? → A: Keyword matching with stored successful patterns - detect keywords in task title, query task_breakdown_patterns table for matches, rank by success rate
 
 ### Post-MVP Features (Noted for Future Specs)
 
@@ -47,6 +52,7 @@ The following features were discussed and are valuable but deferred to post-MVP 
 - **Body Doubling**: "Working Now" status showing team members currently working on tasks
 - **Energy Level Matching**: Tag tasks by energy required, match to user's current energy
 - **Smart Reminders**: Customizable reminders beyond due dates (e.g., "Remind me 3 days before")
+- **AI-Powered Task Breakdown**: Upgrade from rule-based to LLM-based (OpenAI/Claude) for more intelligent subtask suggestions
 
 **Team Collaboration**:
 - **Task Dependencies**: "Task A blocks Task B" relationships with visualization
@@ -322,8 +328,14 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **Stage Deadlines**: What happens when a task is moved backward to a previous stage with a past deadline? (Answer: Deadline reactivates with overdue indicator)
 - **Focus Mode**: What happens if user navigates away from app while in Focus Mode? (Answer: Focus Mode state persists; returning to app shows "You're still working on [Task]. Continue?" prompt)
 - **Streak Tracking**: What happens to streaks across timezones or when user works at midnight? (Answer: Streak based on user's local timezone; completion at 11:59pm counts for that day)
+- **Streak Tracking**: What happens if user has a paused streak and misses the grace day? (Answer: Streak counter resets to 0, shows encouraging message "New streak starts today! 💪")
+- **Streak Tracking**: What happens to long streaks when they break? (Answer: System stores "best streak" stat; shows "Your best streak: 23 days" as motivation to beat personal record)
 - **Task Breakdown**: What happens when breakdown suggestions fail to match task type? (Answer: System offers generic breakdown: "Break into 3-5 steps" with empty subtask fields to fill)
 - **Task Breakdown**: What happens if user repeatedly rejects breakdown suggestions? (Answer: System learns preference and stops auto-prompting for that user, but keeps "Suggest Subtasks" button available)
+- **Reminders**: What happens if user dismisses daily "no tasks completed" prompt multiple days in a row? (Answer: System continues showing prompt but with varied encouraging messages; user can disable in settings if desired)
+- **Reminders**: What happens if user completes a task late at night after seeing the daily prompt? (Answer: Prompt immediately disappears and is replaced with celebration message for completing task)
+- **Animations**: What happens when user has prefers-reduced-motion enabled in their OS? (Answer: System automatically respects setting and disables all animations, showing static celebration messages instead)
+- **Animations**: What happens if user wants celebrations but not confetti specifically? (Answer: Settings allow disabling confetti while keeping other celebrations like checkmarks and progress bars)
 
 ## Requirements *(mandatory)*
 
@@ -490,8 +502,13 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-109**: Suggested tasks MUST display with reasoning (e.g., "Due tomorrow", "High priority", "Blocks 3 other tasks")
 - **FR-110**: System MUST provide a Focus Mode that displays only the current task in a distraction-free full-screen layout
 - **FR-111**: Focus Mode MUST hide navigation, sidebar, and all other tasks, showing only task title, description, subtasks, and "Mark Complete" button
-- **FR-112**: Completing a task MUST trigger a celebration animation (confetti or checkmark swoosh) with encouraging message
+- **FR-112**: Completing a task MUST trigger a celebration animation (confetti via lightweight library like canvas-confetti, or checkmark swoosh via CSS) with encouraging message
+- **FR-112a**: Users MUST be able to disable celebration animations in settings for reduced motion preference (respects prefers-reduced-motion CSS media query)
+- **FR-112b**: When animations are disabled, celebration MUST still show encouraging message without motion effects
 - **FR-113**: System MUST track user's task completion streak (consecutive days with at least one completed task)
+- **FR-113a**: Streak MUST use forgiving approach: if user misses a day, streak "pauses" for 1 grace day; streak breaks only after 2 consecutive days with no tasks completed
+- **FR-113b**: When streak is paused, indicator MUST show paused state (e.g., "🔥 5 day streak (paused - complete a task today to keep it!)")
+- **FR-113c**: Completing a task during grace day MUST immediately restore active streak status
 - **FR-114**: Streak counter MUST display prominently in Tasks page header with flame emoji (e.g., "🔥 5 day streak!")
 - **FR-115**: System MUST display today's task completion progress in header (e.g., "3/8 tasks complete today" with progress bar)
 - **FR-116**: Task cards MUST show completion progress percentage when subtasks exist (e.g., "60% complete" with visual bar)
@@ -499,7 +516,8 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-118**: When creating a task with due date > 7 days away, system MUST prompt "Want to set milestone deadlines for each stage?"
 - **FR-119**: Task cards with stage-level deadlines MUST display upcoming stage deadline with color-coded urgency (green: >3 days, yellow: 1-3 days, red: <1 day or overdue)
 - **FR-120**: Completing a task stage before its deadline MUST show encouragement message (e.g., "Planning done early! 🎯")
-- **FR-121**: System MUST provide gentle evening prompt if no tasks completed today, suggesting an easy task to build momentum
+- **FR-121**: System MUST provide gentle prompt when user opens app if no tasks completed today, suggesting an easy task to build momentum (client-side check)
+- **FR-121a**: System MUST send email reminder if user has no activity (no tasks completed, no app opens) for 3-7 days, encouraging return with motivational message (server-side cron job)
 - **FR-122**: All progress indicators, streaks, and celebrations MUST use positive, encouraging language (never punishing or guilt-inducing)
 - **FR-123**: Focus Mode MUST be accessible via keyboard shortcut (e.g., 'F' key) for quick activation
 - **FR-124**: Users MUST be able to exit Focus Mode easily (ESC key or visible "Exit Focus" button)
@@ -507,14 +525,21 @@ As a power user, I need to add custom fields to my task cards so I can track add
 **Task Breakdown Assistance**
 
 - **FR-125**: When creating a new task, system MUST prompt "Want help breaking this down?" if title suggests complex work
-- **FR-126**: Task breakdown suggestions MUST analyze task title and suggest 3-7 logical subtasks based on common cosplay workflows
+- **FR-126**: Task breakdown suggestions MUST analyze task title using rule-based pattern matching (keyword detection + stored successful patterns) and suggest 3-7 logical subtasks based on common cosplay workflows
+- **FR-126a**: Pattern matching MUST use keyword detection algorithm: extract keywords from task title, normalize (lowercase, stemming), query `task_breakdown_patterns` table for fuzzy matches
+- **FR-126b**: Keywords MUST be matched using fuzzy matching (e.g., "drafting" matches "draft", "designing" matches "design")
+- **FR-126c**: Pattern matching MUST consider multiple keywords and rank results by success rate (acceptance_rate = times_accepted / times_offered)
 - **FR-127**: System MUST recognize task types: Costume Creation, Prop Building, Photoshoot Planning, Convention Prep, Material Sourcing
 - **FR-128**: Suggested subtasks MUST be editable (add, remove, reorder, rename) before user confirms
 - **FR-129**: For tasks with no subtasks and due date > 7 days away, system MUST show gentle prompt "Break this down into smaller steps?" with magic wand icon
 - **FR-130**: When user creates similar tasks repeatedly, system MUST learn patterns and improve future suggestions
+- **FR-130a**: When user accepts breakdown, system MUST increment `times_accepted` counter for that pattern
+- **FR-130b**: When user dismisses breakdown, system MUST increment `times_offered` counter but not `times_accepted`
+- **FR-130c**: System MUST track user-specific dismissals in separate table to avoid repeatedly showing unwanted patterns to the same user
 - **FR-131**: If user has previously broken down a similar task, system MUST offer "Use previous breakdown structure?" option
 - **FR-132**: Task breakdown suggestions MUST be available on-demand via "Suggest Subtasks" button in task detail panel
 - **FR-133**: System MUST match task titles to saved templates and offer "Apply [Template Name] template?" when detected
+- **FR-133a**: Patterns with <20% acceptance rate after 10+ offers MUST be marked as "low quality" and deprioritized in ranking
 - **FR-134**: Breakdown suggestions MUST include logical workflow order (e.g., Research before Construction)
 
 **Custom Task Fields**
@@ -594,8 +619,8 @@ As a power user, I need to add custom fields to my task cards so I can track add
 
 - **TaskBreakdownPattern** (new related entity): Learned patterns for task breakdown suggestions
   - Properties: id, teamId, taskType (costume/prop/photoshoot/convention/material), pattern (JSON array of subtask titles), usageCount, createdAt
-  - Used for: AI-assisted task breakdown, learning from user patterns, template suggestions
-  - Business rules: Team-scoped, patterns improve with usage, top 10 patterns per type
+  - Used for: Rule-based task breakdown (MVP), learning from user patterns, template suggestions; upgradeable to AI/ML post-MVP
+  - Business rules: Team-scoped, patterns improve with usage (increment usageCount), top 10 patterns per type; rule-based matching uses keywords + stored patterns
 
 - **CustomFieldDefinition** (new related entity): Custom field definitions for teams
   - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select; for currency type stores default currency code), displayOrder, showOnCard (boolean), createdAt, updatedAt

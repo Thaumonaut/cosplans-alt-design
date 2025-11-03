@@ -28,7 +28,11 @@ This document provides complete database table definitions, relationships, index
      ├──────── task_notifications (user_id)
      ├──────── task_comments (user_id, mentions)
      ├──────── task_attachments (uploaded_by)
-     └──────── saved_task_views (user_id)
+     ├──────── saved_task_views (user_id)
+     ├──────── task_labels (created_by)
+     ├──────── task_label_assignments (assigned_by)
+     ├──────── user_task_stats (user_id)
+     └──────── task_breakdown_patterns (created_by)
 
 ┌──────────┐
 │  teams   │
@@ -36,7 +40,10 @@ This document provides complete database table definitions, relationships, index
      │
      ├──────── task_templates (team_id)
      ├──────── saved_task_views (team_id)
-     └──────── custom_field_definitions (team_id)
+     ├──────── custom_field_definitions (team_id)
+     ├──────── task_labels (team_id)
+     ├──────── user_task_stats (team_id)
+     └──────── task_breakdown_patterns (team_id)
 
 ┌──────────┐
 │  tasks   │ (existing table, no changes)
@@ -46,13 +53,27 @@ This document provides complete database table definitions, relationships, index
      ├──────── task_comments (task_id)
      ├──────── task_attachments (task_id)
      ├──────── task_notifications (task_id)
-     └──────── task_custom_field_values (task_id)
+     ├──────── task_custom_field_values (task_id)
+     ├──────── task_label_assignments (task_id)
+     └──────── task_stage_deadlines (task_id)
+
+┌──────────────┐
+│  task_stages │ (existing table, no changes)
+└────┬─────────┘
+     │
+     └──────── task_stage_deadlines (stage_id)
 
 ┌────────────────────────────┐
 │ custom_field_definitions   │
 └────────────┬───────────────┘
              │
              └──────── task_custom_field_values (field_definition_id)
+
+┌──────────────┐
+│  task_labels │
+└────┬─────────┘
+     │
+     └──────── task_label_assignments (label_id)
 ```
 
 ---
@@ -1020,6 +1041,465 @@ CREATE POLICY task_custom_field_values_delete ON public.task_custom_field_values
 
 ---
 
+### 9. task_labels
+
+**Purpose**: Team-scoped color-coded labels for flexible task categorization and organization.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.task_labels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  color TEXT NOT NULL CHECK (color ~ '^#[0-9A-Fa-f]{6}$'),
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT task_labels_team_name_unique UNIQUE (team_id, name)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_task_labels_team_id ON public.task_labels(team_id, name);
+CREATE INDEX idx_task_labels_created_by ON public.task_labels(created_by);
+```
+
+**Constraints**:
+- `team_id` REFERENCES `teams(id)` ON DELETE CASCADE - Deleting team deletes all labels
+- `created_by` REFERENCES `auth.users(id)` ON DELETE SET NULL - Track creator, preserve label if user deleted
+- `name` unique per team
+- `color` must be valid 6-digit hex color (e.g., "#FF6B6B")
+
+**Business Rules**:
+- Maximum 50 labels per team (enforced application-side)
+- Label names case-sensitive within team (Application, application are different)
+- Default colors provided from predefined palette: red, orange, yellow, green, blue, purple, pink, gray
+- Deleting a label removes all `task_label_assignments` for that label (CASCADE)
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.task_labels ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view labels for their teams
+CREATE POLICY task_labels_select ON public.task_labels FOR SELECT USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- INSERT: Any team member can create labels
+CREATE POLICY task_labels_insert ON public.task_labels FOR INSERT WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- UPDATE: Any team member can update labels
+CREATE POLICY task_labels_update ON public.task_labels FOR UPDATE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+) WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- DELETE: Only team owners/admins or label creator can delete labels
+CREATE POLICY task_labels_delete ON public.task_labels FOR DELETE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND (role IN ('owner', 'admin') OR user_id = created_by)
+  )
+);
+```
+
+---
+
+### 10. task_label_assignments
+
+**Purpose**: Many-to-many relationship between tasks and labels, allowing multiple labels per task.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.task_label_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  label_id UUID NOT NULL REFERENCES public.task_labels(id) ON DELETE CASCADE,
+  assigned_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE SET NULL,
+  assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT task_label_assignments_task_label_unique UNIQUE (task_id, label_id)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_task_label_assignments_task_id ON public.task_label_assignments(task_id);
+CREATE INDEX idx_task_label_assignments_label_id ON public.task_label_assignments(label_id);
+```
+
+**Constraints**:
+- `task_id` REFERENCES `tasks(id)` ON DELETE CASCADE - Deleting task removes all label assignments
+- `label_id` REFERENCES `task_labels(id)` ON DELETE CASCADE - Deleting label removes all assignments
+- `assigned_by` REFERENCES `auth.users(id)` ON DELETE SET NULL - Track who assigned label
+- UNIQUE constraint on `(task_id, label_id)` - Same label cannot be assigned twice to same task
+
+**Business Rules**:
+- No hard limit on labels per task, but UI suggests first 3 visible, remaining collapsed
+- Assigning same label twice to same task is idempotent (UNIQUE constraint prevents duplicates)
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.task_label_assignments ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view label assignments for tasks in their teams
+CREATE POLICY task_label_assignments_select ON public.task_label_assignments FOR SELECT USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- INSERT: Users can assign labels to tasks in their teams
+CREATE POLICY task_label_assignments_insert ON public.task_label_assignments FOR INSERT WITH CHECK (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- DELETE: Users can remove label assignments from tasks in their teams
+CREATE POLICY task_label_assignments_delete ON public.task_label_assignments FOR DELETE USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+```
+
+---
+
+### 11. task_stage_deadlines
+
+**Purpose**: Stage-level milestone deadlines for breaking down long-duration tasks into manageable checkpoints.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.task_stage_deadlines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  stage_id UUID NOT NULL REFERENCES public.task_stages(id) ON DELETE CASCADE,
+  deadline TIMESTAMPTZ NOT NULL,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT task_stage_deadlines_task_stage_unique UNIQUE (task_id, stage_id)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_task_stage_deadlines_task_id ON public.task_stage_deadlines(task_id);
+CREATE INDEX idx_task_stage_deadlines_deadline ON public.task_stage_deadlines(deadline) WHERE completed_at IS NULL;
+```
+
+**Constraints**:
+- `task_id` REFERENCES `tasks(id)` ON DELETE CASCADE - Deleting task removes all stage deadlines
+- `stage_id` REFERENCES `task_stages(id)` ON DELETE CASCADE - Deleting stage removes deadlines for that stage
+- UNIQUE constraint on `(task_id, stage_id)` - One deadline per stage per task
+- `completed_at` nullable - NULL = not yet reached this stage, NOT NULL = stage completed
+
+**Business Rules**:
+- Stage deadlines optional (not all stages require deadlines)
+- System prompts to set stage deadlines for tasks with due date > 7 days away
+- When task moves to new stage, `completed_at` set automatically for previous stage if not already set
+- Stage deadlines color-coded: green (>3 days), yellow (1-3 days), red (<1 day or overdue)
+- Completing stage before deadline shows encouragement message
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.task_stage_deadlines ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view stage deadlines for tasks in their teams
+CREATE POLICY task_stage_deadlines_select ON public.task_stage_deadlines FOR SELECT USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- INSERT: Users can create stage deadlines for tasks in their teams
+CREATE POLICY task_stage_deadlines_insert ON public.task_stage_deadlines FOR INSERT WITH CHECK (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- UPDATE: Users can update stage deadlines for tasks in their teams
+CREATE POLICY task_stage_deadlines_update ON public.task_stage_deadlines FOR UPDATE USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+) WITH CHECK (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- DELETE: Users can delete stage deadlines for tasks in their teams
+CREATE POLICY task_stage_deadlines_delete ON public.task_stage_deadlines FOR DELETE USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+```
+
+---
+
+### 12. user_task_stats
+
+**Purpose**: Track user task completion statistics for streak tracking, gamification, and progress visibility.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.user_task_stats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  team_id UUID NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  current_streak INTEGER NOT NULL DEFAULT 0,
+  best_streak INTEGER NOT NULL DEFAULT 0,
+  last_task_completed_at TIMESTAMPTZ,
+  streak_paused_at TIMESTAMPTZ, -- Set when user misses a day (1-day grace period)
+  tasks_completed_today INTEGER NOT NULL DEFAULT 0,
+  tasks_completed_total INTEGER NOT NULL DEFAULT 0,
+  celebration_animations_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT user_task_stats_user_team_unique UNIQUE (user_id, team_id)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_user_task_stats_user_id ON public.user_task_stats(user_id);
+CREATE INDEX idx_user_task_stats_team_id ON public.user_task_stats(team_id);
+CREATE INDEX idx_user_task_stats_last_completed ON public.user_task_stats(last_task_completed_at);
+```
+
+**Constraints**:
+- `user_id` REFERENCES `auth.users(id)` ON DELETE CASCADE - Deleting user removes stats
+- `team_id` REFERENCES `teams(id)` ON DELETE CASCADE - Deleting team removes stats for that team
+- UNIQUE constraint on `(user_id, team_id)` - One stats record per user per team
+- `current_streak >= 0`, `best_streak >= 0`, `tasks_completed_today >= 0`, `tasks_completed_total >= 0`
+
+**Business Rules**:
+- **Streak Logic**:
+  - Increment `current_streak` when user completes first task of the day
+  - If user misses a day, set `streak_paused_at` (1-day grace period)
+  - If user completes task during grace day, clear `streak_paused_at` and keep streak
+  - If user misses 2 consecutive days, reset `current_streak` to 0
+  - Update `best_streak` if `current_streak` exceeds it
+- **Daily Reset**: `tasks_completed_today` resets to 0 at midnight user local time (handled by cron job)
+- **Celebrations**: `celebration_animations_enabled` controls confetti/animations (respects prefers-reduced-motion)
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.user_task_stats ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view their own stats for teams they belong to
+CREATE POLICY user_task_stats_select ON public.user_task_stats FOR SELECT USING (
+  user_id = auth.uid()
+  AND team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- INSERT: Users can create their own stats records
+CREATE POLICY user_task_stats_insert ON public.user_task_stats FOR INSERT WITH CHECK (
+  user_id = auth.uid()
+  AND team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- UPDATE: Users can update their own stats
+CREATE POLICY user_task_stats_update ON public.user_task_stats FOR UPDATE USING (
+  user_id = auth.uid()
+  AND team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+) WITH CHECK (
+  user_id = auth.uid()
+  AND team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- DELETE: Users can delete their own stats (rare, usually for privacy requests)
+CREATE POLICY user_task_stats_delete ON public.user_task_stats FOR DELETE USING (
+  user_id = auth.uid()
+);
+```
+
+---
+
+### 13. task_breakdown_patterns
+
+**Purpose**: Store learned patterns for task breakdown assistance, improving suggestions over time based on team usage.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.task_breakdown_patterns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  keywords TEXT[] NOT NULL, -- Normalized keywords (lowercase, stemmed) for matching
+  task_type TEXT, -- Optional: Costume Creation, Prop Building, Photoshoot Planning, Convention Prep, Material Sourcing
+  suggested_subtasks JSONB NOT NULL, -- Array of subtask objects: [{"title": "...", "order": 0}, ...]
+  times_offered INTEGER NOT NULL DEFAULT 0,
+  times_accepted INTEGER NOT NULL DEFAULT 0,
+  acceptance_rate DECIMAL(5,2) GENERATED ALWAYS AS (
+    CASE WHEN times_offered > 0 THEN (times_accepted::DECIMAL / times_offered::DECIMAL * 100) ELSE 0 END
+  ) STORED,
+  is_low_quality BOOLEAN GENERATED ALWAYS AS (
+    times_offered >= 10 AND (times_accepted::DECIMAL / times_offered::DECIMAL) < 0.20
+  ) STORED,
+  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_task_breakdown_patterns_team_id ON public.task_breakdown_patterns(team_id);
+CREATE INDEX idx_task_breakdown_patterns_keywords ON public.task_breakdown_patterns USING GIN(keywords);
+CREATE INDEX idx_task_breakdown_patterns_task_type ON public.task_breakdown_patterns(team_id, task_type) WHERE task_type IS NOT NULL;
+CREATE INDEX idx_task_breakdown_patterns_acceptance_rate ON public.task_breakdown_patterns(team_id, acceptance_rate DESC) WHERE NOT is_low_quality;
+```
+
+**Constraints**:
+- `team_id` REFERENCES `teams(id)` ON DELETE CASCADE - Deleting team deletes all patterns
+- `created_by` REFERENCES `auth.users(id)` ON DELETE SET NULL - Track pattern creator
+- `keywords` array must have at least 1 element
+- `suggested_subtasks` JSONB must be valid array of objects with "title" and "order" fields
+- `acceptance_rate` computed column: `(times_accepted / times_offered * 100)` or 0 if never offered
+- `is_low_quality` computed column: TRUE if `times_offered >= 10` AND `acceptance_rate < 20%`
+
+**Business Rules**:
+- **Pattern Matching**:
+  - Extract keywords from task title → normalize (lowercase, stem)
+  - Query patterns with matching keywords using GIN index for fast text search
+  - Rank results by `acceptance_rate` DESC
+  - Filter out `is_low_quality = TRUE` patterns
+- **Learning**:
+  - When user accepts breakdown: increment `times_accepted` and `times_offered`
+  - When user dismisses breakdown: increment `times_offered` only
+  - Computed `acceptance_rate` auto-updates based on counters
+  - Patterns <20% acceptance after 10+ offers marked as low quality (deprioritized)
+- **Pattern Creation**:
+  - When user manually creates subtasks, system offers "Save as pattern?" for future reuse
+  - Team owners/admins can view and manage patterns in settings
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.task_breakdown_patterns ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view patterns for their teams
+CREATE POLICY task_breakdown_patterns_select ON public.task_breakdown_patterns FOR SELECT USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- INSERT: Any team member can create patterns
+CREATE POLICY task_breakdown_patterns_insert ON public.task_breakdown_patterns FOR INSERT WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- UPDATE: Team owners/admins or pattern creator can update patterns
+CREATE POLICY task_breakdown_patterns_update ON public.task_breakdown_patterns FOR UPDATE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND (role IN ('owner', 'admin') OR user_id = created_by)
+  )
+) WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND (role IN ('owner', 'admin') OR user_id = created_by)
+  )
+);
+
+-- DELETE: Only team owners/admins can delete patterns
+CREATE POLICY task_breakdown_patterns_delete ON public.task_breakdown_patterns FOR DELETE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+  )
+);
+```
+
+---
+
 ## Migration Order & Rollback
 
 ### Migration Sequence
@@ -1034,6 +1514,11 @@ Execute migrations in this order to satisfy foreign key dependencies:
 6. **20251103150005_create_saved_task_views.sql** - Depends on `teams` and `auth.users`
 7. **20251103150006_create_custom_field_definitions.sql** - Depends on `teams`
 8. **20251103150007_create_task_custom_field_values.sql** - Depends on `tasks` and `custom_field_definitions`
+9. **20251103150008_create_task_labels.sql** - Depends on `teams` and `auth.users`
+10. **20251103150009_create_task_label_assignments.sql** - Depends on `tasks` and `task_labels`
+11. **20251103150010_create_task_stage_deadlines.sql** - Depends on `tasks` and `task_stages`
+12. **20251103150011_create_user_task_stats.sql** - Depends on `teams` and `auth.users`
+13. **20251103150012_create_task_breakdown_patterns.sql** - Depends on `teams` and `auth.users`
 
 ### Rollback Strategy
 
@@ -1041,6 +1526,11 @@ Execute migrations in this order to satisfy foreign key dependencies:
 
 ```sql
 -- Rollback script (execute in this order)
+DROP TABLE IF EXISTS public.task_breakdown_patterns CASCADE;
+DROP TABLE IF EXISTS public.user_task_stats CASCADE;
+DROP TABLE IF EXISTS public.task_stage_deadlines CASCADE;
+DROP TABLE IF EXISTS public.task_label_assignments CASCADE;
+DROP TABLE IF EXISTS public.task_labels CASCADE;
 DROP TABLE IF EXISTS public.task_custom_field_values CASCADE;
 DROP TABLE IF EXISTS public.custom_field_definitions CASCADE;
 DROP TABLE IF EXISTS public.saved_task_views CASCADE;
@@ -1188,10 +1678,10 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 
 ## Summary Statistics
 
-**New Tables**: 8  
-**New Indexes**: 17  
-**New RLS Policies**: 32  
-**Total FK Relationships**: 13
+**New Tables**: 13  
+**New Indexes**: 29  
+**New RLS Policies**: 52  
+**Total FK Relationships**: 21
 
 **Estimated Storage** (per 1000 tasks):
 - Subtasks: ~500KB (avg 5 subtasks/task, 100 bytes each)
@@ -1202,8 +1692,13 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 - Saved Views: ~5KB (avg 5 views/user, 1KB each)
 - Custom Field Definitions: ~20KB (avg 10 fields/team, 2KB each)
 - Task Custom Field Values: ~1MB (avg 5 custom fields/task, 200 bytes each)
+- Task Labels: ~10KB (avg 20 labels/team, 500 bytes each)
+- Task Label Assignments: ~200KB (avg 2 labels/task, 100 bytes each)
+- Task Stage Deadlines: ~300KB (avg 3 stage deadlines/task, 100 bytes each)
+- User Task Stats: ~5KB (1 record per user per team, 500 bytes each)
+- Task Breakdown Patterns: ~50KB (avg 30 patterns/team, ~1.5KB each)
 
-**Total Additional Storage**: ~54MB per 1000 tasks (metadata only)
+**Total Additional Storage**: ~55MB per 1000 tasks (metadata only)
 
 ---
 

@@ -53,9 +53,12 @@ The technical approach uses native HTML5 drag-and-drop, Tanstack Virtual for lar
 **Scale/Scope**: 
 - 11 User Stories (P1-P3 priorities)
 - 159 Functional Requirements
-- 6 new database tables (subtasks, comments, attachments, notifications, templates, saved_views)
-- 2 custom fields tables (custom_field_definitions, task_custom_field_values)
-- 5 ADHD/gamification tables (task_labels, task_label_assignments, task_stage_deadlines, user_task_stats, task_breakdown_patterns)
+- 13 new database tables total:
+  - 6 core tables (subtasks, comments, attachments, notifications, templates, saved_views)
+  - 2 custom fields tables (custom_field_definitions, task_custom_field_values)
+  - 5 ADHD/label tables (task_labels, task_label_assignments, task_stage_deadlines, user_task_stats, task_breakdown_patterns)
+- 29 new indexes
+- 52 RLS policies
 - 35+ API endpoints (REST-style over Supabase)
 - 20+ new Svelte components
 
@@ -240,9 +243,14 @@ Full-screen distraction-free view:
 
 #### 3. Celebration System (FR-112-116, FR-120)
 Positive reinforcement:
-- Confetti animation on task completion
+- Confetti animation on task completion (canvas-confetti library ~3KB)
+- Reduced motion support: respects prefers-reduced-motion CSS media query
+- User preference to disable animations entirely
 - Encouraging messages ("Great job! Task complete 🎉")
-- Streak tracking ("🔥 5 day streak!")
+- Forgiving streak tracking ("🔥 5 day streak!")
+  - Streak "pauses" for 1 grace day if user misses a day
+  - Breaks only after 2 consecutive days without completing tasks
+  - Tracks "best streak" for motivation to beat personal record
 - Progress bars everywhere ("3/8 tasks complete today")
 - Stage completion encouragement ("Planning done early! 🎯")
 - No guilt-inducing language
@@ -255,13 +263,23 @@ Break down overwhelm:
 - Celebrate early completions
 
 #### 5. Task Breakdown Assistance (FR-125-134)
-AI-powered help:
+Rule-based pattern matching (MVP) with AI upgrade path (post-MVP):
 - Prompt "Want help breaking this down?" for complex tasks
+- **Keyword Detection Algorithm**:
+  - Extract keywords from task title
+  - Normalize (lowercase, stemming)
+  - Query `task_breakdown_patterns` table for fuzzy matches
+  - Rank results by success rate (acceptance_rate = times_accepted / times_offered)
 - Recognize task types (Costume, Prop, Photoshoot, Convention, Material)
-- Suggest 3-7 logical subtasks
-- Learn from user patterns
+- Suggest 3-7 logical subtasks based on stored successful patterns
+- **Learning System**:
+  - Increment `times_accepted` when user accepts breakdown
+  - Increment `times_offered` (but not accepted) when user dismisses
+  - Track user-specific dismissals to avoid repeat prompting
+  - Mark patterns <20% acceptance rate as "low quality" after 10+ offers
 - Match to saved templates
-- Available on-demand
+- Available on-demand via "Suggest Subtasks" button
+- **Post-MVP**: Upgrade to AI/ML (OpenAI/Claude API) when more AI features are added
 
 #### 6. Progress Visibility (FR-115-116)
 Constant feedback:
@@ -273,14 +291,21 @@ Constant feedback:
 ### Implementation Notes
 
 **Gentle Prompts** (FR-121-122):
-- Evening prompt if no tasks completed: "Here's a quick one to get started"
+- **Daily prompts** (client-side): When user opens app, check if no tasks completed today → show gentle prompt "Here's a quick one to get started"
+- **Inactivity reminders** (server-side): If user has no activity (no tasks completed, no app opens) for 3-7 days → send email reminder with motivational message
 - Never punishing or guilt-inducing language
 - Always encouraging and supportive
+- User can disable in settings if desired
 
 **Learning System** (FR-130-131):
-- System learns user patterns for task breakdown
-- Improves suggestions over time
-- Respects user preferences (stops prompting if repeatedly rejected)
+- System learns user patterns for task breakdown via keyword matching
+- Improves suggestions over time based on acceptance rates
+- Respects user preferences (stops auto-prompting if repeatedly rejected, but keeps "Suggest Subtasks" button available)
+
+**Accessibility** (FR-112a-112b):
+- All animations respect prefers-reduced-motion CSS media query
+- Users can disable celebrations in settings
+- When disabled, still show encouraging messages without motion effects
 
 ---
 
