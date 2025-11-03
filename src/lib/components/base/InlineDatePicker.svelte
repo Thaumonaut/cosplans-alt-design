@@ -1,147 +1,137 @@
 <script lang="ts">
-  import { cn } from '$lib/utils'
-  import { Calendar } from 'lucide-svelte'
-  import { Datepicker } from 'flowbite-svelte'
+	/**
+	 * InlineDatePicker Component
+	 * 
+	 * Provides inline date editing for "living document" UX.
+	 * Click to edit, save on selection, cancel on Escape.
+	 */
+	import { createEventDispatcher } from 'svelte';
 
-  interface Props {
-    value: string | null
-    editable?: boolean
-    onSave: (value: string) => Promise<void>
-    placeholder?: string
-    class?: string
-  }
+	export let value: string | null = null; // ISO date string
+	export let placeholder: string = 'No date';
+	export let disabled: boolean = false;
+	export let showTime: boolean = false;
+	export let minDate: string | undefined = undefined;
+	export let maxDate: string | undefined = undefined;
+	
+	const dispatch = createEventDispatcher<{
+		change: string | null;
+		cancel: void;
+	}>();
 
-  let { value = $bindable(null as string | null), editable = true, onSave, placeholder = 'Select date', class: className }: Props = $props()
+	let isEditing = $state(false);
+	let inputElement: HTMLInputElement;
 
-  let isSaving = $state(false)
-  let error = $state<string | null>(null)
-  let lastSavedValue = $state(value)
-  let datepickerValue = $state<Date | undefined>(undefined)
+	function startEditing() {
+		if (disabled) return;
+		isEditing = true;
+		setTimeout(() => inputElement?.focus(), 0);
+	}
 
-  // Convert string value to Date for Datepicker
-  $effect(() => {
-    if (value && value.trim() !== '') {
-      try {
-        // Parse YYYY-MM-DD format
-        const [year, month, day] = value.split('-').map(Number)
-        const newDate = new Date(year, month - 1, day)
-        if (!isNaN(newDate.getTime()) && datepickerValue?.getTime() !== newDate.getTime()) {
-          datepickerValue = newDate
-        }
-      } catch {
-        datepickerValue = undefined
-      }
-    } else {
-      datepickerValue = undefined
-    }
-  })
+	function handleChange(event: Event) {
+		const newValue = (event.target as HTMLInputElement).value;
+		value = newValue || null;
+		isEditing = false;
+		dispatch('change', value);
+	}
 
-  // Watch for datepicker value changes and trigger save
-  $effect(() => {
-    if (datepickerValue && editable && !isSaving) {
-      const newValue = dateToString(datepickerValue)
-      if (newValue && newValue !== lastSavedValue && newValue !== value) {
-        // Small delay to avoid rapid firing during date selection
-        const timeout = setTimeout(() => {
-          handleDateChange()
-        }, 300)
-        return () => clearTimeout(timeout)
-      }
-    }
-  })
+	function handleBlur() {
+		setTimeout(() => {
+			isEditing = false;
+		}, 150);
+	}
 
-  // Convert Date back to string format (YYYY-MM-DD)
-  function dateToString(date: Date | undefined | null): string {
-    if (!date || isNaN(date.getTime())) return ''
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			isEditing = false;
+			dispatch('cancel');
+		}
+	}
 
-  async function handleDateChange() {
-    if (!editable || isSaving) return
-    
-    const newValue = dateToString(datepickerValue)
-    const newValueStr = newValue || ''
-    
-    // Don't save if value hasn't changed
-    if (newValueStr === lastSavedValue || !newValue) {
-      if (newValueStr !== (value || '')) value = newValue
-      return
-    }
+	function formatDisplayDate(dateString: string | null): string {
+		if (!dateString) return placeholder;
+		
+		const date = new Date(dateString);
+		if (isNaN(date.getTime())) return placeholder;
 
-    // Update value immediately for UI
-    value = newValue
-    lastSavedValue = newValueStr
-    isSaving = true
-    error = null
-    
-    try {
-      await onSave(newValueStr)
-    } catch (err: any) {
-      value = lastSavedValue || null
-      datepickerValue = lastSavedValue ? (() => {
-        const [year, month, day] = lastSavedValue.split('-').map(Number)
-        return new Date(year, month - 1, day)
-      })() : undefined
-      error = err?.message || 'Save failed'
-    } finally {
-      isSaving = false
-    }
-  }
+		if (showTime) {
+			return date.toLocaleString('en-US', {
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric',
+				hour: 'numeric',
+				minute: '2-digit',
+			});
+		}
 
-  function formatDisplayDate(dateString: string | null | undefined): string {
-    if (!dateString) return ''
-    try {
-      const [year, month, day] = dateString.split('-').map(Number)
-      const date = new Date(year, month - 1, day)
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    } catch {
-      return dateString
-    }
-  }
+		return date.toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+		});
+	}
 
-  const displayValue = $derived(formatDisplayDate(value))
+	function isOverdue(dateString: string | null): boolean {
+		if (!dateString) return false;
+		const date = new Date(dateString);
+		const now = new Date();
+		return date < now;
+	}
+
+	function isDueSoon(dateString: string | null): boolean {
+		if (!dateString) return false;
+		const date = new Date(dateString);
+		const now = new Date();
+		const diff = date.getTime() - now.getTime();
+		const daysDiff = diff / (1000 * 60 * 60 * 24);
+		return daysDiff > 0 && daysDiff <= 3;
+	}
+
+	const displayClass = $derived(
+		value && isOverdue(value)
+			? 'text-red-600 dark:text-red-400'
+			: value && isDueSoon(value)
+			? 'text-yellow-600 dark:text-yellow-400'
+			: value
+			? 'text-gray-900 dark:text-white'
+			: 'text-gray-500 dark:text-gray-400'
+	);
 </script>
 
-<div class={cn('relative inline-flex items-center', className)}>
-  {#if !editable}
-    <!-- Read-only display -->
-    <div class="flex items-center gap-2 text-[var(--theme-foreground)]">
-      {#if value}
-        <span>{displayValue}</span>
-      {:else}
-        <span class="text-[var(--theme-muted-foreground)]">{placeholder}</span>
-      {/if}
-    </div>
-  {:else}
-    <!-- Editable date picker with popup calendar -->
-    <div class="relative inline-flex items-center gap-2">
-      <div class="relative">
-        <Datepicker
-          bind:value={datepickerValue}
-          onselect={handleDateChange}
-          placeholder={placeholder}
-          firstDayOfWeek={0}
-          autohide={true}
-          disabled={isSaving}
-          inputClass={cn(
-            'min-w-[140px] border-[var(--theme-border)] bg-[var(--theme-input-bg)] text-[var(--theme-foreground)]',
-            'placeholder:text-[var(--theme-muted-foreground)]',
-            isSaving && 'opacity-70 pointer-events-none',
-            error && 'border-[var(--theme-error)]'
-          )}
-          class={className}
-        />
-      </div>
-    </div>
-    {#if isSaving}
-      <span class="ml-2 text-xs text-[var(--theme-muted-foreground)]">Saving...</span>
-    {/if}
-    {#if error}
-      <span class="ml-2 text-xs text-[var(--theme-error)]">{error}</span>
-    {/if}
-  {/if}
-</div>
-
+{#if isEditing}
+	<input
+		bind:this={inputElement}
+		type={showTime ? 'datetime-local' : 'date'}
+		value={value || ''}
+		on:change={handleChange}
+		on:blur={handleBlur}
+		on:keydown={handleKeydown}
+		min={minDate}
+		max={maxDate}
+		class="inline-block px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+		{disabled}
+	/>
+{:else}
+	<div
+		role="button"
+		tabindex={disabled ? -1 : 0}
+		class="inline-flex items-center gap-1 px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors {displayClass} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
+		on:click={startEditing}
+		on:keydown={(e) => e.key === 'Enter' && startEditing()}
+	>
+		<svg
+			class="w-4 h-4"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+			/>
+		</svg>
+		<span>{formatDisplayDate(value)}</span>
+	</div>
+{/if}

@@ -85,13 +85,13 @@
 
 ### Base Components
 
-- [ ] T037 [P] Create InlineSelect component in src/lib/components/base/InlineSelect.svelte (for living document editing)
-- [ ] T038 [P] Create InlineDatePicker component in src/lib/components/base/InlineDatePicker.svelte
-- [ ] T039 [P] Create ConfirmDialog component in src/lib/components/base/ConfirmDialog.svelte
-- [ ] T040 [P] Create ErrorToast component in src/lib/components/base/ErrorToast.svelte
-- [ ] T041 Create DragDropContext setup in src/lib/utils/drag-drop.ts (native HTML5 DnD utilities)
+- [X] T037 [P] Create InlineSelect component in src/lib/components/base/InlineSelect.svelte (for living document editing)
+- [X] T038 [P] Create InlineDatePicker component in src/lib/components/base/InlineDatePicker.svelte
+- [X] T039 [P] Create ConfirmDialog component in src/lib/components/base/ConfirmDialog.svelte
+- [X] T040 [P] Create ErrorToast component in src/lib/components/base/ErrorToast.svelte
+- [X] T041 Create DragDropContext setup in src/lib/utils/drag-drop.ts (native HTML5 DnD utilities)
 
-**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
+**Checkpoint**: ✅ Foundation ready - user story implementation can now begin in parallel
 
 ---
 
