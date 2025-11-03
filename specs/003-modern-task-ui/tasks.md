@@ -66,13 +66,13 @@
 
 ### TypeScript Type Definitions
 
-- [ ] T024 [P] Define core task types in src/lib/types/tasks.ts (Subtask, TaskComment, TaskAttachment, TaskNotification, TaskDetail)
-- [ ] T025 [P] Define template types in src/lib/types/templates.ts (TaskTemplate, SavedTaskView)
-- [ ] T026 [P] Define custom field types in src/lib/types/custom-fields.ts (CustomFieldDefinition, TaskCustomFieldValue, CustomFieldType, CurrencyValue)
-- [ ] T027 [P] Define label types in src/lib/types/labels.ts (TaskLabel, TaskLabelAssignment)
-- [ ] T028 [P] Define ADHD feature types in src/lib/types/adhd-features.ts (TaskStageDeadline, UserTaskStats, TaskBreakdownPattern)
-- [ ] T029 [P] Define Zod validation schemas in src/lib/schemas/tasks.ts for runtime validation
-- [ ] T030 Create type guards and utility functions in src/lib/types/type-guards.ts
+- [X] T024 [P] Define core task types in src/lib/types/tasks.ts (Subtask, TaskComment, TaskAttachment, TaskNotification, TaskDetail)
+- [X] T025 [P] Define template types in src/lib/types/templates.ts (TaskTemplate, SavedTaskView)
+- [X] T026 [P] Define custom field types in src/lib/types/custom-fields.ts (CustomFieldDefinition, TaskCustomFieldValue, CustomFieldType, CurrencyValue)
+- [X] T027 [P] Define label types in src/lib/types/labels.ts (TaskLabel, TaskLabelAssignment)
+- [X] T028 [P] Define ADHD feature types in src/lib/types/adhd-features.ts (TaskStageDeadline, UserTaskStats, TaskBreakdownPattern)
+- [X] T029 [P] Define Zod validation schemas in src/lib/schemas/tasks.ts for runtime validation
+- [X] T030 Create type guards and utility functions in src/lib/types/type-guards.ts
 
 ### Service Layer Foundation
 
