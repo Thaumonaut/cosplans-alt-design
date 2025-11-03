@@ -31,7 +31,7 @@ export const LAZY_ROUTES = {
 	photoshoots: () => import('../../routes/(auth)/photoshoots/+page.svelte'),
 	'post-production': () => import('../../routes/(auth)/post-production/+page.svelte'),
 	resources: () => import('../../routes/(auth)/resources/+page.svelte'),
-	tasks: () => import('../../routes/(auth)/tasks/+page.svelte'),
+	tasks: () => import('../../routes/(app)/tasks/+page.svelte'),
 	timeline: () => import('../../routes/(auth)/timeline/+page.svelte'),
 	tools: () => import('../../routes/(auth)/tools/+page.svelte')
 } as const;

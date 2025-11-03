@@ -8,7 +8,10 @@
   import { teamService } from '$lib/api/services/teamService'
   import { currentTeam } from '$lib/stores/teams'
   import { get } from 'svelte/store'
-  import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
+  // TODO: TaskDetail archived during modern task UI migration (003-modern-task-ui)
+  // Will be replaced with new TaskDetailPanel in Phase 4 (User Story 2)
+  // See: .archive/003-modern-task-ui/MIGRATION.md
+  // import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import { toast } from '$lib/stores/toast'
   import { supabase } from '$lib/supabase'
@@ -293,7 +296,27 @@
 </div>
 
 <!-- New Task Creation Flyout -->
+<!-- TODO: TaskDetail archived during modern task UI migration (003-modern-task-ui) -->
+<!-- Will be replaced with new TaskDetailPanel in Phase 4 (User Story 2) -->
 <CreationFlyout bind:open={showNewTaskFlyout} title="Create New Task">
+  <div class="p-8 text-center">
+    <CheckSquare class="w-16 h-16 mx-auto mb-4 text-gray-400" />
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      Task Creation Coming Soon
+    </h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+      We're building a new and improved task creation experience as part of the modern task UI.
+    </p>
+    <Button
+      onclick={() => {
+        goto('/tasks')
+        showNewTaskFlyout = false
+      }}
+    >
+      Go to Tasks Page
+    </Button>
+  </div>
+  <!--
   <TaskDetail
     mode="create"
     projectId={projectId}

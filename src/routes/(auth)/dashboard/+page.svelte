@@ -16,7 +16,10 @@
   } from "lucide-svelte";
   import ProjectDetail from "$lib/components/projects/ProjectDetail.svelte";
   import IdeaDetail from "$lib/components/ideas/IdeaDetail.svelte";
-  import TaskDetail from "$lib/components/tasks/TaskDetail.svelte";
+  // TODO: TaskDetail archived during modern task UI migration (003-modern-task-ui)
+  // Will be replaced with new TaskDetailPanel in Phase 4 (User Story 2)
+  // See: .archive/003-modern-task-ui/MIGRATION.md
+  // import TaskDetail from "$lib/components/tasks/TaskDetail.svelte";
   import ResourceDetail from "$lib/components/resources/ResourceDetail.svelte";
   import { projectService } from '$lib/api/services/projectService';
   import { photoshootService } from '$lib/api/services/photoshootService';
@@ -959,6 +962,9 @@
 {/if}
 
 <!-- Task Detail Flyout -->
+<!-- TODO: TaskDetail archived during modern task UI migration (003-modern-task-ui) -->
+<!-- Will be replaced with new TaskDetailPanel in Phase 4 (User Story 2) -->
+<!-- For now, redirect to full tasks page -->
 {#if showTaskDetailFlyout && selectedTaskId}
   <CreationFlyout
     bind:open={showTaskDetailFlyout}
@@ -968,6 +974,24 @@
       showTaskDetailFlyout = false
     }}
   >
+    <div class="p-8 text-center">
+      <CheckSquare2 class="w-16 h-16 mx-auto mb-4 text-gray-400" />
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        Task Details Coming Soon
+      </h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        We're building a new and improved task detail view as part of the modern task UI.
+      </p>
+      <Button
+        onclick={() => {
+          goto('/tasks')
+          showTaskDetailFlyout = false
+        }}
+      >
+        View All Tasks
+      </Button>
+    </div>
+    <!--
     <TaskDetail
       taskId={selectedTaskId}
       mode="edit"
