@@ -10,6 +10,14 @@ This feature implements a complete UI redesign of the task management system to 
 - **Four View Modes**: List, Kanban Board, Calendar, Timeline
 - **Rich Task Details**: Subtasks, comments with @mentions, file attachments, activity logs
 - **Custom Fields**: Team-specific custom fields with 10 field types (text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email)
+- **Task Labels**: Color-coded flexible categorization with multi-label support
+- **ADHD-Friendly Features**: 
+  - "What should I do now?" task suggestion algorithm
+  - Focus Mode for distraction-free work
+  - Celebration animations and streak tracking
+  - Stage-level deadlines to break down long projects
+  - Progress visibility everywhere
+  - AI-assisted task breakdown suggestions
 - **Contextual Integration**: Tasks embedded in project, photoshoot, and resource pages
 - **Advanced Filtering**: Multi-criteria filters, saved views, grouping options
 - **Standalone Tasks**: Tasks not tied to specific projects (shopping lists, general planning)
@@ -17,6 +25,8 @@ This feature implements a complete UI redesign of the task management system to 
 - **Real-time Notifications**: In-app and email notifications for assignments, comments, @mentions, status changes
 
 The technical approach uses native HTML5 drag-and-drop, Tanstack Virtual for large lists, and Contenteditable for rich text. The "living document" design philosophy provides inline editing throughout, making task management feel fluid and natural.
+
+**Accessibility Focus**: This implementation prioritizes neurodivergent users, particularly those with ADHD, by addressing executive function challenges like decision paralysis, task initiation difficulty, time blindness, and motivation issues. Features are designed by someone with ADHD for users with ADHD.
 
 ---
 
@@ -41,12 +51,13 @@ The technical approach uses native HTML5 drag-and-drop, Tanstack Virtual for lar
 - Support mobile devices (responsive design)
   
 **Scale/Scope**: 
-- 8 User Stories (P1-P3 priorities)
-- 117 Functional Requirements
+- 11 User Stories (P1-P3 priorities)
+- 159 Functional Requirements
 - 6 new database tables (subtasks, comments, attachments, notifications, templates, saved_views)
 - 2 custom fields tables (custom_field_definitions, task_custom_field_values)
-- 30+ API endpoints (REST-style over Supabase)
-- 15+ new Svelte components
+- 5 ADHD/gamification tables (task_labels, task_label_assignments, task_stage_deadlines, user_task_stats, task_breakdown_patterns)
+- 35+ API endpoints (REST-style over Supabase)
+- 20+ new Svelte components
 
 ---
 
@@ -191,6 +202,88 @@ This approach eliminates the cognitive overhead of "edit mode" vs "view mode" an
 
 ---
 
+## ADHD-Friendly Features
+
+### Overview
+
+This implementation prioritizes accessibility for neurodivergent users, particularly those with ADHD. Features address core executive function challenges:
+
+| ADHD Challenge | Solution |
+|----------------|----------|
+| **Decision Paralysis** | "What should I do now?" algorithm suggests next task |
+| **Task Initiation** | Focus Mode reduces overwhelm to single task |
+| **Motivation** | Celebration animations, streaks, progress bars |
+| **Time Blindness** | Stage-level deadlines break long projects into milestones |
+| **Overwhelm** | AI-assisted task breakdown, gentle prompts |
+| **Forgetfulness** | Visual cues, labels, progress indicators everywhere |
+
+### Key Features
+
+#### 1. Task Suggestion Algorithm (FR-107-109)
+Analyzes tasks based on:
+- Due dates (urgent first)
+- Task priority
+- Project priority
+- Estimated effort
+- Dependencies
+
+Presents 1-3 specific tasks with clear reasoning (e.g., "Due tomorrow", "High priority", "Blocks 3 other tasks").
+
+#### 2. Focus Mode (FR-110-111, FR-123-124)
+Full-screen distraction-free view:
+- Shows only current task
+- Hides navigation, sidebar, other tasks
+- Displays task title, description, subtasks
+- Prominent "Mark Complete" button
+- Accessible via 'F' keyboard shortcut
+- Easy exit with ESC or button
+
+#### 3. Celebration System (FR-112-116, FR-120)
+Positive reinforcement:
+- Confetti animation on task completion
+- Encouraging messages ("Great job! Task complete 🎉")
+- Streak tracking ("🔥 5 day streak!")
+- Progress bars everywhere ("3/8 tasks complete today")
+- Stage completion encouragement ("Planning done early! 🎯")
+- No guilt-inducing language
+
+#### 4. Stage-Level Deadlines (FR-117-120)
+Break down overwhelm:
+- Set milestone deadlines for each workflow stage
+- Color-coded urgency (green: >3 days, yellow: 1-3 days, red: overdue)
+- Prompt for tasks with far-away due dates
+- Celebrate early completions
+
+#### 5. Task Breakdown Assistance (FR-125-134)
+AI-powered help:
+- Prompt "Want help breaking this down?" for complex tasks
+- Recognize task types (Costume, Prop, Photoshoot, Convention, Material)
+- Suggest 3-7 logical subtasks
+- Learn from user patterns
+- Match to saved templates
+- Available on-demand
+
+#### 6. Progress Visibility (FR-115-116)
+Constant feedback:
+- Header shows "X/Y tasks complete today" with progress bar
+- Task cards show subtask completion percentage
+- Visual bars and percentages everywhere
+- Real-time updates
+
+### Implementation Notes
+
+**Gentle Prompts** (FR-121-122):
+- Evening prompt if no tasks completed: "Here's a quick one to get started"
+- Never punishing or guilt-inducing language
+- Always encouraging and supportive
+
+**Learning System** (FR-130-131):
+- System learns user patterns for task breakdown
+- Improves suggestions over time
+- Respects user preferences (stops prompting if repeatedly rejected)
+
+---
+
 ## Custom Fields Feature
 
 ### Overview
@@ -258,14 +351,28 @@ Custom fields are **User Story 8 (P3 Priority)**, implemented after core task UI
 
 ## New Entities Summary
 
+**Core Task Features:**
 1. **subtasks**: Child checklist items (1-to-many with tasks)
 2. **task_comments**: Comments with @mentions (1-to-many with tasks)
 3. **task_attachments**: File uploads via R2 (1-to-many with tasks)
 4. **task_notifications**: In-app notification records (many-to-many: users ↔ tasks)
 5. **task_templates**: Reusable task patterns (team-scoped)
 6. **saved_task_views**: User-saved filter configurations (user + team scoped)
+
+**Custom Fields:**
 7. **custom_field_definitions**: Team custom field schema (team-scoped, max 20 per team)
 8. **task_custom_field_values**: Task-specific custom field data (task-scoped)
+
+**Labels & Organization:**
+9. **task_labels**: Team labels for flexible categorization (max 50 per team)
+10. **task_label_assignments**: Many-to-many between tasks and labels
+
+**ADHD & Gamification:**
+11. **task_stage_deadlines**: Milestone deadlines per workflow stage (breaks down long projects)
+12. **user_task_stats**: Streak tracking, completion counts, gamification data
+13. **task_breakdown_patterns**: Learned patterns for AI-assisted task suggestions (team-scoped)
+
+**Total: 13 new tables** (8 core + 2 custom fields + 2 labels + 3 ADHD)
 
 All entities enforce team isolation via RLS policies. See `data-model.md` for complete schema.
 
