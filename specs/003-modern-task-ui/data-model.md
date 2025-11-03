@@ -35,7 +35,8 @@ This document provides complete database table definitions, relationships, index
 └────┬─────┘
      │
      ├──────── task_templates (team_id)
-     └──────── saved_task_views (team_id)
+     ├──────── saved_task_views (team_id)
+     └──────── custom_field_definitions (team_id)
 
 ┌──────────┐
 │  tasks   │ (existing table, no changes)
@@ -44,7 +45,14 @@ This document provides complete database table definitions, relationships, index
      ├──────── subtasks (task_id)
      ├──────── task_comments (task_id)
      ├──────── task_attachments (task_id)
-     └──────── task_notifications (task_id)
+     ├──────── task_notifications (task_id)
+     └──────── task_custom_field_values (task_id)
+
+┌────────────────────────────┐
+│ custom_field_definitions   │
+└────────────┬───────────────┘
+             │
+             └──────── task_custom_field_values (field_definition_id)
 ```
 
 ---
@@ -799,18 +807,233 @@ export interface SavedTaskViewUpdate {
 
 ---
 
+### 7. custom_field_definitions
+
+**Purpose**: Team-specific custom field schema definitions allowing teams to extend task data with domain-specific fields.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.custom_field_definitions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  field_name TEXT NOT NULL,
+  field_type TEXT NOT NULL,
+  required BOOLEAN NOT NULL DEFAULT FALSE,
+  default_value TEXT,
+  options JSONB DEFAULT '{}'::JSONB,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  show_on_card BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT custom_field_definitions_field_type_check CHECK (
+    field_type IN ('text', 'textarea', 'number', 'currency', 'dropdown', 'multi-select', 'checkbox', 'date', 'url', 'email')
+  ),
+  CONSTRAINT custom_field_definitions_team_name_unique UNIQUE (team_id, field_name)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_custom_field_definitions_team_id ON public.custom_field_definitions(team_id, display_order);
+CREATE INDEX idx_custom_field_definitions_show_on_card ON public.custom_field_definitions(team_id, show_on_card) WHERE show_on_card = TRUE;
+```
+
+**Constraints**:
+- `team_id` REFERENCES `teams(id)` ON DELETE CASCADE - Deleting team deletes all custom field definitions
+- `field_type` must be one of 10 supported types
+- `field_name` unique per team
+- `display_order >= 0` - Ensures logical ordering
+
+**Business Rules**:
+- Maximum 20 custom field definitions per team (enforced application-side)
+- Field definitions ordered by `display_order` within team
+- `options` JSONB stores:
+  - For dropdown/multi-select: Array of choice strings
+  - For currency: Default currency code (ISO 4217)
+  - For number: Optional min/max values
+- `show_on_card` controls whether field appears on task cards in list/board view
+- Deleting a field definition CASCADE deletes all `task_custom_field_values` for that field
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.custom_field_definitions ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view custom field definitions for their teams
+CREATE POLICY custom_field_definitions_select ON public.custom_field_definitions FOR SELECT USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- INSERT: Only team owners/admins can create custom field definitions
+CREATE POLICY custom_field_definitions_insert ON public.custom_field_definitions FOR INSERT WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+  )
+);
+
+-- UPDATE: Only team owners/admins can update custom field definitions
+CREATE POLICY custom_field_definitions_update ON public.custom_field_definitions FOR UPDATE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+  )
+) WITH CHECK (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+  )
+);
+
+-- DELETE: Only team owners/admins can delete custom field definitions
+CREATE POLICY custom_field_definitions_delete ON public.custom_field_definitions FOR DELETE USING (
+  team_id IN (
+    SELECT team_id FROM public.team_members
+    WHERE user_id = auth.uid()
+    AND role IN ('owner', 'admin')
+  )
+);
+```
+
+**Field Type Details**:
+- **text**: Single-line text input, value stored as plain string
+- **textarea**: Multi-line text input, value stored as plain string
+- **number**: Numeric input, value stored as numeric string (e.g., "42", "3.14")
+- **currency**: Number + currency code, value stored as JSON: `{"amount": "100.00", "currency": "USD"}`
+- **dropdown**: Single-select from predefined options, value stored as selected option string
+- **multi-select**: Multiple selections, value stored as JSON array: `["option1", "option2"]`
+- **checkbox**: Boolean yes/no, value stored as `"true"` or `"false"` string
+- **date**: Date picker, value stored as ISO 8601 date string: `"2025-11-03"`
+- **url**: Link input with validation, value stored as URL string
+- **email**: Email input with validation, value stored as email string
+
+---
+
+### 8. task_custom_field_values
+
+**Purpose**: Store custom field values for individual tasks, with all values as TEXT for flexible type handling.
+
+**Table Definition**:
+
+```sql
+CREATE TABLE public.task_custom_field_values (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  field_definition_id UUID NOT NULL REFERENCES public.custom_field_definitions(id) ON DELETE CASCADE,
+  value TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT task_custom_field_values_task_field_unique UNIQUE (task_id, field_definition_id)
+);
+```
+
+**Indexes**:
+
+```sql
+CREATE INDEX idx_task_custom_field_values_task_id ON public.task_custom_field_values(task_id);
+CREATE INDEX idx_task_custom_field_values_field_definition_id ON public.task_custom_field_values(field_definition_id);
+```
+
+**Constraints**:
+- `task_id` REFERENCES `tasks(id)` ON DELETE CASCADE - Deleting task deletes all custom field values
+- `field_definition_id` REFERENCES `custom_field_definitions(id)` ON DELETE CASCADE - Deleting field definition deletes all values
+- UNIQUE constraint on `(task_id, field_definition_id)` - One value per field per task
+- `value` nullable for non-required fields
+
+**Business Rules**:
+- All values stored as TEXT with type-specific formatting:
+  - text/textarea/number: Plain string
+  - currency: JSON object `{"amount": "100.00", "currency": "USD"}`
+  - multi-select: JSON array `["option1", "option2"]`
+  - checkbox: `"true"` or `"false"` string
+  - date: ISO 8601 string `"2025-11-03"`
+  - url/email: Plain string
+- Application layer handles parsing and validation based on field type
+- NULL allowed for non-required fields
+- Required field enforcement: Only on task creation or save, not retroactively
+
+**RLS Policies**:
+
+```sql
+ALTER TABLE public.task_custom_field_values ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: Users can view custom field values for tasks in their teams
+CREATE POLICY task_custom_field_values_select ON public.task_custom_field_values FOR SELECT USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- INSERT: Users can insert custom field values for tasks in their teams
+CREATE POLICY task_custom_field_values_insert ON public.task_custom_field_values FOR INSERT WITH CHECK (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- UPDATE: Users can update custom field values for tasks they can edit
+CREATE POLICY task_custom_field_values_update ON public.task_custom_field_values FOR UPDATE USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+) WITH CHECK (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+
+-- DELETE: Users can delete custom field values for tasks they can edit
+CREATE POLICY task_custom_field_values_delete ON public.task_custom_field_values FOR DELETE USING (
+  task_id IN (
+    SELECT id FROM public.tasks
+    WHERE team_id IN (
+      SELECT team_id FROM public.team_members
+      WHERE user_id = auth.uid()
+    )
+  )
+);
+```
+
+---
+
 ## Migration Order & Rollback
 
 ### Migration Sequence
 
 Execute migrations in this order to satisfy foreign key dependencies:
 
-1. **20251103_create_subtasks.sql** - Depends only on `tasks` (existing)
-2. **20251103_create_task_comments.sql** - Depends on `tasks` and `auth.users`
-3. **20251103_create_task_attachments.sql** - Depends on `tasks` and `auth.users`
-4. **20251103_create_task_notifications.sql** - Depends on `tasks` and `auth.users`
-5. **20251103_create_task_templates.sql** - Depends on `teams` and `task_stages`
-6. **20251103_create_saved_task_views.sql** - Depends on `teams` and `auth.users`
+1. **20251103150000_create_subtasks.sql** - Depends only on `tasks` (existing)
+2. **20251103150001_create_task_comments.sql** - Depends on `tasks` and `auth.users`
+3. **20251103150002_create_task_attachments.sql** - Depends on `tasks` and `auth.users`
+4. **20251103150003_create_task_notifications.sql** - Depends on `tasks` and `auth.users`
+5. **20251103150004_create_task_templates.sql** - Depends on `teams` and `task_stages`
+6. **20251103150005_create_saved_task_views.sql** - Depends on `teams` and `auth.users`
+7. **20251103150006_create_custom_field_definitions.sql** - Depends on `teams`
+8. **20251103150007_create_task_custom_field_values.sql** - Depends on `tasks` and `custom_field_definitions`
 
 ### Rollback Strategy
 
@@ -818,6 +1041,8 @@ Execute migrations in this order to satisfy foreign key dependencies:
 
 ```sql
 -- Rollback script (execute in this order)
+DROP TABLE IF EXISTS public.task_custom_field_values CASCADE;
+DROP TABLE IF EXISTS public.custom_field_definitions CASCADE;
 DROP TABLE IF EXISTS public.saved_task_views CASCADE;
 DROP TABLE IF EXISTS public.task_templates CASCADE;
 DROP TABLE IF EXISTS public.task_notifications CASCADE;
@@ -963,10 +1188,10 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 
 ## Summary Statistics
 
-**New Tables**: 6  
-**New Indexes**: 13  
-**New RLS Policies**: 24  
-**Total FK Relationships**: 11
+**New Tables**: 8  
+**New Indexes**: 17  
+**New RLS Policies**: 32  
+**Total FK Relationships**: 13
 
 **Estimated Storage** (per 1000 tasks):
 - Subtasks: ~500KB (avg 5 subtasks/task, 100 bytes each)
@@ -975,8 +1200,10 @@ WHERE created_at < NOW() - INTERVAL '90 days';
 - Notifications: ~1MB (avg 5 notifications/task, 200 bytes each)
 - Templates: ~10KB (avg 10 templates/team, 1KB each)
 - Saved Views: ~5KB (avg 5 views/user, 1KB each)
+- Custom Field Definitions: ~20KB (avg 10 fields/team, 2KB each)
+- Task Custom Field Values: ~1MB (avg 5 custom fields/task, 200 bytes each)
 
-**Total Additional Storage**: ~53MB per 1000 tasks (metadata only)
+**Total Additional Storage**: ~54MB per 1000 tasks (metadata only)
 
 ---
 

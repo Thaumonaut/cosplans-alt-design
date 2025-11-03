@@ -21,6 +21,11 @@
 - Q: Should the system send notifications for task events, and if so, which events? → A: Both in-app and email notifications for all task events (assignments, comments, status changes, @mentions)
 - Q: How do users watch/subscribe to tasks they're not assigned to? → A: No watching mechanism: Users only get notifications for tasks they're assigned to
 - Q: Should tasks from archived projects be visible in the main task views? → A: Hide by default, show with "Include Archived" filter toggle that users can enable
+- Q: When a custom field is marked as required, how should validation be enforced for existing tasks? → A: Enforce only on task creation/save - existing tasks without values are allowed, but new edits require the field
+- Q: How should custom field values be stored in the database for different field types? → A: Store all values as text with type-specific parsing/validation (JSON string for multi-select, ISO date string, number as string)
+- Q: What permissions model should apply to custom field definitions and values? → A: Team-level permissions only - owner/admin can manage field definitions, all members can view/edit field values on tasks
+- Q: Should custom fields support export/import between teams? → A: Full export/import - field definitions and values can be exported from one team and imported to another
+- Q: How should currency custom fields handle different currencies and symbols? → A: Store currency code separately (USD, EUR, GBP), display with locale-appropriate symbol
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -173,7 +178,7 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **Text**: Single-line text input
 - **Textarea**: Multi-line text input
 - **Number**: Numeric input with optional min/max
-- **Currency**: Number with currency symbol
+- **Currency**: Number with currency code (ISO 4217) selector; displays with appropriate symbol based on selected currency (e.g., USD→$, EUR→€, GBP→£)
 - **Dropdown**: Single-select from predefined options
 - **Multi-select**: Multiple selections from predefined options
 - **Checkbox**: Boolean yes/no
@@ -199,6 +204,9 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **Custom Fields**: What happens when a task template includes custom field values that don't exist in the destination team? (Answer: Field is skipped/ignored)
 - **Custom Fields**: How many custom fields can a team create? (Answer: Maximum 20 custom fields per team to prevent UI clutter and performance issues)
 - **Custom Fields**: What happens when custom field dropdown options are changed after tasks have existing values? (Answer: Existing values preserved even if option removed, shown with warning badge)
+- **Custom Fields**: What happens when importing custom field definitions with names that already exist in the destination team? (Answer: System detects conflict and prompts user to rename incoming field, skip import, or merge if types match)
+- **Custom Fields**: What happens when importing tasks with custom field values for fields that don't exist in destination team? (Answer: User prompted to either create matching field definitions first or skip those field values during import)
+- **Custom Fields**: What happens when filtering or sorting by currency fields with different currency codes? (Answer: System converts all currencies to team's default currency using exchange rates for comparison, displays original currency in results)
 
 ## Requirements *(mandatory)*
 
@@ -347,8 +355,11 @@ As a power user, I need to add custom fields to my task cards so I can track add
 **Custom Task Fields**
 
 - **FR-096**: Team owners and admins MUST be able to define custom fields for their team in team settings
+- **FR-096a**: All team members MUST be able to view and edit custom field values on tasks they have permission to edit, regardless of who created the field definition
 - **FR-097**: System MUST support custom field types: text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email
+- **FR-097a**: Currency fields MUST store both numeric value and currency code (ISO 4217) separately and display with locale-appropriate symbol (e.g., "$100.00" for USD, "€100.00" for EUR)
 - **FR-098**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., dropdown choices)
+- **FR-098a**: Required custom fields MUST be enforced only on task creation and when editing/saving existing tasks; existing tasks without required field values are allowed to remain unchanged
 - **FR-099**: Custom fields MUST appear in task detail panel in a dedicated "Custom Fields" section below standard fields
 - **FR-100**: System MUST render appropriate input widget for each custom field type (text input, dropdown, date picker, etc.)
 - **FR-101**: Custom field values MUST be saved automatically when task detail panel is updated
@@ -363,6 +374,11 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-110**: Task templates MUST support saving and applying custom field values
 - **FR-111**: Custom field values MUST be included in task search when searching by "all fields"
 - **FR-112**: Custom field history changes MUST appear in task activity log
+- **FR-113**: Team admins MUST be able to export custom field definitions (field name, type, options, settings) as JSON or CSV format
+- **FR-114**: Team admins MUST be able to import custom field definitions from exported files into their team
+- **FR-115**: When importing custom field definitions, system MUST detect name conflicts and prompt user to rename, skip, or merge
+- **FR-116**: Task exports (CSV, JSON) MUST include custom field values with field names as column headers
+- **FR-117**: Task imports MUST support mapping imported custom field data to existing field definitions in the destination team
 
 ### Key Entities *(existing entities, enhanced UI only)*
 
@@ -392,14 +408,15 @@ As a power user, I need to add custom fields to my task cards so I can track add
   - Used for: In-app notification center, tracking read/unread state, linking to tasks
 
 - **CustomFieldDefinition** (new related entity): Custom field definitions for teams
-  - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select), displayOrder, showOnCard (boolean), createdAt, updatedAt
+  - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select; for currency type stores default currency code), displayOrder, showOnCard (boolean), createdAt, updatedAt
   - Used for: Defining team-specific custom fields, configuring field behavior, controlling display
-  - Business rules: Max 20 per team, unique field names per team, cascade delete field values on definition delete
+  - Business rules: Max 20 per team, unique field names per team, cascade delete field values on definition delete; currency fields must specify default currency code in options
+  - Permissions: Only team owners and admins can create/edit/delete field definitions; all team members can view definitions and edit field values on tasks
 
 - **TaskCustomFieldValue** (new related entity): Custom field values for individual tasks
-  - Properties: id, taskId, fieldDefinitionId, value (text), createdAt, updatedAt
+  - Properties: id, taskId, fieldDefinitionId, value (TEXT), createdAt, updatedAt
   - Used for: Storing custom field data per task, querying/filtering by custom values
-  - Business rules: Value format depends on field type (JSON for multi-select, ISO date for date fields), null allowed for non-required fields
+  - Business rules: All values stored as TEXT with type-specific formatting (JSON array string for multi-select, ISO 8601 date string for dates, numeric string for numbers, JSON object for currency with structure {"amount": "100.00", "currency": "USD"}); application layer handles parsing and validation; null allowed for non-required fields
 
 ## Success Criteria *(mandatory)*
 

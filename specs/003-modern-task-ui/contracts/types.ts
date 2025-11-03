@@ -14,6 +14,7 @@ export type TaskPriority = 'low' | 'medium' | 'high'
 export type ViewMode = 'list' | 'board' | 'calendar' | 'timeline'
 export type GroupingOption = 'stage' | 'priority' | 'project' | 'assignee' | 'dueDate'
 export type NotificationEventType = 'assignment' | 'mention' | 'comment' | 'status_change'
+export type CustomFieldType = 'text' | 'textarea' | 'number' | 'currency' | 'dropdown' | 'multi-select' | 'checkbox' | 'date' | 'url' | 'email'
 
 // ========== TASK ENTITIES ==========
 
@@ -37,6 +38,7 @@ export interface TaskDetail extends Task {
   subtasks: Subtask[]
   comments?: TaskComment[]
   attachments?: TaskAttachment[]
+  customFieldValues?: TaskCustomFieldValue[]
   subtaskCompletion: {
     completed: number
     total: number
@@ -409,6 +411,137 @@ export interface TimelineTaskPosition {
   top: string // CSS value for vertical position
 }
 
+// ========== CUSTOM FIELDS ==========
+
+/**
+ * Custom field definition for a team
+ */
+export interface CustomFieldDefinition {
+  id: string
+  teamId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  required: boolean
+  defaultValue?: string | null
+  options?: CustomFieldOptions
+  displayOrder: number
+  showOnCard: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Options for different custom field types
+ */
+export interface CustomFieldOptions {
+  // For dropdown/multi-select: array of choice strings
+  choices?: string[]
+  // For currency: default currency code (ISO 4217)
+  defaultCurrency?: string
+  // For number: min/max values
+  min?: number
+  max?: number
+}
+
+/**
+ * Custom field value for a specific task
+ */
+export interface TaskCustomFieldValue {
+  id: string
+  taskId: string
+  fieldDefinitionId: string
+  value: string | null // Stored as TEXT, parsed based on field type
+  createdAt: string
+  updatedAt: string
+  // Populated when joined with field definition
+  fieldDefinition?: CustomFieldDefinition
+}
+
+/**
+ * Parsed custom field value (application layer)
+ */
+export interface ParsedCustomFieldValue {
+  fieldDefinitionId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  rawValue: string | null
+  parsedValue: CustomFieldValueTypes
+}
+
+/**
+ * Union type for parsed custom field values
+ */
+export type CustomFieldValueTypes = 
+  | string                                          // text, textarea, url, email
+  | number                                          // number
+  | boolean                                         // checkbox
+  | { amount: number; currency: string }           // currency
+  | string[]                                        // multi-select
+  | Date                                            // date
+
+/**
+ * Create custom field definition input
+ */
+export interface CustomFieldDefinitionCreateInput {
+  fieldName: string
+  fieldType: CustomFieldType
+  required?: boolean
+  defaultValue?: string
+  options?: CustomFieldOptions
+  displayOrder?: number
+  showOnCard?: boolean
+}
+
+/**
+ * Update custom field definition input
+ */
+export interface CustomFieldDefinitionUpdateInput {
+  fieldName?: string
+  required?: boolean
+  defaultValue?: string
+  options?: CustomFieldOptions
+  displayOrder?: number
+  showOnCard?: boolean
+}
+
+/**
+ * Set custom field value input
+ */
+export interface TaskCustomFieldValueSetInput {
+  fieldDefinitionId: string
+  value: string | null
+}
+
+/**
+ * Currency value structure for currency fields
+ */
+export interface CurrencyValue {
+  amount: string // Stored as string to avoid floating point issues
+  currency: string // ISO 4217 currency code (USD, EUR, GBP, etc.)
+}
+
+/**
+ * Custom field export data
+ */
+export interface CustomFieldExport {
+  definitions: CustomFieldDefinition[]
+  exportedAt: string
+  teamId: string
+}
+
+/**
+ * Custom field import result
+ */
+export interface CustomFieldImportResult {
+  imported: number
+  skipped: number
+  conflicts: Array<{
+    fieldName: string
+    reason: string
+    action: 'renamed' | 'skipped' | 'merged'
+  }>
+}
+
 // ========== VALIDATION SCHEMAS (ZOD) ==========
 
 /**
@@ -423,6 +556,8 @@ export const ViewModeSchema = ['list', 'board', 'calendar', 'timeline'] as const
 export const GroupingOptionSchema = ['stage', 'priority', 'project', 'assignee', 'dueDate'] as const
 
 export const NotificationEventTypeSchema = ['assignment', 'mention', 'comment', 'status_change'] as const
+
+export const CustomFieldTypeSchema = ['text', 'textarea', 'number', 'currency', 'dropdown', 'multi-select', 'checkbox', 'date', 'url', 'email'] as const
 
 // ========== TYPE GUARDS ==========
 
@@ -444,6 +579,10 @@ export function isGroupingOption(value: string): value is GroupingOption {
 
 export function isNotificationEventType(value: string): value is NotificationEventType {
   return ['assignment', 'mention', 'comment', 'status_change'].includes(value)
+}
+
+export function isCustomFieldType(value: string): value is CustomFieldType {
+  return ['text', 'textarea', 'number', 'currency', 'dropdown', 'multi-select', 'checkbox', 'date', 'url', 'email'].includes(value)
 }
 
 // ========== CONSTANTS ==========
@@ -481,6 +620,23 @@ export const MAX_TEMPLATES_PER_TEAM = 50
 export const MAX_SAVED_VIEWS_PER_USER = 20
 export const MAX_COMMENT_LENGTH = 10000
 export const MAX_FILE_SIZE = 26214400 // 25MB in bytes
+export const MAX_CUSTOM_FIELDS_PER_TEAM = 20
+
+export const CUSTOM_FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
+  text: 'Text',
+  textarea: 'Textarea',
+  number: 'Number',
+  currency: 'Currency',
+  dropdown: 'Dropdown',
+  'multi-select': 'Multi-Select',
+  checkbox: 'Checkbox',
+  date: 'Date',
+  url: 'URL',
+  email: 'Email',
+}
+
+// Common currency codes for currency fields
+export const COMMON_CURRENCY_CODES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'MXN'] as const
 
 // ========== EXPORT ALL ==========
 
@@ -506,5 +662,14 @@ export type {
   SavedTaskViewCreateInput,
   SavedTaskViewUpdateInput,
   TaskFilters,
+  CustomFieldDefinition,
+  CustomFieldDefinitionCreateInput,
+  CustomFieldDefinitionUpdateInput,
+  TaskCustomFieldValue,
+  TaskCustomFieldValueSetInput,
+  ParsedCustomFieldValue,
+  CurrencyValue,
+  CustomFieldExport,
+  CustomFieldImportResult,
 }
 
