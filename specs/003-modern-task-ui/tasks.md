@@ -103,10 +103,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T042 [P] [US1] Create TaskListView component in src/lib/components/tasks/TaskListView.svelte (renders tasks as list with virtual scrolling)
+- [X] T042 [P] [US1] Create TaskListView component in src/lib/components/tasks/TaskListView.svelte (renders tasks as list with virtual scrolling)
 - [X] T043 [P] [US1] Create TaskCard component in src/lib/components/tasks/TaskCard.svelte (displays task summary in list/board)
-- [ ] T044 [P] [US1] Create TaskBoardView component in src/lib/components/tasks/TaskBoardView.svelte (kanban columns by stage)
-- [ ] T045 [P] [US1] Create TaskCalendarView component in src/lib/components/tasks/TaskCalendarView.svelte (calendar grid with tasks)
+- [X] T044 [P] [US1] Create TaskBoardView component in src/lib/components/tasks/TaskBoardView.svelte (kanban columns by stage)
+- [X] T045 [P] [US1] Create TaskCalendarView component in src/lib/components/tasks/TaskCalendarView.svelte (calendar grid with tasks)
 - [X] T046 [US1] Create ViewModeSelector component in src/lib/components/tasks/TaskViewModeSelector.svelte (toggle between views)
 - [X] T047 [US1] Create TaskFilterPanel component in src/lib/components/tasks/TaskFilterPanel.svelte (filter UI)
 - [X] T048 [US1] Implement view mode state management in src/lib/stores/task-view-store.ts (Svelte store for view state)
@@ -115,7 +115,7 @@
 - [ ] T051 [US1] Load task data in src/routes/(app)/tasks/+page.ts (server-side data loading)
 - [ ] T052 [US1] Wire up view switching and filtering in main Tasks page
 - [ ] T053 [US1] Add responsive mobile layout for all views
-- [ ] T054 [US1] Implement virtual scrolling for list view (>100 tasks)
+- [X] T054 [US1] Implement virtual scrolling for list view (>100 tasks)
 
 **Checkpoint**: Users can view and filter tasks in multiple view modes ✅
 
