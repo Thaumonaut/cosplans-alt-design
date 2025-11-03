@@ -17,9 +17,9 @@ This document tracks the migration from the legacy task system to the new modern
 The following legacy files have been archived as they are replaced by the new system:
 
 ### 1. **Old Tasks Route** → `.archive/003-modern-task-ui/old-components/auth-tasks-page/`
-- **Original Path:** `src/routes/(auth)/tasks/+page.svelte`
+- **Original Path:** `src/routes/(auth)/tasks/+page.svelte` (archived version)
 - **Reason:** This was the legacy task list page using the old UI system
-- **Replaced By:** `src/routes/(app)/tasks/+page.svelte` (new modern UI)
+- **Replaced By:** `src/routes/(auth)/tasks/+page.svelte` (new modern UI, same location)
 - **Key Differences:**
   - New: Multiple view modes (list, board, calendar, timeline)
   - New: Virtual scrolling for performance
@@ -66,7 +66,7 @@ The following legacy files have been archived as they are replaced by the new sy
 
 ### Routes
 ```
-src/routes/(app)/tasks/
+src/routes/(auth)/tasks/
   ├── +page.svelte       # Main tasks page with view switching
   └── +page.ts           # Server-side data loading
 ```
@@ -202,7 +202,7 @@ const mainNav = [
 ];
 ```
 
-The route is properly configured under `src/routes/(app)/tasks/` which is the authenticated app layout.
+The route is properly configured under `src/routes/(auth)/tasks/` which is the authenticated app layout with sidebar navigation.
 
 ---
 
