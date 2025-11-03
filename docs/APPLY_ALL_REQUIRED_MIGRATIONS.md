@@ -160,3 +160,4 @@ After all migrations are applied:
 3. Check browser console - should have no 404/406 errors
 
 
+

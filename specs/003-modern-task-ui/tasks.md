@@ -29,17 +29,17 @@ All paths relative to repository root: `/home/jek/Downloads/cosplay-tracker/`
 
 **Purpose**: Database schema and foundation for all task features
 
-- [ ] T001 Create database migration for subtasks table in `supabase/migrations/20251103000001_create_subtasks.sql`
-- [ ] T002 [P] Create database migration for task_comments table in `supabase/migrations/20251103000002_create_task_comments.sql`
-- [ ] T003 [P] Create database migration for task_attachments table in `supabase/migrations/20251103000003_create_task_attachments.sql`
-- [ ] T004 [P] Create database migration for task_notifications table in `supabase/migrations/20251103000004_create_task_notifications.sql`
-- [ ] T005 [P] Create database migration for task_templates table in `supabase/migrations/20251103000005_create_task_templates.sql`
-- [ ] T006 [P] Create database migration for saved_task_views table in `supabase/migrations/20251103000006_create_saved_task_views.sql`
-- [ ] T007 Run all migrations to create new tables and verify schema in local Supabase instance
-- [ ] T008 [P] Add type definitions for new entities in `src/lib/types/domain/task.ts` (Subtask, TaskComment, TaskAttachment, TaskNotification, TaskTemplate, SavedTaskView)
-- [ ] T009 [P] Create taskFilters store in `src/lib/stores/taskFilters.ts` for filter state management
-- [ ] T010 [P] Create taskViews store in `src/lib/stores/taskViews.ts` for saved views persistence
-- [ ] T011 [P] Create notifications store in `src/lib/stores/notifications.ts` for in-app notification state
+- [X] T001 Create database migration for subtasks table in `supabase/migrations/20251103150000_create_subtasks.sql`
+- [X] T002 [P] Create database migration for task_comments table in `supabase/migrations/20251103150001_create_task_comments.sql`
+- [X] T003 [P] Create database migration for task_attachments table in `supabase/migrations/20251103150002_create_task_attachments.sql`
+- [X] T004 [P] Create database migration for task_notifications table in `supabase/migrations/20251103150003_create_task_notifications.sql`
+- [X] T005 [P] Create database migration for task_templates table in `supabase/migrations/20251103150004_create_task_templates.sql`
+- [X] T006 [P] Create database migration for saved_task_views table in `supabase/migrations/20251103150005_create_saved_task_views.sql`
+- [X] T007 Run all migrations to create new tables and verify schema in local Supabase instance
+- [X] T008 [P] Add type definitions for new entities in `src/lib/types/domain/task.ts` (Subtask, TaskComment, TaskAttachment, TaskNotification, TaskTemplate, SavedTaskView)
+- [X] T009 [P] Create taskFilters store in `src/lib/stores/taskFilters.ts` for filter state management
+- [X] T010 [P] Create taskViews store in `src/lib/stores/taskViews.ts` for saved views persistence
+- [X] T011 [P] Create notifications store in `src/lib/stores/notifications.ts` for in-app notification state
 
 **Checkpoint**: Database schema complete, type definitions ready, core stores initialized
 
@@ -51,15 +51,15 @@ All paths relative to repository root: `/home/jek/Downloads/cosplay-tracker/`
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T012 [P] Create SubtaskService with CRUD operations in `src/lib/api/services/subtaskService.ts`
-- [ ] T013 [P] Create TaskCommentService with CRUD operations in `src/lib/api/services/taskCommentService.ts`
-- [ ] T014 [P] Create TaskAttachmentService with upload/download operations in `src/lib/api/services/taskAttachmentService.ts`
-- [ ] T015 [P] Create TaskNotificationService with fetch/mark-read operations in `src/lib/api/services/taskNotificationService.ts`
-- [ ] T016 [P] Create TaskTemplateService with CRUD operations in `src/lib/api/services/taskTemplateService.ts`
-- [ ] T017 Enhance TaskService with new filter parameters and bulk operations in `src/lib/api/services/taskService.ts`
-- [ ] T018 [P] Create drag-and-drop utility functions in `src/lib/utils/drag-and-drop.ts` using native HTML5 DND API
-- [ ] T019 [P] Create task filter logic utilities in `src/lib/utils/task-filters.ts` for client-side filtering
-- [ ] T020 [P] Create natural language parsing utility in `src/lib/utils/natural-language.ts` for quick task creation
+- [X] T012 [P] Create SubtaskService with CRUD operations in `src/lib/api/services/subtaskService.ts`
+- [X] T013 [P] Create TaskCommentService with CRUD operations in `src/lib/api/services/taskCommentService.ts`
+- [X] T014 [P] Create TaskAttachmentService with upload/download operations in `src/lib/api/services/taskAttachmentService.ts`
+- [X] T015 [P] Create TaskNotificationService with fetch/mark-read operations in `src/lib/api/services/taskNotificationService.ts`
+- [X] T016 [P] Create TaskTemplateService with CRUD operations in `src/lib/api/services/taskTemplateService.ts`
+- [X] T017 Enhance TaskService with new filter parameters and bulk operations in `src/lib/api/services/taskService.ts`
+- [X] T018 [P] Create drag-and-drop utility functions in `src/lib/utils/drag-and-drop.ts` using native HTML5 DND API
+- [X] T019 [P] Create task filter logic utilities in `src/lib/utils/task-filters.ts` for client-side filtering
+- [X] T020 [P] Create natural language parsing utility in `src/lib/utils/natural-language.ts` for quick task creation
 - [ ] T021 [P] Create base InlineUserSelector component in `src/lib/components/base/InlineUserSelector.svelte` for assignee selection
 - [ ] T022 [P] Create base InlineTagInput component in `src/lib/components/base/InlineTagInput.svelte` for tag input
 - [ ] T023 [P] Create base InlineFileUpload component in `src/lib/components/base/InlineFileUpload.svelte` for file attachments

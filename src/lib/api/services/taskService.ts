@@ -400,3 +400,172 @@ function mapTaskFromDb(row: any): Task {
   return mapTaskFromDbWithStage(row)
 }
 
+// ========== ENHANCED METHODS FOR MODERN TASK UI ==========
+
+/**
+ * Extended task filtering with multiple criteria
+ * Supports all new filter options from modern task UI
+ */
+export async function listWithFilters(filters: {
+  teamId?: string
+  projectId?: string | null
+  stageIds?: string[]
+  priorities?: string[]
+  assignees?: string[]
+  dateRange?: { start: string; end: string }
+  search?: string
+  includeArchived?: boolean
+  limit?: number
+  offset?: number
+}): Promise<Task[]> {
+  let query = (supabase
+    .from('tasks')
+    .select(`
+      *,
+      task_stages(
+        id,
+        name,
+        display_order,
+        is_completion_stage
+      )
+    `) as any)
+    .order('created_at', { ascending: false })
+
+  // Team filter
+  if (filters.teamId) {
+    query = query.eq('team_id', filters.teamId)
+  }
+
+  // Project filter (including null for standalone tasks)
+  if (filters.projectId !== undefined) {
+    if (filters.projectId === null) {
+      query = query.is('project_id', null)
+    } else {
+      query = query.eq('project_id', filters.projectId)
+    }
+  }
+
+  // Stage IDs filter (multiple stages)
+  if (filters.stageIds && filters.stageIds.length > 0) {
+    query = query.in('stage_id', filters.stageIds)
+  }
+
+  // Priorities filter (multiple priorities)
+  if (filters.priorities && filters.priorities.length > 0) {
+    query = query.in('priority', filters.priorities)
+  }
+
+  // Assignees filter (multiple assignees)
+  if (filters.assignees && filters.assignees.length > 0) {
+    query = query.in('assigned_to', filters.assignees)
+  }
+
+  // Date range filter (due date)
+  if (filters.dateRange) {
+    query = query.gte('due_date', filters.dateRange.start)
+    query = query.lte('due_date', filters.dateRange.end)
+  }
+
+  // Search filter (title and description)
+  if (filters.search && filters.search.trim()) {
+    query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+  }
+
+  // Archived projects filter
+  // Note: This requires joining with projects table to check archived status
+  // For now, we'll handle this in application layer after fetching
+  // TODO: Optimize with proper join once project archived field is confirmed
+
+  // Pagination
+  if (filters.limit) {
+    query = query.limit(filters.limit)
+  }
+  if (filters.offset) {
+    query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+  return (data || []).map(mapTaskFromDbWithStage)
+}
+
+/**
+ * Bulk update multiple tasks
+ * Updates specified fields for all task IDs provided
+ */
+export async function bulkUpdate(
+  taskIds: string[],
+  updates: {
+    stageId?: string
+    priority?: string
+    assignedTo?: string | null
+    dueDate?: string | null
+  }
+): Promise<{ updated: number; failed: string[] }> {
+  if (taskIds.length === 0) {
+    return { updated: 0, failed: [] }
+  }
+
+  const dbUpdates: any = {}
+  if (updates.stageId !== undefined) dbUpdates.stage_id = updates.stageId
+  if (updates.priority !== undefined) dbUpdates.priority = updates.priority
+  if (updates.assignedTo !== undefined) dbUpdates.assigned_to = updates.assignedTo
+  if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate
+
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(dbUpdates)
+      .in('id', taskIds)
+      .select()
+
+    if (error) throw error
+
+    return {
+      updated: data?.length || 0,
+      failed: []
+    }
+  } catch (error) {
+    console.error('Bulk update failed:', error)
+    return {
+      updated: 0,
+      failed: taskIds
+    }
+  }
+}
+
+/**
+ * Bulk delete multiple tasks
+ */
+export async function bulkDelete(taskIds: string[]): Promise<{ deleted: number; failed: string[] }> {
+  if (taskIds.length === 0) {
+    return { deleted: 0, failed: [] }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .in('id', taskIds)
+
+    if (error) throw error
+
+    return {
+      deleted: taskIds.length,
+      failed: []
+    }
+  } catch (error) {
+    console.error('Bulk delete failed:', error)
+    return {
+      deleted: 0,
+      failed: taskIds
+    }
+  }
+}
+
+// Add enhanced methods to taskService export
+taskService.listWithFilters = listWithFilters
+taskService.bulkUpdate = bulkUpdate
+taskService.bulkDelete = bulkDelete
+
