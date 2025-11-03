@@ -467,7 +467,7 @@
                       </Badge>
                     </div>
                     <Progress value={project.progress} class="h-2" />
-                    <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                       <div>
                         <p class="text-muted-foreground">Tasks</p>
                         <p class="font-medium">{project.tasks.completed}/{project.tasks.total}</p>
@@ -503,7 +503,7 @@
               View all
             </Button>
           </div>
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             {#each dbIdeas as idea (idea.id)}
               <div class="cursor-pointer hover:shadow-md transition-shadow" onclick={() => goto(`/ideas/${idea.id}`)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goto(`/ideas/${idea.id}`); } }}>
                 <Card>
@@ -548,7 +548,7 @@
       {/if}
     
     <!-- Sidebar Widgets -->
-    <div class="grid gap-6 md:grid-cols-2">
+    <div class="grid gap-6 lg:grid-cols-2">
       <!-- My Tasks -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-3">
