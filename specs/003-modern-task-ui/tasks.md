@@ -60,9 +60,9 @@ All paths relative to repository root: `/home/jek/Downloads/cosplay-tracker/`
 - [X] T018 [P] Create drag-and-drop utility functions in `src/lib/utils/drag-and-drop.ts` using native HTML5 DND API
 - [X] T019 [P] Create task filter logic utilities in `src/lib/utils/task-filters.ts` for client-side filtering
 - [X] T020 [P] Create natural language parsing utility in `src/lib/utils/natural-language.ts` for quick task creation
-- [ ] T021 [P] Create base InlineUserSelector component in `src/lib/components/base/InlineUserSelector.svelte` for assignee selection
-- [ ] T022 [P] Create base InlineTagInput component in `src/lib/components/base/InlineTagInput.svelte` for tag input
-- [ ] T023 [P] Create base InlineFileUpload component in `src/lib/components/base/InlineFileUpload.svelte` for file attachments
+- [X] T021 [P] Create base InlineUserSelector component in `src/lib/components/base/InlineUserSelector.svelte` for assignee selection
+- [X] T022 [P] Create base InlineTagInput component in `src/lib/components/base/InlineTagInput.svelte` for tag input
+- [X] T023 [P] Create base InlineFileUpload component in `src/lib/components/base/InlineFileUpload.svelte` for file attachments
 
 **Checkpoint**: Foundation ready - all services operational, utilities available, base components complete - user story implementation can now begin in parallel
 
