@@ -150,6 +150,39 @@ As a busy cosplayer, I need to quickly create tasks without filling out lengthy 
 
 ---
 
+### User Story 8 - Custom Task Fields (Priority: P3)
+
+As a power user, I need to add custom fields to my task cards so I can track additional information specific to my workflow that wasn't anticipated by the default fields.
+
+**Why this priority**: Different users have different tracking needs (budget, measurements, material specs, etc.). Custom fields provide flexibility without cluttering the default UI for everyone.
+
+**Independent Test**: Navigate to team settings, create a custom field "Budget" (currency type) and "Material" (text type). Create a task, verify custom fields appear in task detail panel. Enter values, save, verify data persists. Add another task, verify custom field appears there too. Delete custom field definition, verify it's removed from all tasks.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am a team owner/admin, **When** I navigate to team settings → Custom Fields, **Then** I see a list of existing custom fields and an "Add Custom Field" button
+2. **Given** I click "Add Custom Field", **When** I specify field name "Budget", type "Currency", and save, **Then** the custom field appears in task detail panels for all tasks in this team
+3. **Given** I have custom fields defined, **When** I open any task detail panel, **Then** I see a "Custom Fields" section showing all team custom fields with appropriate input widgets
+4. **Given** I am editing a task with custom fields, **When** I enter a value in a custom text field and save, **Then** the value persists and displays on task reopening
+5. **Given** I have a custom dropdown field "Status Type" with options ["In Review", "Blocked", "Waiting"], **When** I select "Blocked" for a task, **Then** the selection saves and displays correctly
+6. **Given** I have custom fields with values on multiple tasks, **When** I delete a custom field definition, **Then** the field and all its values are removed from all tasks (with confirmation warning)
+7. **Given** I have custom fields defined, **When** I view task cards in list/board view, **Then** I can optionally show selected custom fields as additional metadata on the card
+8. **Given** I am filtering tasks, **When** I open the filter panel, **Then** I can filter by custom field values (e.g., Budget > $100, Material = "Vinyl")
+
+**Custom Field Types Supported**:
+- **Text**: Single-line text input
+- **Textarea**: Multi-line text input
+- **Number**: Numeric input with optional min/max
+- **Currency**: Number with currency symbol
+- **Dropdown**: Single-select from predefined options
+- **Multi-select**: Multiple selections from predefined options
+- **Checkbox**: Boolean yes/no
+- **Date**: Date picker
+- **URL**: Link input with validation
+- **Email**: Email input with validation
+
+---
+
 ### Edge Cases
 
 - What happens when a user drags a task to a stage that doesn't exist for that task's team (mixing team tasks in shared views)?
@@ -162,6 +195,10 @@ As a busy cosplayer, I need to quickly create tasks without filling out lengthy 
 - How does the system handle conflicting simultaneous edits to the same task (real-time collaboration)?
 - What happens when viewing tasks across multiple teams (team switching/filtering)?
 - How does the system handle tasks with past due dates (visual warnings, notifications)?
+- **Custom Fields**: What happens when a custom field definition is deleted and tasks have values for that field? (Answer: Values are cascade deleted with confirmation warning)
+- **Custom Fields**: What happens when a task template includes custom field values that don't exist in the destination team? (Answer: Field is skipped/ignored)
+- **Custom Fields**: How many custom fields can a team create? (Answer: Maximum 20 custom fields per team to prevent UI clutter and performance issues)
+- **Custom Fields**: What happens when custom field dropdown options are changed after tasks have existing values? (Answer: Existing values preserved even if option removed, shown with warning badge)
 
 ## Requirements *(mandatory)*
 
@@ -307,6 +344,26 @@ As a busy cosplayer, I need to quickly create tasks without filling out lengthy 
 - **FR-094**: Email notifications MUST include task title, change description, actor name, and direct link to the task
 - **FR-095**: Users MUST be able to configure notification preferences (disable email, disable in-app, or disable specific event types) in settings
 
+**Custom Task Fields**
+
+- **FR-096**: Team owners and admins MUST be able to define custom fields for their team in team settings
+- **FR-097**: System MUST support custom field types: text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email
+- **FR-098**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., dropdown choices)
+- **FR-099**: Custom fields MUST appear in task detail panel in a dedicated "Custom Fields" section below standard fields
+- **FR-100**: System MUST render appropriate input widget for each custom field type (text input, dropdown, date picker, etc.)
+- **FR-101**: Custom field values MUST be saved automatically when task detail panel is updated
+- **FR-102**: Users MUST be able to configure which custom fields appear on task cards in list/board view in team settings
+- **FR-103**: Task filters MUST support filtering by custom field values (text contains, number comparison, dropdown selection, etc.)
+- **FR-104**: Custom fields MUST be team-scoped (each team has its own custom field definitions)
+- **FR-105**: Maximum 20 custom fields per team MUST be enforced to prevent UI clutter and performance degradation
+- **FR-106**: Deleting a custom field definition MUST show confirmation warning and CASCADE delete all task values for that field
+- **FR-107**: Custom field definitions MUST be orderable/reorderable by team admins to control display order
+- **FR-108**: Dropdown/multi-select custom fields MUST support adding/editing/deleting options from team settings
+- **FR-109**: Changing dropdown options MUST preserve existing task values even if option is removed (show with warning badge)
+- **FR-110**: Task templates MUST support saving and applying custom field values
+- **FR-111**: Custom field values MUST be included in task search when searching by "all fields"
+- **FR-112**: Custom field history changes MUST appear in task activity log
+
 ### Key Entities *(existing entities, enhanced UI only)*
 
 - **Task**: Existing entity with properties: id, title, description, stageId, priority, assignedTo, dueDate, projectId (nullable), resourceId (nullable), teamId, completed (deprecated), createdAt, updatedAt
@@ -333,6 +390,16 @@ As a busy cosplayer, I need to quickly create tasks without filling out lengthy 
 - **TaskNotification** (new related entity): Notification records for task events
   - Properties: id, userId, taskId, eventType (assignment, mention, comment, status_change), read (boolean), message, actorUserId, createdAt
   - Used for: In-app notification center, tracking read/unread state, linking to tasks
+
+- **CustomFieldDefinition** (new related entity): Custom field definitions for teams
+  - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select), displayOrder, showOnCard (boolean), createdAt, updatedAt
+  - Used for: Defining team-specific custom fields, configuring field behavior, controlling display
+  - Business rules: Max 20 per team, unique field names per team, cascade delete field values on definition delete
+
+- **TaskCustomFieldValue** (new related entity): Custom field values for individual tasks
+  - Properties: id, taskId, fieldDefinitionId, value (text), createdAt, updatedAt
+  - Used for: Storing custom field data per task, querying/filtering by custom values
+  - Business rules: Value format depends on field type (JSON for multi-select, ISO date for date fields), null allowed for non-required fields
 
 ## Success Criteria *(mandatory)*
 
