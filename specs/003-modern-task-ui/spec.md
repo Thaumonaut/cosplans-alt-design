@@ -27,6 +27,36 @@
 - Q: Should custom fields support export/import between teams? → A: Full export/import - field definitions and values can be exported from one team and imported to another
 - Q: How should currency custom fields handle different currencies and symbols? → A: Store currency code separately (USD, EUR, GBP), display with locale-appropriate symbol
 
+### Post-MVP Features (Noted for Future Specs)
+
+The following features were discussed and are valuable but deferred to post-MVP to maintain focused scope:
+
+**Time Management**:
+- **Time Estimates**: Add estimated hours/effort fields to tasks
+- **Time Tracking**: Track actual hours spent on tasks (manual logging or timer)
+- **Actual vs Estimated**: Compare estimated vs actual time for planning improvements
+
+**Integrations**:
+- **Calendar Sync**: Two-way sync with Google Calendar, iCal, etc.
+- **Discord Integration**: Post task updates, create tasks from Discord, team coordination
+- **API Webhooks**: External integrations for Slack, Zapier, custom tools
+
+**Advanced ADHD Support**:
+- **Pomodoro Timer**: Built-in 25/5 work/break timer with task-specific focus sessions
+- **Achievement System**: Full gamification with levels, points, badges, unlockable rewards
+- **Body Doubling**: "Working Now" status showing team members currently working on tasks
+- **Energy Level Matching**: Tag tasks by energy required, match to user's current energy
+- **Smart Reminders**: Customizable reminders beyond due dates (e.g., "Remind me 3 days before")
+
+**Team Collaboration**:
+- **Task Dependencies**: "Task A blocks Task B" relationships with visualization
+- **Recurring Tasks**: Tasks that repeat daily/weekly/monthly (separate from team calendar)
+- **Task Approval Workflows**: Tasks require review/approval before completion
+
+**Rationale for Deferral**: These features are valuable but require significant additional development time. The current MVP provides a strong, differentiated task management system with ADHD support. Post-MVP iterations can add these based on user feedback and usage patterns, particularly prioritizing time tracking for marketplace/commission economy alignment.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Quick Task Overview and Management (Priority: P1)
@@ -155,7 +185,86 @@ As a busy cosplayer, I need to quickly create tasks without filling out lengthy 
 
 ---
 
-### User Story 8 - Custom Task Fields (Priority: P3)
+### User Story 8 - Task Organization with Labels (Priority: P2)
+
+As a cosplayer managing multiple projects, I need flexible visual categorization beyond projects and stages so I can quickly identify and filter tasks by themes, urgency, or custom categories.
+
+**Why this priority**: Labels provide quick visual organization that's more flexible than rigid hierarchies. ADHD users especially benefit from color-coded visual cues.
+
+**Independent Test**: Create labels "Urgent", "Fabric Work", "Needs Review" with different colors. Apply multiple labels to tasks. Filter tasks by label. Verify labels appear as colored badges on task cards.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am on the Tasks page, **When** I click "Manage Labels", **Then** I see a list of existing labels with color swatches and an "Add Label" button
+2. **Given** I create a new label "Urgent" with red color, **When** I apply it to tasks, **Then** the label appears as a red badge on task cards in all views
+3. **Given** I have labels defined, **When** I edit a task, **Then** I can add/remove multiple labels with a dropdown or tag-style picker
+4. **Given** I have tasks with labels, **When** I filter by "Urgent" label, **Then** only tasks with that label display
+5. **Given** I view a task card, **When** multiple labels are applied, **Then** all labels display as colored badges (up to 3 visible, "+2 more" for additional)
+6. **Given** I have labeled tasks, **When** I delete a label, **Then** it's removed from all tasks with a confirmation warning
+7. **Given** I filter tasks, **When** I select multiple labels, **Then** tasks matching ANY selected label display (OR logic)
+
+---
+
+### User Story 9 - ADHD-Friendly Task Management (Priority: P1)
+
+As a cosplayer with ADHD, I need tools that help me break through decision paralysis, celebrate progress, and maintain focus so I can consistently complete tasks without becoming overwhelmed.
+
+**Why this priority**: ADHD affects executive function, making task initiation, prioritization, and completion challenging. Built-in support features make the app accessible and effective for neurodivergent users.
+
+**Independent Test**: Create 10 tasks with various due dates and priorities. Click "What should I do now?" and verify algorithm suggests appropriate task. Complete task and verify celebration animation plays. Check streak counter updates. Enable Focus Mode and verify UI simplifies to show only current task.
+
+**Acceptance Scenarios**:
+
+1. **Given** I have many tasks in my list, **When** I click "What should I do now?" button, **Then** the system suggests 1-3 specific tasks based on due dates, priority, and dependencies with clear reasoning
+2. **Given** I select a suggested task, **When** I click "Start Working", **Then** Focus Mode activates, hiding other tasks and showing only the current task with minimal UI
+3. **Given** I am in Focus Mode, **When** I complete the task, **Then** a celebration animation plays (confetti, checkmark swoosh) and I see "Great job! Task complete 🎉"
+4. **Given** I complete tasks regularly, **When** I complete a task, **Then** my task completion streak updates (e.g., "5 days in a row! 🔥")
+5. **Given** I view my tasks, **When** I look at the header, **Then** I see today's completion progress ("3/8 tasks complete today") with a progress bar
+6. **Given** I create a task with a far-away due date, **When** I save it, **Then** the system prompts "This task is due in 30 days. Want to set milestone deadlines for each stage?"
+7. **Given** I set stage-level deadlines on a task, **When** I view the task card, **Then** I see upcoming stage deadline ("Planning due in 3 days") with color-coded urgency
+8. **Given** I complete a task stage before its deadline, **When** the stage advances, **Then** I see encouragement ("Planning done early! 🎯") and the next stage's deadline
+9. **Given** I have an active streak, **When** I view the Tasks page header, **Then** I see my current streak with a flame icon and motivational message
+10. **Given** I haven't completed tasks today, **When** it's evening, **Then** I see a gentle prompt "You haven't completed any tasks today. Here's a quick one to get started:" with an easy task suggestion
+
+**ADHD-Specific Features**:
+- **Next Action Algorithm**: Suggests tasks based on due dates, priority, estimated effort, and user's completion patterns
+- **Focus Mode**: Full-screen single-task view with minimal distractions
+- **Celebration Animations**: Visual reward for completing tasks (confetti, checkmarks, encouraging messages)
+- **Streak Tracking**: Consecutive days with completed tasks, displayed prominently with flame emoji
+- **Stage-Level Deadlines**: Break long projects into smaller milestone deadlines per workflow stage
+- **Progress Visibility**: "X/Y tasks complete" shown everywhere (header, project pages, task cards)
+- **Gentle Prompts**: Encouraging, non-judgmental reminders to start tasks
+- **Decision Support**: "What should I do now?" removes paralysis by providing clear direction
+
+---
+
+### User Story 10 - Task Breakdown Assistance (Priority: P2)
+
+As a user planning complex cosplay projects, I need help breaking large overwhelming tasks into manageable subtasks so I can get started and make steady progress without feeling paralyzed.
+
+**Why this priority**: Large tasks create anxiety and procrastination, especially for ADHD users. Automatic breakdown suggestions lower the barrier to starting work.
+
+**Independent Test**: Create task "Build Iron Man Armor". System prompts for breakdown. Accept suggestion. Verify subtasks like "Research reference images", "Cut foam pieces", "Paint and weather" are created automatically.
+
+**Acceptance Scenarios**:
+
+1. **Given** I create a new task with no subtasks, **When** I save it, **Then** the system asks "This looks like a big task! Want help breaking it down?"
+2. **Given** I accept breakdown assistance, **When** the system analyzes the task title, **Then** it suggests 3-7 logical subtasks based on common cosplay workflows
+3. **Given** I see suggested subtasks, **When** I review them, **Then** I can edit, delete, reorder, or add more before confirming
+4. **Given** I have a task with no subtasks and due date > 7 days away, **When** I view the task, **Then** I see a gentle prompt "Break this down into smaller steps?" with a magic wand icon
+5. **Given** I click "Suggest subtasks", **When** the task is related to a previous similar task, **Then** the system offers "You broke down a similar task last time. Use that structure?"
+6. **Given** I have templates saved, **When** I create a new task, **Then** the system suggests matching templates ("This looks like a photoshoot task. Apply Photoshoot Prep template?")
+7. **Given** I create multiple similar tasks, **When** I break down one, **Then** the system learns and offers better suggestions for future similar tasks
+
+**Breakdown Suggestions by Task Type**:
+- **Costume Creation**: Research → Pattern/design → Material gathering → Construction → Fitting → Finishing
+- **Prop Building**: Reference gathering → Material selection → Base construction → Detail work → Painting → Weathering
+- **Photoshoot Planning**: Location scouting → Crew booking → Shot list → Equipment prep → Costume prep → Execution
+- **Convention Prep**: Registration → Hotel booking → Costume selection → Packing list → Travel arrangements → Schedule planning
+
+---
+
+### User Story 11 - Custom Task Fields (Priority: P3)
 
 As a power user, I need to add custom fields to my task cards so I can track additional information specific to my workflow that wasn't anticipated by the default fields.
 
@@ -207,6 +316,14 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **Custom Fields**: What happens when importing custom field definitions with names that already exist in the destination team? (Answer: System detects conflict and prompts user to rename incoming field, skip import, or merge if types match)
 - **Custom Fields**: What happens when importing tasks with custom field values for fields that don't exist in destination team? (Answer: User prompted to either create matching field definitions first or skip those field values during import)
 - **Custom Fields**: What happens when filtering or sorting by currency fields with different currency codes? (Answer: System converts all currencies to team's default currency using exchange rates for comparison, displays original currency in results)
+- **Labels**: What happens when a user tries to create more than 50 labels? (Answer: System prevents creation and shows message "Maximum 50 labels reached. Delete unused labels to create new ones")
+- **Labels**: What happens when applying 10+ labels to a single task? (Answer: Task card shows first 3 labels + "+7 more" badge; hover/click shows all labels)
+- **Stage Deadlines**: What happens if user sets stage deadlines in non-chronological order? (Answer: System allows it with warning "Stage deadlines seem out of order. Is this intentional?")
+- **Stage Deadlines**: What happens when a task is moved backward to a previous stage with a past deadline? (Answer: Deadline reactivates with overdue indicator)
+- **Focus Mode**: What happens if user navigates away from app while in Focus Mode? (Answer: Focus Mode state persists; returning to app shows "You're still working on [Task]. Continue?" prompt)
+- **Streak Tracking**: What happens to streaks across timezones or when user works at midnight? (Answer: Streak based on user's local timezone; completion at 11:59pm counts for that day)
+- **Task Breakdown**: What happens when breakdown suggestions fail to match task type? (Answer: System offers generic breakdown: "Break into 3-5 steps" with empty subtask fields to fill)
+- **Task Breakdown**: What happens if user repeatedly rejects breakdown suggestions? (Answer: System learns preference and stops auto-prompting for that user, but keeps "Suggest Subtasks" button available)
 
 ## Requirements *(mandatory)*
 
@@ -352,33 +469,81 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-094**: Email notifications MUST include task title, change description, actor name, and direct link to the task
 - **FR-095**: Users MUST be able to configure notification preferences (disable email, disable in-app, or disable specific event types) in settings
 
+**Task Labels & Organization**
+
+- **FR-096**: Users MUST be able to create custom labels for their team with a name and color (hex color code)
+- **FR-097**: Labels MUST be team-scoped (all team members can view and use team labels)
+- **FR-098**: Users MUST be able to apply multiple labels to a single task
+- **FR-099**: Labels MUST appear as colored badges on task cards in all views (list, board, calendar, timeline)
+- **FR-100**: Task cards MUST display up to 3 labels visibly, with "+N more" indicator for additional labels
+- **FR-101**: Users MUST be able to filter tasks by one or more labels (OR logic: show tasks matching ANY selected label)
+- **FR-102**: Label filter state MUST persist across sessions in saved views
+- **FR-103**: Deleting a label MUST show confirmation warning and remove label from all tasks
+- **FR-104**: Maximum 50 labels per team MUST be enforced to prevent organizational clutter
+- **FR-105**: Labels MUST be manageable from a "Manage Labels" dialog with create/edit/delete/reorder capabilities
+- **FR-106**: Label color picker MUST offer preset colors (10-15 options) and custom color input
+
+**ADHD-Friendly Features**
+
+- **FR-107**: System MUST provide a "What should I do now?" button that suggests 1-3 tasks based on priority algorithm
+- **FR-108**: Task suggestion algorithm MUST consider: due dates (urgent first), task priority, project priority, estimated effort (if set), and dependencies
+- **FR-109**: Suggested tasks MUST display with reasoning (e.g., "Due tomorrow", "High priority", "Blocks 3 other tasks")
+- **FR-110**: System MUST provide a Focus Mode that displays only the current task in a distraction-free full-screen layout
+- **FR-111**: Focus Mode MUST hide navigation, sidebar, and all other tasks, showing only task title, description, subtasks, and "Mark Complete" button
+- **FR-112**: Completing a task MUST trigger a celebration animation (confetti or checkmark swoosh) with encouraging message
+- **FR-113**: System MUST track user's task completion streak (consecutive days with at least one completed task)
+- **FR-114**: Streak counter MUST display prominently in Tasks page header with flame emoji (e.g., "🔥 5 day streak!")
+- **FR-115**: System MUST display today's task completion progress in header (e.g., "3/8 tasks complete today" with progress bar)
+- **FR-116**: Task cards MUST show completion progress percentage when subtasks exist (e.g., "60% complete" with visual bar)
+- **FR-117**: Users MUST be able to set stage-level deadlines (milestone deadlines for each workflow stage)
+- **FR-118**: When creating a task with due date > 7 days away, system MUST prompt "Want to set milestone deadlines for each stage?"
+- **FR-119**: Task cards with stage-level deadlines MUST display upcoming stage deadline with color-coded urgency (green: >3 days, yellow: 1-3 days, red: <1 day or overdue)
+- **FR-120**: Completing a task stage before its deadline MUST show encouragement message (e.g., "Planning done early! 🎯")
+- **FR-121**: System MUST provide gentle evening prompt if no tasks completed today, suggesting an easy task to build momentum
+- **FR-122**: All progress indicators, streaks, and celebrations MUST use positive, encouraging language (never punishing or guilt-inducing)
+- **FR-123**: Focus Mode MUST be accessible via keyboard shortcut (e.g., 'F' key) for quick activation
+- **FR-124**: Users MUST be able to exit Focus Mode easily (ESC key or visible "Exit Focus" button)
+
+**Task Breakdown Assistance**
+
+- **FR-125**: When creating a new task, system MUST prompt "Want help breaking this down?" if title suggests complex work
+- **FR-126**: Task breakdown suggestions MUST analyze task title and suggest 3-7 logical subtasks based on common cosplay workflows
+- **FR-127**: System MUST recognize task types: Costume Creation, Prop Building, Photoshoot Planning, Convention Prep, Material Sourcing
+- **FR-128**: Suggested subtasks MUST be editable (add, remove, reorder, rename) before user confirms
+- **FR-129**: For tasks with no subtasks and due date > 7 days away, system MUST show gentle prompt "Break this down into smaller steps?" with magic wand icon
+- **FR-130**: When user creates similar tasks repeatedly, system MUST learn patterns and improve future suggestions
+- **FR-131**: If user has previously broken down a similar task, system MUST offer "Use previous breakdown structure?" option
+- **FR-132**: Task breakdown suggestions MUST be available on-demand via "Suggest Subtasks" button in task detail panel
+- **FR-133**: System MUST match task titles to saved templates and offer "Apply [Template Name] template?" when detected
+- **FR-134**: Breakdown suggestions MUST include logical workflow order (e.g., Research before Construction)
+
 **Custom Task Fields**
 
-- **FR-096**: Team owners and admins MUST be able to define custom fields for their team in team settings
-- **FR-096a**: All team members MUST be able to view and edit custom field values on tasks they have permission to edit, regardless of who created the field definition
-- **FR-097**: System MUST support custom field types: text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email
-- **FR-097a**: Currency fields MUST store both numeric value and currency code (ISO 4217) separately and display with locale-appropriate symbol (e.g., "$100.00" for USD, "€100.00" for EUR)
-- **FR-098**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., dropdown choices)
-- **FR-098a**: Required custom fields MUST be enforced only on task creation and when editing/saving existing tasks; existing tasks without required field values are allowed to remain unchanged
-- **FR-099**: Custom fields MUST appear in task detail panel in a dedicated "Custom Fields" section below standard fields
-- **FR-100**: System MUST render appropriate input widget for each custom field type (text input, dropdown, date picker, etc.)
-- **FR-101**: Custom field values MUST be saved automatically when task detail panel is updated
-- **FR-102**: Users MUST be able to configure which custom fields appear on task cards in list/board view in team settings
-- **FR-103**: Task filters MUST support filtering by custom field values (text contains, number comparison, dropdown selection, etc.)
-- **FR-104**: Custom fields MUST be team-scoped (each team has its own custom field definitions)
-- **FR-105**: Maximum 20 custom fields per team MUST be enforced to prevent UI clutter and performance degradation
-- **FR-106**: Deleting a custom field definition MUST show confirmation warning and CASCADE delete all task values for that field
-- **FR-107**: Custom field definitions MUST be orderable/reorderable by team admins to control display order
-- **FR-108**: Dropdown/multi-select custom fields MUST support adding/editing/deleting options from team settings
-- **FR-109**: Changing dropdown options MUST preserve existing task values even if option is removed (show with warning badge)
-- **FR-110**: Task templates MUST support saving and applying custom field values
-- **FR-111**: Custom field values MUST be included in task search when searching by "all fields"
-- **FR-112**: Custom field history changes MUST appear in task activity log
-- **FR-113**: Team admins MUST be able to export custom field definitions (field name, type, options, settings) as JSON or CSV format
-- **FR-114**: Team admins MUST be able to import custom field definitions from exported files into their team
-- **FR-115**: When importing custom field definitions, system MUST detect name conflicts and prompt user to rename, skip, or merge
-- **FR-116**: Task exports (CSV, JSON) MUST include custom field values with field names as column headers
-- **FR-117**: Task imports MUST support mapping imported custom field data to existing field definitions in the destination team
+- **FR-135**: Team owners and admins MUST be able to define custom fields for their team in team settings
+- **FR-136**: All team members MUST be able to view and edit custom field values on tasks they have permission to edit, regardless of who created the field definition
+- **FR-137**: System MUST support custom field types: text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email
+- **FR-138**: Currency fields MUST store both numeric value and currency code (ISO 4217) separately and display with locale-appropriate symbol (e.g., "$100.00" for USD, "€100.00" for EUR)
+- **FR-139**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., dropdown choices)
+- **FR-140**: Required custom fields MUST be enforced only on task creation and when editing/saving existing tasks; existing tasks without required field values are allowed to remain unchanged
+- **FR-141**: Custom fields MUST appear in task detail panel in a dedicated "Custom Fields" section below standard fields
+- **FR-142**: System MUST render appropriate input widget for each custom field type (text input, dropdown, date picker, etc.)
+- **FR-143**: Custom field values MUST be saved automatically when task detail panel is updated
+- **FR-144**: Users MUST be able to configure which custom fields appear on task cards in list/board view in team settings
+- **FR-145**: Task filters MUST support filtering by custom field values (text contains, number comparison, dropdown selection, etc.)
+- **FR-146**: Custom fields MUST be team-scoped (each team has its own custom field definitions)
+- **FR-147**: Maximum 20 custom fields per team MUST be enforced to prevent UI clutter and performance degradation
+- **FR-148**: Deleting a custom field definition MUST show confirmation warning and CASCADE delete all task values for that field
+- **FR-149**: Custom field definitions MUST be orderable/reorderable by team admins to control display order
+- **FR-150**: Dropdown/multi-select custom fields MUST support adding/editing/deleting options from team settings
+- **FR-151**: Changing dropdown options MUST preserve existing task values even if option is removed (show with warning badge)
+- **FR-152**: Task templates MUST support saving and applying custom field values
+- **FR-153**: Custom field values MUST be included in task search when searching by "all fields"
+- **FR-154**: Custom field history changes MUST appear in task activity log
+- **FR-155**: Team admins MUST be able to export custom field definitions (field name, type, options, settings) as JSON or CSV format
+- **FR-156**: Team admins MUST be able to import custom field definitions from exported files into their team
+- **FR-157**: When importing custom field definitions, system MUST detect name conflicts and prompt user to rename, skip, or merge
+- **FR-158**: Task exports (CSV, JSON) MUST include custom field values with field names as column headers
+- **FR-159**: Task imports MUST support mapping imported custom field data to existing field definitions in the destination team
 
 ### Key Entities *(existing entities, enhanced UI only)*
 
@@ -406,6 +571,31 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **TaskNotification** (new related entity): Notification records for task events
   - Properties: id, userId, taskId, eventType (assignment, mention, comment, status_change), read (boolean), message, actorUserId, createdAt
   - Used for: In-app notification center, tracking read/unread state, linking to tasks
+
+- **TaskLabel** (new related entity): Custom labels for task organization
+  - Properties: id, teamId, name, color (hex), displayOrder, createdAt, updatedAt
+  - Used for: Flexible visual categorization, quick filtering, color-coded organization
+  - Business rules: Max 50 labels per team, unique names per team
+
+- **TaskLabelAssignment** (new related entity): Many-to-many relationship between tasks and labels
+  - Properties: taskId, labelId
+  - Used for: Applying multiple labels to tasks, filtering by labels
+  - Business rules: Task can have multiple labels, label can be on multiple tasks
+
+- **TaskStageDeadline** (new related entity): Stage-level milestone deadlines for ADHD support
+  - Properties: id, taskId, stageId, dueDate, completedAt (nullable), createdAt, updatedAt
+  - Used for: Breaking down long projects into smaller deadlines, reducing overwhelm, celebrating stage completions
+  - Business rules: One deadline per stage per task, optional (not all stages need deadlines)
+
+- **UserTaskStats** (new related entity): User task completion statistics for gamification
+  - Properties: userId, currentStreak (days), longestStreak, tasksCompletedToday, tasksCompletedThisWeek, tasksCompletedAllTime, lastCompletionDate
+  - Used for: Streak tracking, progress visibility, motivation
+  - Business rules: Updated on task completion, streak breaks if no completions for 24+ hours
+
+- **TaskBreakdownPattern** (new related entity): Learned patterns for task breakdown suggestions
+  - Properties: id, teamId, taskType (costume/prop/photoshoot/convention/material), pattern (JSON array of subtask titles), usageCount, createdAt
+  - Used for: AI-assisted task breakdown, learning from user patterns, template suggestions
+  - Business rules: Team-scoped, patterns improve with usage, top 10 patterns per type
 
 - **CustomFieldDefinition** (new related entity): Custom field definitions for teams
   - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select; for currency type stores default currency code), displayOrder, showOnCard (boolean), createdAt, updatedAt
