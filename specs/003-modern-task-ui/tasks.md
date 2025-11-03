@@ -76,12 +76,12 @@
 
 ### Service Layer Foundation
 
-- [ ] T031 Create Supabase client wrapper in src/lib/services/supabase.ts with typed client
-- [ ] T032 [P] Implement SubtaskService in src/lib/services/subtask-service.ts (CRUD operations, RLS)
-- [ ] T033 [P] Implement CommentService in src/lib/services/comment-service.ts (CRUD, @mentions parsing)
-- [ ] T034 [P] Implement AttachmentService in src/lib/services/attachment-service.ts (upload to R2, signed URLs)
-- [ ] T035 [P] Implement NotificationService in src/lib/services/notification-service.ts (create, mark read, subscribe)
-- [ ] T036 Implement TaskService core methods in src/lib/services/task-service.ts (extends existing, adds relations)
+- [X] T031 Create Supabase client wrapper in src/lib/services/supabase.ts with typed client
+- [X] T032 [P] Implement SubtaskService in src/lib/services/subtask-service.ts (CRUD operations, RLS)
+- [X] T033 [P] Implement CommentService in src/lib/services/comment-service.ts (CRUD, @mentions parsing)
+- [X] T034 [P] Implement AttachmentService in src/lib/services/attachment-service.ts (upload to R2, signed URLs)
+- [X] T035 [P] Implement NotificationService in src/lib/services/notification-service.ts (create, mark read, subscribe)
+- [X] T036 Implement TaskService core methods in src/lib/services/task-service.ts (extends existing, adds relations)
 
 ### Base Components
 
