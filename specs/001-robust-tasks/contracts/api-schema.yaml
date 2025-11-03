@@ -1,0 +1,641 @@
+openapi: 3.0.3
+info:
+  title: Task Management API
+  description: |
+    API contracts for robust task management feature. Defines REST endpoints for task and stage operations.
+    
+    **Note**: This application uses Supabase directly (not a REST API), but these contracts define the expected behavior for service implementations.
+    
+    **Authentication**: All operations require Supabase JWT authentication.
+    
+    **Team Context**: All operations are scoped to the user's currently selected team via RLS policies.
+  version: 1.0.0
+  contact:
+    name: Cosplay Tracker Team
+
+servers:
+  - url: https://[project].supabase.co/rest/v1
+    description: Supabase REST API
+  - url: http://localhost:54321/rest/v1
+    description: Local Supabase instance
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth JWT token
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - teamId
+        - stageId
+        - title
+        - priority
+        - completed
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+          description: null for standalone tasks
+        resourceId:
+          type: string
+          format: uuid
+          nullable: true
+        teamId:
+          type: string
+          format: uuid
+          description: Required: from project.team_id or tasks.team_id
+        stageId:
+          type: string
+          format: uuid
+          description: Current workflow stage (determines completion)
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high]
+        assignedTo:
+          type: string
+          format: uuid
+          nullable: true
+        completed:
+          type: boolean
+          description: DEPRECATED: Derived from stage.is_completion_stage
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        resourceId:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+          description: Required if projectId is null
+        stageId:
+          type: string
+          format: uuid
+          description: Optional: defaults to first non-completion stage
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+        assignedTo:
+          type: string
+          format: uuid
+
+    TaskUpdate:
+      type: object
+      properties:
+        stageId:
+          type: string
+          format: uuid
+          description: Change stage (for drag-and-drop)
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high]
+        assignedTo:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        resourceId:
+          type: string
+          format: uuid
+          nullable: true
+
+    TaskStage:
+      type: object
+      required:
+        - id
+        - teamId
+        - name
+        - displayOrder
+        - isCompletionStage
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        displayOrder:
+          type: integer
+          minimum: 0
+        isCompletionStage:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskStageCreate:
+      type: object
+      required:
+        - teamId
+        - name
+        - displayOrder
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        displayOrder:
+          type: integer
+          minimum: 0
+        isCompletionStage:
+          type: boolean
+          default: false
+
+    TaskStageUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        displayOrder:
+          type: integer
+          minimum: 0
+        isCompletionStage:
+          type: boolean
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+paths:
+  /tasks:
+    get:
+      summary: List tasks
+      description: List tasks for the current active team with optional filters
+      operationId: listTasks
+      tags:
+        - Tasks
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by project (null for standalone tasks)
+        - name: resource_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: stage_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+        - name: assigned_to
+          in: query
+          schema:
+            type: string
+            format: uuid
+            nullable: true
+        - name: due_before
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: due_after
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create task
+      description: Create a new task (project-scoped or standalone)
+      operationId: createTask
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+        '500':
+          description: Server error
+
+  /tasks/{id}:
+    get:
+      summary: Get task
+      description: Get a single task by ID
+      operationId: getTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not member of task's team)
+
+    patch:
+      summary: Update task
+      description: Update an existing task (e.g., change stage, update fields)
+      operationId: updateTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+        '404':
+          description: Task not found
+
+    delete:
+      summary: Delete task
+      description: Delete a task
+      operationId: deleteTask
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+        '404':
+          description: Task not found
+
+  /tasks/{id}/move:
+    post:
+      summary: Move task to stage
+      description: Move task to a different stage (for kanban drag-and-drop)
+      operationId: moveTaskToStage
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stageId
+              properties:
+                stageId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Task moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid stage
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Task or stage not found
+
+  /task-stages:
+    get:
+      summary: List task stages
+      description: List all stages for a team (ordered by displayOrder)
+      operationId: listTaskStages
+      tags:
+        - Task Stages
+      parameters:
+        - name: team_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskStage'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not member of team)
+
+    post:
+      summary: Create task stage
+      description: Create a new task stage (requires owner/editor role)
+      operationId: createTaskStage
+      tags:
+        - Task Stages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStageCreate'
+      responses:
+        '201':
+          description: Stage created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStage'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+
+  /task-stages/{id}:
+    get:
+      summary: Get task stage
+      description: Get a single stage by ID
+      operationId: getTaskStage
+      tags:
+        - Task Stages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStage'
+        '404':
+          description: Stage not found
+        '401':
+          description: Unauthorized
+
+    patch:
+      summary: Update task stage
+      description: Update an existing stage (requires owner/editor role)
+      operationId: updateTaskStage
+      tags:
+        - Task Stages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStageUpdate'
+      responses:
+        '200':
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStage'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+        '404':
+          description: Stage not found
+
+    delete:
+      summary: Delete task stage
+      description: Delete a stage (fails if tasks reference it, requires owner/editor role)
+      operationId: deleteTaskStage
+      tags:
+        - Task Stages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Stage deleted
+        '400':
+          description: Stage has active tasks
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (not owner/editor of team)
+        '404':
+          description: Stage not found
+
+  /task-stages/reorder:
+    post:
+      summary: Reorder task stages
+      description: Update displayOrder for multiple stages (requires owner/editor role)
+      operationId: reorderTaskStages
+      tags:
+        - Task Stages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - teamId
+                - stageIds
+              properties:
+                teamId:
+                  type: string
+                  format: uuid
+                stageIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Stages reordered
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskStage'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+

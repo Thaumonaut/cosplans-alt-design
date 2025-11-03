@@ -33,6 +33,12 @@
       >
         Team
       </button>
+      <button
+        onclick={() => goto('/settings/task-stages')}
+        class="w-full text-left block px-3 py-2 rounded-md hover:bg-muted transition-colors {currentPath === '/settings/task-stages' ? 'bg-muted font-medium' : ''}"
+      >
+        Task Stages
+      </button>
     </nav>
     
     <div class="lg:col-span-3">

@@ -1,19 +1,45 @@
 import { supabase } from '$lib/supabase'
+import { get } from 'svelte/store'
+import { currentTeam } from '$lib/stores/teams'
+import { taskStageService } from './taskStageService'
 import type { Task, TaskCreate, TaskUpdate } from '$lib/types/domain/task'
 
 export const taskService = {
   /**
    * List all tasks for the current team (across all projects)
-   * RLS policies automatically filter by team through project relationship
+   * RLS policies automatically filter by team membership
+   * Tasks are joined with task_stages to get stage information
+   * 
+   * Note: RLS policies ensure users can only see tasks from teams they are active members of:
+   * - Project-scoped tasks: visible if user is member of project's team
+   * - Standalone tasks: visible if user is member of task's team_id
    */
   async listAll(filters?: { completed?: boolean; priority?: string }): Promise<Task[]> {
-    let query = supabase
+    // Join with task_stages to get stage info and derive completion status
+    // RLS policies automatically filter by team membership (no explicit team filter needed)
+    // Use LEFT JOIN (!left) to include tasks without stages (shouldn't happen after migration, but handle gracefully)
+    let query = (supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        task_stages(
+          id,
+          name,
+          display_order,
+          is_completion_stage
+        )
+      `) as any)
       .order('created_at', { ascending: false })
 
     if (filters?.completed !== undefined) {
-      query = query.eq('completed', filters.completed)
+      // Filter by completion stage instead of completed boolean
+      // With LEFT JOIN, we need to filter on the joined relation
+      // Note: This will only match tasks that have a stage (which should be all tasks after migration)
+      if (filters.completed) {
+        query = query.eq('task_stages.is_completion_stage', true)
+      } else {
+        query = query.or('task_stages.is_completion_stage.is.null,task_stages.is_completion_stage.eq.false')
+      }
     }
     if (filters?.priority) {
       query = query.eq('priority', filters.priority)
@@ -22,17 +48,33 @@ export const taskService = {
     const { data, error } = await query
 
     if (error) throw error
-    return (data || []).map(mapTaskFromDb)
+    // RLS policies ensure only tasks from user's teams are returned
+    return (data || []).map(mapTaskFromDbWithStage)
   },
 
   /**
    * List tasks for a project (optionally filter by resource)
-   * If projectId is not provided, lists all standalone tasks
+   * If projectId is not provided, lists all standalone tasks for current team
+   * Tasks are joined with task_stages to get stage information
+   * 
+   * Note: RLS policies ensure tasks are filtered by team membership
+   * - If projectId is provided: returns tasks for that project (must be in user's team)
+   * - If projectId is null: returns standalone tasks where team_id is in user's teams
    */
-  async list(filters?: { projectId?: string | null; resourceId?: string }): Promise<Task[]> {
-    let query = supabase
+  async list(filters?: { projectId?: string | null; resourceId?: string; stageId?: string }): Promise<Task[]> {
+    // Join with task_stages to get stage info
+    // Use LEFT JOIN to include tasks without stages (shouldn't happen after migration, but handle gracefully)
+    let query = (supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        task_stages(
+          id,
+          name,
+          display_order,
+          is_completion_stage
+        )
+      `) as any)
       .order('created_at', { ascending: false })
 
     if (filters?.projectId !== undefined) {
@@ -52,19 +94,32 @@ export const taskService = {
         : query.eq('resource_id', filters.resourceId) // Resource-specific tasks
     }
 
+    if (filters?.stageId !== undefined) {
+      query = query.eq('stage_id', filters.stageId)
+    }
+
     const { data, error } = await query
 
     if (error) throw error
-    return (data || []).map(mapTaskFromDb)
+    return (data || []).map(mapTaskFromDbWithStage)
   },
 
   /**
    * Get a single task by ID
+   * Joined with task_stages to get stage information
    */
   async get(id: string): Promise<Task | null> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('tasks')
-      .select('*')
+      .select(`
+        *,
+        task_stages(
+          id,
+          name,
+          display_order,
+          is_completion_stage
+        )
+      `) as any)
       .eq('id', id)
       .single()
 
@@ -73,18 +128,64 @@ export const taskService = {
       throw error
     }
 
-    return mapTaskFromDb(data)
+    return mapTaskFromDbWithStage(data)
   },
 
   /**
    * Create a new task
    */
   async create(task: TaskCreate): Promise<Task> {
+    // Get current team for team_id and stage assignment
+    const team = get(currentTeam)
+    if (!team) {
+      throw new Error('No active team selected')
+    }
+
+    // Determine team_id: use provided teamId or current active team
+    let teamId = task.teamId || team.id
+
+    // For project-scoped tasks, derive team_id from project if not provided
+    if (task.projectId && !teamId) {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('team_id')
+        .eq('id', task.projectId)
+        .single()
+      if (project && 'team_id' in project) {
+        teamId = (project as any).team_id
+      }
+    }
+
+    if (!teamId) {
+      throw new Error('Team ID is required for task creation')
+    }
+
+    // Determine stage_id: use provided or default to first non-completion stage
+    let stageId = task.stageId
+    if (!stageId) {
+      const stages = await taskStageService.list(teamId)
+      const firstNonCompletion = stages.find((s) => !s.isCompletionStage)
+      if (!firstNonCompletion) {
+        // Fallback: ensure defaults exist
+        await taskStageService.ensureDefaults(teamId)
+        const defaults = await taskStageService.list(teamId)
+        stageId = defaults.find((s) => !s.isCompletionStage)?.id || defaults[0]?.id
+      } else {
+        stageId = firstNonCompletion.id
+      }
+    }
+
+    if (!stageId) {
+      throw new Error('Stage ID is required for task creation')
+    }
+
     // Map camelCase to snake_case for database
     const insertData: Record<string, unknown> = {
       title: task.title,
       description: task.description || null,
       priority: task.priority || 'medium',
+      stage_id: stageId,
+      team_id: teamId,
     }
 
     // Only include project_id if provided
@@ -102,11 +203,19 @@ export const taskService = {
       insertData.assigned_to = task.assignedTo
     }
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert(insertData as any)
-      .select()
-      .single()
+        const { data, error } = await (supabase
+          .from('tasks')
+          .insert(insertData as any)
+          .select(`
+            *,
+            task_stages(
+              id,
+              name,
+              display_order,
+              is_completion_stage
+            )
+          `) as any)
+          .single()
 
     if (error) {
       // Provide helpful error message for schema cache issues
@@ -119,7 +228,7 @@ export const taskService = {
       throw error
     }
 
-    return mapTaskFromDb(data)
+    return mapTaskFromDbWithStage(data)
   },
 
   /**
@@ -131,17 +240,69 @@ export const taskService = {
 
     if (updates.title !== undefined) updateData.title = updates.title
     if (updates.description !== undefined) updateData.description = updates.description || null
-    if (updates.completed !== undefined) updateData.completed = updates.completed
     if (updates.priority !== undefined) updateData.priority = updates.priority
     if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate
     if (updates.assignedTo !== undefined) updateData.assigned_to = updates.assignedTo
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(updateData as any)
-      .eq('id', id)
-      .select()
-      .single()
+    // Handle stageId changes (for drag-and-drop kanban moves)
+    if (updates.stageId !== undefined) {
+      updateData.stage_id = updates.stageId
+    }
+
+    // Handle projectId changes (moving task to different project)
+    if (updates.projectId !== undefined) {
+      updateData.project_id = updates.projectId || null
+      // If moving to a project, derive team_id from project
+      if (updates.projectId) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('team_id')
+          .eq('id', updates.projectId)
+          .single()
+        if (project && 'team_id' in project) {
+          updateData.team_id = (project as any).team_id
+        }
+      }
+    }
+
+    // Handle resourceId changes
+    if (updates.resourceId !== undefined) {
+      updateData.resource_id = updates.resourceId || null
+    }
+
+    // DEPRECATED: Handle completed boolean (for backward compatibility)
+    // Note: This should be replaced with stageId changes, but kept for transition period
+    if (updates.completed !== undefined) {
+      // Get current task to find appropriate stage
+      const currentTask = await this.get(id)
+      if (currentTask) {
+        const team = get(currentTeam) || { id: currentTask.teamId }
+        const stages = await taskStageService.list(team.id)
+        const completionStage = stages.find((s) => s.isCompletionStage)
+        const nonCompletionStage = stages.find((s) => !s.isCompletionStage)
+
+        if (updates.completed && completionStage) {
+          updateData.stage_id = completionStage.id
+        } else if (!updates.completed && nonCompletionStage) {
+          updateData.stage_id = nonCompletionStage.id
+        }
+      }
+    }
+
+        const { data, error } = await ((supabase
+          .from('tasks') as any)
+          .update(updateData as any)
+          .eq('id', id)
+          .select(`
+            *,
+            task_stages(
+              id,
+              name,
+              display_order,
+              is_completion_stage
+            )
+          `)
+          .single())
 
     if (error) {
       // Provide helpful error message for schema cache issues
@@ -154,7 +315,7 @@ export const taskService = {
       throw error
     }
 
-    return mapTaskFromDb(data)
+    return mapTaskFromDbWithStage(data)
   },
 
   /**
@@ -168,33 +329,74 @@ export const taskService = {
 
   /**
    * Toggle task completion
+   * DEPRECATED: Use moveToStage instead. Kept for backward compatibility.
    */
   async toggleComplete(id: string): Promise<Task> {
     // Get current state
     const task = await this.get(id)
     if (!task) throw new Error('Task not found')
 
-    // Toggle completion
+    // Toggle completion via stage changes
+    const team = get(currentTeam) || { id: task.teamId }
+    const stages = await taskStageService.list(team.id)
+    const completionStage = stages.find((s) => s.isCompletionStage)
+    const nonCompletionStage = stages.find((s) => !s.isCompletionStage)
+
+    if (task.completed && nonCompletionStage) {
+      return await this.moveToStage(id, nonCompletionStage.id)
+    } else if (!task.completed && completionStage) {
+      return await this.moveToStage(id, completionStage.id)
+    }
+
+    // Fallback to old method if stages not found
     return await this.update(id, { completed: !task.completed })
+  },
+
+  /**
+   * Move task to a different stage (for kanban drag-and-drop)
+   */
+  async moveToStage(taskId: string, stageId: string): Promise<Task> {
+    return await this.update(taskId, { stageId })
   },
 }
 
 /**
  * Map database row (snake_case) to Task type (camelCase)
+ * Includes stage information from joined task_stages table
  */
-function mapTaskFromDb(row: any): Task {
+function mapTaskFromDbWithStage(row: any): Task {
+  // Handle both joined format (row.task_stages can be an object or array) and flat format (row.stage_id)
+  // PostgREST returns joined relations as arrays when using LEFT JOIN, as single object with INNER JOIN
+  const stage = Array.isArray(row.task_stages) 
+    ? (row.task_stages[0] || null)
+    : (row.task_stages || (row.stage_id ? { id: row.stage_id } : null))
+  const teamId = row.team_id || row.teamId || null
+
+  // Derive completed from stage.is_completion_stage, fallback to row.completed for backward compatibility
+  const completed = stage?.is_completion_stage ?? row.completed ?? false
+
   return {
     id: row.id,
     projectId: row.project_id ?? null,
     resourceId: row.resource_id ?? null,
+    teamId: teamId || '', // Required field, empty string as fallback (should not happen after migration)
+    stageId: row.stage_id || stage?.id || '', // Required field, empty string as fallback (should not happen after migration)
     title: row.title,
     description: row.description ?? undefined,
-    completed: row.completed ?? false,
+    completed, // DEPRECATED: Derived from stage
     dueDate: row.due_date ?? undefined,
     priority: row.priority || 'medium',
     assignedTo: row.assigned_to ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
+}
+
+/**
+ * Map database row (snake_case) to Task type (camelCase)
+ * DEPRECATED: Use mapTaskFromDbWithStage instead. Kept for backward compatibility.
+ */
+function mapTaskFromDb(row: any): Task {
+  return mapTaskFromDbWithStage(row)
 }
 

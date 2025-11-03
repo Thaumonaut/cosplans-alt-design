@@ -14,8 +14,10 @@
     User 
   } from 'lucide-svelte'
   import { taskService } from '$lib/api/services/taskService'
+  import { taskStageService } from '$lib/api/services/taskStageService'
   import { projectService } from '$lib/api/services/projectService'
-  import { teamService } from '$lib/api/services/teamService'
+  import { teamService, type Team } from '$lib/api/services/teamService'
+  import StageSelector from '$lib/components/base/StageSelector.svelte'
   import { tasks as tasksStore } from '$lib/stores/tasks-store'
   import { currentTeam } from '$lib/stores/teams'
   import type { TeamMember } from '$lib/api/services/teamService'
@@ -32,19 +34,22 @@
   } from '$lib/components/ui'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import TaskDetail from '$lib/components/tasks/TaskDetail.svelte'
-  import type { Task, TaskPriority } from '$lib/types/domain/task'
+  import TaskCard from '$lib/components/tasks/TaskCard.svelte'
+  import type { Task, TaskPriority, TaskStage } from '$lib/types/domain/task'
   import type { Project } from '$lib/types/domain/project'
 
   type ViewMode = "kanban" | "list" | "table"
-  type Status = "todo" | "in-progress" | "done"
 
   let viewMode = $state<ViewMode>("kanban")
   let filterProject = $state<string>("all")
   let filterPriority = $state<string>("all")
+  let showAllTeams = $state(false) // Toggle to show tasks from all teams vs current team only
   let loading = $state(true)
   let allTasks = $state<Task[]>([])
   let allProjects = $state<Project[]>([])
   let teamMembers = $state<TeamMember[]>([])
+  let taskStages = $state<TaskStage[]>([]) // Team's task stages for kanban columns
+  let allTeams = $state<Team[]>([]) // All user's teams for team filtering
   let showCreateFlyout = $state(false)
   let selectedTaskId = $state<string | null>(null)
   let showTaskDetailFlyout = $state(false)
@@ -64,20 +69,21 @@
         filters.priority = filterPriority
       }
 
-      const [tasksData, projectsData] = await Promise.all([
+      // Load tasks, projects, stages, team members, and all teams in parallel
+      const [tasksData, projectsData, stagesData, membersData, teamsData] = await Promise.all([
         taskService.listAll(filters),
-        projectService.list()
+        projectService.list(),
+        taskStageService.ensureDefaults(team.id), // Ensure default stages exist
+        teamService.getMembers(team.id).catch(() => []),
+        teamService.list().catch(() => [])
       ])
 
       allTasks = tasksData
       allProjects = projectsData
+      taskStages = stagesData
+      teamMembers = membersData || []
+      allTeams = teamsData || []
 
-      // Load team members for assignment display
-      try {
-        teamMembers = await teamService.getMembers(team.id)
-      } catch (err) {
-        console.error('Failed to load team members:', err)
-      }
     } catch (error) {
       console.error('Failed to load tasks:', error)
     } finally {
@@ -88,6 +94,22 @@
   // Filter tasks
   const filteredTasks = $derived(() => {
     let filtered = allTasks
+    const currentTeamObj = get(currentTeam)
+
+    // Filter by team: default to current team, unless "show all teams" is enabled
+    if (!showAllTeams && currentTeamObj) {
+      // Only show tasks from current active team
+      filtered = filtered.filter(t => {
+        // For project-scoped tasks, check project's team
+        if (t.projectId) {
+          const project = allProjects.find(p => p.id === t.projectId)
+          return project && project.teamId === currentTeamObj.id
+        }
+        // For standalone tasks, check task's team_id
+        return t.teamId === currentTeamObj.id
+      })
+    }
+    // If showAllTeams is true, RLS already ensures only tasks from user's teams are visible
 
     if (filterProject !== "all") {
       filtered = filtered.filter(t => t.projectId === filterProject)
@@ -100,17 +122,31 @@
     return filtered
   })
 
-  // Convert tasks to UI format with project names and assigned user info
+  // Convert tasks to UI format with project names, assigned user info, stage mapping, and team info
   const uiTasks = $derived(() => {
+    const currentTeamObj = get(currentTeam)
     return filteredTasks().map(task => {
       const project = allProjects.find(p => p.id === task.projectId)
       const assignedMember = task.assignedTo ? teamMembers.find(m => m.userId === task.assignedTo) : null
+      const stage = taskStages.find(s => s.id === task.stageId)
+      // Get team name for this task (from project.team_id or task.team_id)
+      let taskTeam: Team | undefined
+      if (task.projectId && project) {
+        taskTeam = allTeams.find(t => t.id === project.teamId)
+      } else if (task.teamId) {
+        taskTeam = allTeams.find(t => t.id === task.teamId)
+      }
+      
       return {
         ...task,
         projectName: project ? `${project.character} (${project.series})` : null,
         assignedUser: assignedMember?.user,
-        status: task.completed ? 'done' : (task.priority === 'high' ? 'in-progress' : 'todo') as Status,
+        stageName: stage?.name || 'Unknown',
+        stageId: task.stageId, // Current stage ID for drag-and-drop
         dueDateStr: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+        teamName: taskTeam?.name || null,
+        teamId: taskTeam?.id || null,
+        isFromCurrentTeam: taskTeam?.id === currentTeamObj?.id || false,
       }
     })
   })
@@ -122,31 +158,29 @@
     ]
   })
 
-  const statusLabels: Record<Status, string> = {
-    todo: "To Do",
-    "in-progress": "In Progress",
-    done: "Done",
-  }
-
   const priorityColors = {
     high: "bg-[color-mix(in_srgb,var(--theme-error)_20%,transparent)] backdrop-blur-sm text-[var(--theme-error)] border-[color-mix(in_srgb,var(--theme-error)_30%,transparent)]",
     medium: "bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] backdrop-blur-sm text-[var(--theme-warning)] border-[color-mix(in_srgb,var(--theme-warning)_30%,transparent)]",
     low: "bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] backdrop-blur-sm text-[var(--theme-info)] border-[color-mix(in_srgb,var(--theme-info)_30%,transparent)]",
   }
 
-  const statusColors = {
-    todo: "bg-[color-mix(in_srgb,var(--theme-muted)_20%,transparent)] backdrop-blur-sm text-[var(--theme-muted-foreground)]",
-    "in-progress": "bg-[color-mix(in_srgb,var(--theme-primary)_20%,transparent)] backdrop-blur-sm text-[var(--theme-primary)]",
-    done: "bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] backdrop-blur-sm text-[var(--theme-success)]",
+  // Helper to get status color based on stage
+  function getStageColor(stage: TaskStage | undefined): string {
+    if (!stage) return "bg-[color-mix(in_srgb,var(--theme-muted)_20%,transparent)] backdrop-blur-sm text-[var(--theme-muted-foreground)]"
+    if (stage.isCompletionStage) {
+      return "bg-[color-mix(in_srgb,var(--theme-success)_20%,transparent)] backdrop-blur-sm text-[var(--theme-success)]"
+    }
+    return "bg-[color-mix(in_srgb,var(--theme-primary)_20%,transparent)] backdrop-blur-sm text-[var(--theme-primary)]"
   }
 
-  function getTasksByStatus(status: string) {
-    return uiTasks().filter((task) => task.status === status)
+  // Get tasks for a specific stage (kanban column)
+  function getTasksByStage(stageId: string) {
+    return uiTasks().filter((task) => task.stageId === stageId)
   }
 
   // Drag and drop handlers
   let draggedTask = $state<string | null>(null)
-  let dragOverStatus = $state<string | null>(null)
+  let dragOverStageId = $state<string | null>(null)
 
   function handleDragStart(taskId: string, event: DragEvent) {
     if (event.dataTransfer) {
@@ -156,51 +190,34 @@
     draggedTask = taskId
   }
 
-  function handleDragOver(status: string, event: DragEvent) {
+  function handleDragOver(stageId: string, event: DragEvent) {
     event.preventDefault()
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move'
     }
-    dragOverStatus = status
+    dragOverStageId = stageId
   }
 
   function handleDragLeave() {
-    dragOverStatus = null
+    dragOverStageId = null
   }
 
-  async function handleDrop(status: string, event: DragEvent) {
+  async function handleDrop(stageId: string, event: DragEvent) {
     event.preventDefault()
-    dragOverStatus = null
+    dragOverStageId = null
     
-    if (!draggedTask) return
+    if (!draggedTask || !stageId) return
 
     const task = allTasks.find(t => t.id === draggedTask)
     if (!task) return
 
-    // Determine what updates are needed based on the new status
-    const updates: { completed?: boolean; priority?: TaskPriority } = {}
-    
-    if (status === 'done') {
-      updates.completed = true
-    } else if (status === 'todo') {
-      updates.completed = false
-      // If moving to todo from in-progress, might want to lower priority
-      if (task.priority === 'high') {
-        updates.priority = 'medium'
-      }
-    } else if (status === 'in-progress') {
-      updates.completed = false
-      // If moving to in-progress, might want to raise priority
-      if (task.priority === 'low') {
-        updates.priority = 'medium'
-      }
-    }
-
+    // Use moveToStage to change task stage (completion is determined by stage)
     try {
-      await taskService.update(draggedTask, updates)
+      await taskService.moveToStage(draggedTask, stageId)
       await loadData()
     } catch (error) {
-      console.error('Failed to update task status:', error)
+      console.error('Failed to update task stage:', error)
+      // Optionally show error toast here
     }
 
     draggedTask = null
@@ -208,7 +225,27 @@
 
   async function handleTaskToggle(taskId: string) {
     try {
-      await taskService.toggleComplete(taskId)
+      // Get current task to determine target stage
+      const task = allTasks.find(t => t.id === taskId)
+      if (!task) return
+
+      const currentStage = taskStages.find(s => s.id === task.stageId)
+      if (!currentStage) return
+
+      // Toggle between completion stage and first non-completion stage
+      if (currentStage.isCompletionStage) {
+        // Move to first non-completion stage
+        const firstNonCompletion = taskStages.find(s => !s.isCompletionStage)
+        if (firstNonCompletion) {
+          await taskService.moveToStage(taskId, firstNonCompletion.id)
+        }
+      } else {
+        // Move to completion stage
+        const completionStage = taskStages.find(s => s.isCompletionStage)
+        if (completionStage) {
+          await taskService.moveToStage(taskId, completionStage.id)
+        }
+      }
       await loadData()
     } catch (error) {
       console.error('Failed to toggle task:', error)
@@ -258,10 +295,20 @@
         <h1 class="text-3xl font-bold">Tasks</h1>
         <p class="text-sm text-[var(--theme-muted-foreground)] mt-1">Manage tasks across all your projects</p>
       </div>
-      <Button onclick={handleCreateTask}>
-        <Plus class="mr-2 size-4" />
-        New Task
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          onclick={() => goto('/settings/task-stages')}
+          class="hidden sm:flex"
+        >
+          <LayoutGrid class="mr-2 size-4" />
+          Manage Stages
+        </Button>
+        <Button onclick={handleCreateTask}>
+          <Plus class="mr-2 size-4" />
+          New Task
+        </Button>
+      </div>
     </div>
 
     <!-- View Controls -->
@@ -294,6 +341,19 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Show All Teams Toggle (only show if user has multiple teams) -->
+        {#if allTeams.length > 1}
+          <label class="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted">
+            <input
+              type="checkbox"
+              bind:checked={showAllTeams}
+              onchange={() => loadData()}
+              class="size-4 rounded border-input"
+            />
+            <span>Show All Teams</span>
+          </label>
+        {/if}
+
         <select 
           bind:value={filterProject}
           class="w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -340,130 +400,48 @@
     {:else}
       <!-- Kanban View -->
       {#if viewMode === "kanban"}
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {#each ["todo", "in-progress", "done"] as statusStr}
-            {@const status = statusStr as Status}
-            <Card class="flex flex-col bg-[var(--theme-card-bg)] shadow-sm">
-              <CardHeader class="pb-4">
-                <div class="flex items-center justify-between">
-                  <CardTitle class="text-base font-semibold">{statusLabels[status]}</CardTitle>
-                  <Badge variant="secondary" class="text-sm px-2 py-0.5 font-medium">
-                    {getTasksByStatus(status).length}
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {#each taskStages as stage}
+            <Card class="flex flex-col border-border bg-card shadow-sm">
+              <CardHeader class="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm pb-3">
+                <div class="flex items-center justify-between gap-2">
+                  <CardTitle class="text-sm font-semibold leading-tight">{stage.name}</CardTitle>
+                  <Badge variant="secondary" class="shrink-0 text-[11px] font-medium px-2 py-0.5">
+                    {getTasksByStage(stage.id).length}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent class="flex-1 space-y-3 overflow-y-auto min-h-[200px] p-0">
+              <CardContent class="flex-1 space-y-2.5 overflow-y-auto min-h-[300px] max-h-[calc(100vh-280px)] p-3 scrollbar-thin">
                 <div
                   role="region"
-                  aria-label={`${statusLabels[status]} tasks`}
-                  class="h-full space-y-3 p-6 {dragOverStatus === status && draggedTask && getTasksByStatus(status).findIndex(t => t.id === draggedTask) === -1 ? 'opacity-50' : ''}"
-                  ondragover={(e: DragEvent) => handleDragOver(status, e)}
+                  aria-label={`${stage.name} tasks`}
+                  class="h-full space-y-2.5 {dragOverStageId === stage.id && draggedTask && getTasksByStage(stage.id).findIndex(t => t.id === draggedTask) === -1 ? 'opacity-60 bg-primary/5 rounded-lg border-2 border-dashed border-primary/30' : ''}"
+                  ondragover={(e: DragEvent) => handleDragOver(stage.id, e)}
                   ondragleave={handleDragLeave}
-                  ondrop={(e: DragEvent) => handleDrop(status, e)}
+                  ondrop={(e: DragEvent) => handleDrop(stage.id, e)}
                 >
-                {#each getTasksByStatus(status) as task (task.id)}
-                  <div 
-                    class="group cursor-pointer transition-all hover:shadow-lg bg-white dark:bg-[var(--theme-card-bg)] rounded-xl border border-[var(--theme-border)] p-5 shadow-sm {draggedTask === task.id ? 'opacity-50' : ''}"
-                    draggable="true"
-                    ondragstart={(e) => handleDragStart(task.id, e)}
-                    ondragend={() => draggedTask = null}
-                    onclick={() => handleEditTask(task.id)} 
-                    onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') handleEditTask(task.id) }}
-                    role="button" 
-                    tabindex="0"
-                  >
-                    <div class="mb-3 flex items-start justify-between gap-3">
-                      <div class="flex items-start gap-3 flex-1 min-w-0">
-                        <GripVertical class="mt-1 size-4 text-[var(--theme-muted-foreground)] opacity-0 transition-opacity group-hover:opacity-100 shrink-0" />
-                        <div onclick={(e: MouseEvent) => e.stopPropagation()} class="shrink-0 mt-0.5">
-                          <Checkbox 
-                            checked={task.completed} 
-                            onchange={() => handleTaskToggle(task.id)}
-                          />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                          <h4 class="mb-2 text-base font-semibold leading-snug text-[var(--theme-foreground)] line-clamp-2">{task.title}</h4>
-                          <p class="mb-3 text-sm text-[var(--theme-muted-foreground)] line-clamp-3 leading-relaxed">
-                            {#if task.description}
-                              {task.description}
-                            {:else}
-                              <span class="italic opacity-60">No description provided</span>
-                            {/if}
-                          </p>
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        {#snippet trigger()}
-                          <Button variant="ghost" size="icon" class="size-7 shrink-0" onclick={(e: MouseEvent) => e.stopPropagation()}>
-                            <MoreVertical class="size-4" />
-                          </Button>
-                        {/snippet}
-                        {#snippet children()}
-                          <DropdownMenuItem onclick={() => handleEditTask(task.id)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem variant="destructive" onclick={() => handleDeleteTask(task.id)}>Delete</DropdownMenuItem>
-                        {/snippet}
-                      </DropdownMenu>
-                    </div>
-                    
-                    <!-- Priority and Due Date -->
-                    <div class="flex flex-wrap items-center gap-3 mb-3">
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Priority:</span>
-                        <Badge class="{priorityColors[task.priority]} text-xs font-medium px-2 py-1" variant="outline">
-                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                        </Badge>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Due:</span>
-                        <div class="flex items-center gap-1.5 text-sm text-[var(--theme-muted-foreground)]">
-                          <Clock class="size-4" />
-                          {#if task.dueDate}
-                            <span class="font-medium">{new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          {:else}
-                            <span class="italic opacity-60">No due date</span>
-                          {/if}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Assigned Team Member -->
-                    <div class="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--theme-border-subtle)]">
-                      <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Assigned:</span>
-                      <div class="flex items-center gap-2">
-                        {#if task.assignedUser}
-                          <div class="flex items-center gap-2">
-                            {#if task.assignedUser.avatarUrl}
-                              <img 
-                                src={task.assignedUser.avatarUrl} 
-                                alt={task.assignedUser.name || task.assignedUser.email}
-                                class="size-6 rounded-full object-cover"
-                              />
-                            {:else}
-                              <div class="flex size-6 items-center justify-center rounded-full bg-[var(--theme-primary)] text-[var(--theme-primary-foreground)] text-xs font-medium">
-                                {(task.assignedUser.name || task.assignedUser.email).charAt(0).toUpperCase()}
-                              </div>
-                            {/if}
-                            <span class="text-sm font-medium text-[var(--theme-foreground)]">
-                              {task.assignedUser.name || task.assignedUser.email}
-                            </span>
-                          </div>
-                        {:else}
-                          <span class="text-sm italic opacity-60 text-[var(--theme-muted-foreground)]">Unassigned</span>
-                        {/if}
-                      </div>
-                    </div>
-                    
-                    <!-- Linked Project -->
-                    <div class="flex items-center gap-2">
-                      <span class="text-xs font-medium text-[var(--theme-muted-foreground)] uppercase tracking-wide">Project:</span>
-                      <div class="flex items-center gap-2 text-sm text-[var(--theme-muted-foreground)]">
-                        {#if task.projectName}
-                          <span class="font-medium">{task.projectName}</span>
-                        {:else}
-                          <span class="italic opacity-60">No project linked</span>
-                        {/if}
-                      </div>
-                    </div>
+                {#each getTasksByStage(stage.id) as task (task.id)}
+                  <div class="{draggedTask === task.id ? 'opacity-50' : ''}">
+                    <TaskCard
+                      {task}
+                      stages={taskStages}
+                      {priorityColors}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                      onToggle={handleTaskToggle}
+                      onStageChange={async (taskId, stageId) => {
+                        try {
+                          await taskService.moveToStage(taskId, stageId)
+                          await loadData()
+                        } catch (error) {
+                          console.error('Failed to update task stage:', error)
+                        }
+                      }}
+                      showTeam={showAllTeams}
+                      draggable={true}
+                      onDragStart={handleDragStart}
+                      onDragEnd={() => draggedTask = null}
+                    />
                   </div>
                 {/each}
                 </div>
@@ -494,8 +472,8 @@
                     <Badge class={priorityColors[task.priority]} variant="outline">
                       {task.priority}
                     </Badge>
-                    <Badge class={statusColors[task.status]} variant="secondary">
-                      {statusLabels[task.status]}
+                    <Badge class={getStageColor(taskStages.find(s => s.id === task.stageId))} variant="secondary">
+                      {task.stageName}
                     </Badge>
                   </div>
                   {#if task.description}
@@ -563,8 +541,8 @@
                         if (task.projectId) goto(`/projects/${task.projectId}`)
                       }}>{task.projectName}</td>
                       <td class="p-4">
-                        <Badge class={statusColors[task.status]} variant="secondary">
-                          {statusLabels[task.status]}
+                        <Badge class={getStageColor(taskStages.find(s => s.id === task.stageId))} variant="secondary">
+                          {task.stageName}
                         </Badge>
                       </td>
                       <td class="p-4">
