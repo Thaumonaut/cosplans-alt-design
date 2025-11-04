@@ -15,21 +15,47 @@ export class CommentService extends BaseService {
 	 */
 	async getComments(taskId: string): Promise<ServiceResponse<TaskComment[]>> {
 		return this.execute(async () => {
-			return await this.client
+			// Fetch comments (user_id references auth.users, can't join directly)
+			const { data: comments, error } = await this.client
 				.from('task_comments')
-				.select(`
-					*,
-					user:users!task_comments_user_id_fkey(
-						id,
-						email,
-						first_name,
-						last_name,
-						avatar_url
-					)
-				`)
+				.select('*')
 				.eq('task_id', taskId)
 				.eq('deleted', false)
 				.order('created_at', { ascending: true });
+
+			if (error) return { data: null, error };
+
+			// Fetch users separately from public.users (IDs match auth.users)
+			const userIds = [...new Set(comments?.map((c: any) => c.user_id).filter(Boolean) || [])];
+			let usersMap: Record<string, any> = {};
+			
+			if (userIds.length > 0) {
+				const { data: users } = await this.client
+					.from('users')
+					.select('id, email, name, avatar_url')
+					.in('id', userIds);
+
+				if (users) {
+					users.forEach((u: any) => {
+						const nameParts = u.name?.split(' ') || [];
+						usersMap[u.id] = {
+							id: u.id,
+							email: u.email,
+							first_name: nameParts[0] || null,
+							last_name: nameParts.slice(1).join(' ') || null,
+							avatar_url: u.avatar_url
+						};
+					});
+				}
+			}
+
+			// Attach user data to comments
+			const commentsWithUsers = (comments || []).map((c: any) => ({
+				...c,
+				user: usersMap[c.user_id] || null
+			}));
+
+			return { data: commentsWithUsers, error: null };
 		});
 	}
 

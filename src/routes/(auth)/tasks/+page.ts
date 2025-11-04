@@ -6,6 +6,8 @@
  */
 
 import { TaskService } from '$lib/services/task-service';
+import { taskStageService } from '$lib/api/services/taskStageService';
+import { createSupabaseLoadClient } from '$lib/auth/supabase-client';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, parent }) => {
@@ -14,19 +16,50 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 
 	// Initialize services with fetch for SSR
 	const taskService = new TaskService();
+	const supabase = createSupabaseLoadClient(fetch);
 
 	try {
-		// Fetch tasks for the current team
+		// Fetch tasks for the current team (RLS handles team filtering)
 		const tasksResult = await taskService.getTasks();
 
-		// Fetch status options (task stages)
-		// TODO: Replace with actual status/stage fetching when available
-		const statusOptions = [
-			{ value: '1', label: 'To Do', color: '#6B7280' },
-			{ value: '2', label: 'In Progress', color: '#3B82F6' },
-			{ value: '3', label: 'In Review', color: '#F59E0B' },
-			{ value: '4', label: 'Done', color: '#10B981' },
-		];
+		// Get current user to find their teams
+		const { data: { user } } = await supabase.auth.getUser();
+		
+		let statusOptions: Array<{ value: string; label: string; color?: string }> = [];
+		
+		if (user) {
+			try {
+				// Get user's first active team
+				const { data: teamMembers } = await supabase
+					.from('team_members')
+					.select('team_id')
+					.eq('user_id', user.id)
+					.eq('status', 'active')
+					.limit(1);
+
+				const teamId = teamMembers && teamMembers.length > 0 ? teamMembers[0].team_id : null;
+				
+				if (teamId) {
+					const stages = await taskStageService.ensureDefaults(teamId);
+					// Sort: non-completion stages first, then completion stages
+					// Completion stages always go last
+					const sortedStages = [
+						...stages.filter(s => !s.isCompletionStage).sort((a, b) => a.displayOrder - b.displayOrder),
+						...stages.filter(s => s.isCompletionStage).sort((a, b) => a.displayOrder - b.displayOrder)
+					];
+					
+					// Map to statusOptions format
+					statusOptions = sortedStages.map(stage => ({
+						value: stage.id,
+						label: stage.name,
+						// Color can be computed in UI based on stage properties
+					}));
+				}
+			} catch (stageError) {
+				console.error('Failed to load stages:', stageError);
+				// Fallback to empty array
+			}
+		}
 
 		// Fetch project options for filtering
 		// TODO: Replace with actual project fetching
@@ -40,12 +73,35 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		// TODO: Replace with actual label fetching when labels are implemented
 		const labelOptions: Array<{ value: string; label: string; color: string }> = [];
 
+		// Get completion stage IDs for progress calculation
+		let completionStageIds: string[] = [];
+		if (user) {
+			try {
+				const { data: teamMembers } = await supabase
+					.from('team_members')
+					.select('team_id')
+					.eq('user_id', user.id)
+					.eq('status', 'active')
+					.limit(1);
+
+				const teamId = teamMembers && teamMembers.length > 0 ? teamMembers[0].team_id : null;
+				
+				if (teamId) {
+					const stages = await taskStageService.ensureDefaults(teamId);
+					completionStageIds = stages.filter(s => s.isCompletionStage).map(s => s.id);
+				}
+			} catch (stageError) {
+				console.error('Failed to load completion stages:', stageError);
+			}
+		}
+
 		return {
 			tasks: tasksResult.data || [],
 			statusOptions,
 			projectOptions,
 			assigneeOptions,
 			labelOptions,
+			completionStageIds,
 		};
 	} catch (error) {
 		console.error('Failed to load tasks:', error);
@@ -57,6 +113,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 			projectOptions: [],
 			assigneeOptions: [],
 			labelOptions: [],
+			completionStageIds: [],
 		};
 	}
 };

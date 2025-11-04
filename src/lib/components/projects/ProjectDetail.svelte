@@ -13,7 +13,7 @@
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
-  import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
   import StatusSelector from '$lib/components/base/StatusSelector.svelte'
   import ResourcesTab from './tabs/ResourcesTab.svelte'
@@ -549,18 +549,18 @@
             <!-- Row 2: Due Date -->
             <div class="flex items-center gap-2">
               {#if !isReadOnly}
-                <InlineDatePicker
-                  bind:value={deadlineValue}
-                  editable={true}
-                  onSave={async (v: string) => {
+                <DatePicker
+                  value={deadlineValue}
+                  placeholder="Set due date"
+                  onchange={async (v: string | null) => {
+                    const dateStr = v || '';
                     if (currentMode() === 'create') {
-                      newProject.deadline = v || undefined
-                      deadlineValue = v || ''
+                      newProject.deadline = dateStr || undefined
+                      deadlineValue = dateStr
                     } else if (project) {
-                      await handleSaveField('deadline', v || undefined)
+                      await handleSaveField('deadline', dateStr || undefined)
                     }
                   }}
-                  placeholder="Set due date"
                 />
               {:else if deadlineValue}
                 {@const daysUntil = Math.ceil((new Date(deadlineValue).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}

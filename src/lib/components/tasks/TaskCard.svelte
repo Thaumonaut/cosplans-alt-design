@@ -2,20 +2,24 @@
 	/**
 	 * TaskCard Component
 	 * 
-	 * Displays task summary in list/board views.
-	 * Shows title, status, priority, assignee, labels, due date, and subtask progress.
+	 * Displays informative task summary in list/board views.
+	 * Shows title, description, priority, assignee, labels, due date, subtasks, and other relevant info.
+	 * Always shows placeholders for missing data to encourage completion.
 	 * Supports drag-and-drop, inline editing, and navigation to detail view.
+	 * Uses ClickableCard base component for consistent behavior.
 	 */
 	import { createEventDispatcher } from 'svelte';
 	import { draggable } from '$lib/utils/drag-drop';
-	import InlineSelect from '$lib/components/base/InlineSelect.svelte';
-	import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte';
+	import ClickableCard from '$lib/components/ui/clickable-card.svelte';
+	import PrioritySelector from '$lib/components/base/PrioritySelector.svelte';
+	import { DatePicker } from '$lib/components/ui';
 	import type { DragData } from '$lib/utils/drag-drop';
 
 	interface Props {
-		// Task data (simplified for card display)
+		// Task data
 		id: string;
 		title: string;
+		description?: string | null;
 		status_id: string;
 		priority?: 'low' | 'medium' | 'high';
 		due_date?: string | null;
@@ -26,7 +30,6 @@
 		completed_subtasks?: number;
 		// Options for inline editing
 		statusOptions?: Array<{ value: string; label: string; color?: string }>;
-		priorityOptions?: Array<{ value: string; label: string }>;
 		// Assignee info
 		assignee?: { id: string; email: string; first_name?: string; last_name?: string; avatar_url?: string } | null;
 		// View mode
@@ -40,6 +43,7 @@
 	let {
 		id,
 		title,
+		description = null,
 		status_id,
 		priority = 'medium',
 		due_date = null,
@@ -49,11 +53,6 @@
 		total_subtasks = 0,
 		completed_subtasks = 0,
 		statusOptions = [],
-		priorityOptions = [
-			{ value: 'low', label: 'Low' },
-			{ value: 'medium', label: 'Medium' },
-			{ value: 'high', label: 'High' },
-		],
 		assignee = null,
 		viewMode = 'list',
 		draggable: isDraggable = true,
@@ -71,33 +70,42 @@
 		dragEnd: void;
 	}>();
 
-	function handleClick(event: MouseEvent) {
-		// Don't navigate if clicking on inline editors or checkbox
-		if (
-			(event.target as HTMLElement).closest('.inline-editor') ||
-			(event.target as HTMLElement).closest('input[type="checkbox"]')
-		) {
-			return;
-		}
+	let dateValue = $state(due_date || '');
+
+	// Sync dateValue when due_date prop changes
+	$effect(() => {
+		dateValue = due_date || '';
+	});
+
+	function handleCardClick() {
 		dispatch('click', { id });
 	}
 
 	function handleSelectChange(event: Event) {
+		event.stopPropagation();
 		const checked = (event.target as HTMLInputElement).checked;
 		selected = checked;
 		dispatch('select', { id, selected: checked });
 	}
 
 	function handleStatusChange(event: CustomEvent<string>) {
+		event.stopPropagation?.();
 		dispatch('statusChange', { id, status_id: event.detail });
 	}
 
-	function handlePriorityChange(event: CustomEvent<string>) {
-		dispatch('priorityChange', { id, priority: event.detail as 'low' | 'medium' | 'high' });
+	async function handlePriorityChange(newPriority: 'low' | 'medium' | 'high') {
+		dispatch('priorityChange', { id, priority: newPriority });
 	}
 
-	function handleDueDateChange(event: CustomEvent<string | null>) {
-		dispatch('dueDateChange', { id, due_date: event.detail });
+	function handleDueDateChange(newValue: string | null) {
+		dateValue = newValue || '';
+		dispatch('dueDateChange', { id, due_date: newValue });
+	}
+
+	function formatDate(dateString: string | null): string {
+		if (!dateString) return 'Not set';
+		const date = new Date(dateString);
+		return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
 	}
 
 	const dragData: DragData = {
@@ -106,152 +114,191 @@
 		data: { status_id, priority },
 	};
 
-	const priorityColors = {
-		high: 'text-red-600 dark:text-red-400',
-		medium: 'text-yellow-600 dark:text-yellow-400',
-		low: 'text-green-600 dark:text-green-400',
-	};
-
 	const isOverdue = due_date && new Date(due_date) < new Date();
 	const isDueSoon = due_date && !isOverdue && (new Date(due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) <= 3;
+
+	// Format description for display (truncate if too long)
+	const displayDescription = $derived(
+		description 
+			? (description.length > 100 ? description.substring(0, 100) + '...' : description)
+			: null
+	);
 </script>
 
-<div
-	class="task-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer {selected ? 'ring-2 ring-blue-500' : ''} {viewMode === 'board' ? 'mb-3' : ''}"
-	role="button"
-	tabindex="0"
-	on:click={handleClick}
-	on:keydown={(e) => e.key === 'Enter' && handleClick(e as unknown as MouseEvent)}
-	use:draggable={isDraggable ? dragData : undefined}
+<ClickableCard
+	onclick={handleCardClick}
+	{selected}
+	draggable={isDraggable}
+	dragData={isDraggable ? dragData : null}
+	class="task-card rounded-lg p-4 hover:shadow-lg transition-all border-[var(--theme-border)] {viewMode === 'board' ? 'mb-5 min-h-[200px]' : 'mb-5'}"
 >
-	<!-- Header Row -->
+	<!-- Header Row: Checkbox, Title -->
 	<div class="flex items-start gap-3 mb-2">
 		<!-- Checkbox (if selectable) -->
 		{#if selectable}
 			<input
 				type="checkbox"
 				checked={selected}
-				on:change={handleSelectChange}
-				class="mt-1 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+				onchange={(e) => {
+					e.stopPropagation();
+					handleSelectChange(e);
+				}}
+				onclick={(e) => e.stopPropagation()}
+				style="border-color: var(--theme-border, rgba(120, 113, 108, 0.2)); color: var(--theme-primary, #8b5cf6); --tw-ring-color: var(--theme-primary, #8b5cf6);"
+				class="no-click-propagation mt-1.5 rounded border-2 focus:ring-2"
 			/>
 		{/if}
 
-		<!-- Priority Indicator -->
-		<div class="flex-shrink-0 mt-1">
-			<svg
-				class="w-4 h-4 {priorityColors[priority]}"
-				fill="currentColor"
-				viewBox="0 0 20 20"
-			>
-				{#if priority === 'high'}
-					<path d="M10 3l7 14H3z" />
-				{:else if priority === 'medium'}
-					<circle cx="10" cy="10" r="7" />
-				{:else}
-					<path d="M10 17l-7-14h14z" />
-				{/if}
-			</svg>
-		</div>
-
 		<!-- Title -->
-		<h3 class="flex-1 text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+		<h3 class="flex-1 text-base font-semibold line-clamp-2 leading-tight" style="color: var(--theme-foreground, #1c1917);">
 			{title}
 		</h3>
 	</div>
 
-	<!-- Metadata Row -->
-	<div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-		<!-- Status -->
-		<div class="inline-editor">
-			<InlineSelect
-				value={status_id}
-				options={statusOptions}
-				variant="status"
-				on:change={handleStatusChange}
-			/>
-		</div>
-
-		<!-- Priority -->
-		<div class="inline-editor">
-			<InlineSelect
-				value={priority}
-				options={priorityOptions}
-				variant="priority"
-				on:change={handlePriorityChange}
-			/>
-		</div>
-
-		<!-- Due Date -->
-		{#if due_date || viewMode === 'list'}
-			<div class="inline-editor">
-				<InlineDatePicker
-					value={due_date}
-					placeholder="No due date"
-					on:change={handleDueDateChange}
-				/>
-			</div>
-		{/if}
-
-		<!-- Assignee -->
-		{#if assignee}
-			<div class="flex items-center gap-1">
-				{#if assignee.avatar_url}
-					<img
-						src={assignee.avatar_url}
-						alt={assignee.first_name || assignee.email}
-						class="w-5 h-5 rounded-full"
-					/>
-				{:else}
-					<div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-						{(assignee.first_name?.[0] || assignee.email[0]).toUpperCase()}
-					</div>
-				{/if}
-				<span class="text-xs">
-					{assignee.first_name || assignee.email.split('@')[0]}
-				</span>
-			</div>
-		{/if}
+	<!-- Priority Tag (under title) -->
+	<div class="mb-3 tag-selector" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="none">
+		<PrioritySelector
+			currentPriority={priority}
+			editable={true}
+			onPriorityChange={handlePriorityChange}
+		/>
 	</div>
 
-	<!-- Labels -->
-	{#if labels.length > 0}
-		<div class="flex flex-wrap gap-1 mt-2">
+	<!-- Description -->
+	{#if displayDescription}
+		<p class="text-sm mb-3 line-clamp-2" style="color: var(--theme-text-muted, #78716c);">
+			{displayDescription}
+		</p>
+	{:else}
+		<p class="text-xs italic mb-3" style="color: var(--theme-text-muted, #78716c);">
+			No description — click to add one
+		</p>
+	{/if}
+
+	<!-- Metadata Grid: Due Date, Assignee, Subtasks -->
+	<div class="grid grid-cols-1 gap-2 mb-3">
+		<!-- Due Date (always shown) -->
+		<div class="flex items-center gap-2 text-sm" style="color: var(--theme-foreground, #1c1917);">
+			<svg class="w-4 h-4 shrink-0" style="color: var(--theme-text-muted, #78716c);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+			</svg>
+			<div class="flex items-center gap-2 flex-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="none">
+				<span class="shrink-0" style="color: var(--theme-text-muted, #78716c);">Due Date:</span>
+				<div class="inline-flex items-center gap-1 min-w-0">
+					<DatePicker
+						value={dateValue}
+						placeholder="Not set"
+						onchange={handleDueDateChange}
+						class="text-sm min-w-[100px]"
+					/>
+				</div>
+				{#if due_date}
+					{#if isOverdue}
+						<span class="text-xs font-medium shrink-0" style="color: var(--theme-error, #ef4444);">Overdue</span>
+					{:else if isDueSoon}
+						<span class="text-xs font-medium shrink-0" style="color: var(--theme-warning, #f59e0b);">Due soon</span>
+					{/if}
+				{/if}
+			</div>
+		</div>
+
+		<!-- Assignee (always shown with placeholder) -->
+		<div class="flex items-center gap-2">
+			{#if assignee}
+				<div class="flex items-center gap-2">
+					{#if assignee.avatar_url}
+						<img
+							src={assignee.avatar_url}
+							alt={assignee.first_name || assignee.email}
+							class="w-6 h-6 rounded-full"
+						/>
+					{:else}
+						<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium" style="background-color: var(--theme-primary, #8b5cf6);">
+							{(assignee.first_name?.[0] || assignee.email[0]).toUpperCase()}
+						</div>
+					{/if}
+					<span class="text-sm" style="color: var(--theme-foreground, #1c1917);">
+						{assignee.first_name || assignee.email.split('@')[0]}
+					</span>
+				</div>
+			{:else}
+				<div class="flex items-center gap-2 text-xs italic" style="color: var(--theme-text-muted, #78716c);">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+					</svg>
+					<span>Unassigned — click to assign</span>
+				</div>
+			{/if}
+		</div>
+
+		<!-- Subtasks (always shown) -->
+		<div class="flex items-center gap-2">
+			<svg class="w-4 h-4" style="color: var(--theme-text-muted, #78716c);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+			</svg>
+			<span class="text-sm" style="color: var(--theme-foreground, #1c1917);">
+				{completed_subtasks}/{total_subtasks} subtasks
+			</span>
+			{#if total_subtasks > 0}
+				<span class="text-xs" style="color: var(--theme-text-muted, #78716c);">
+					({subtask_completion_percentage}% complete)
+				</span>
+			{:else}
+				<span class="text-xs italic" style="color: var(--theme-text-muted, #78716c);">
+					— click to break down
+				</span>
+			{/if}
+		</div>
+	</div>
+
+	<!-- Subtask Progress Bar (only when subtasks exist) -->
+	{#if total_subtasks > 0}
+		<div class="mb-3">
+			<div class="w-full rounded-full h-2" style="background-color: var(--theme-border-subtle, rgba(120, 113, 108, 0.1));">
+				<div
+					class="h-2 rounded-full transition-all duration-300"
+					style="width: {subtask_completion_percentage || 0}%; background-color: var(--theme-primary, #8b5cf6);"
+				></div>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Labels and Additional Tags -->
+	<div class="flex flex-wrap gap-1.5 items-center mb-3">
+		{#if labels.length > 0}
 			{#each labels.slice(0, 3) as label}
 				<span
-					class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded"
-					style="background-color: {label.color}20; color: {label.color}"
+					class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+					style="background-color: {label.color}20; color: {label.color}; border: 1px solid {label.color}40"
 				>
 					{label.name}
 				</span>
 			{/each}
 			{#if labels.length > 3}
-				<span class="inline-flex items-center px-2 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+				<span class="inline-flex items-center px-2 py-0.5 text-xs" style="color: var(--theme-text-muted, #78716c);">
 					+{labels.length - 3} more
 				</span>
 			{/if}
-		</div>
-	{/if}
+		{/if}
+		<!-- Spot for additional tags -->
+		<span class="inline-flex items-center px-2 py-0.5 text-xs italic border border-dashed rounded-full" style="color: var(--theme-text-muted, #78716c); border-color: var(--theme-border, rgba(120, 113, 108, 0.2));">
+			+ Add tag
+		</span>
+	</div>
 
-	<!-- Subtask Progress -->
-	{#if total_subtasks > 0}
-		<div class="mt-3">
-			<div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-				<span>{completed_subtasks}/{total_subtasks} subtasks</span>
-				<span>{subtask_completion_percentage}%</span>
-			</div>
-			<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-				<div
-					class="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-					style="width: {subtask_completion_percentage}%"
-				/>
-			</div>
+	<!-- Status (only in list view, hidden in board view since column shows it) -->
+	{#if viewMode === 'list'}
+		<div class="pt-3 border-t" style="border-color: var(--theme-border, rgba(120, 113, 108, 0.2));">
+			<!-- Status selector would go here if needed -->
 		</div>
 	{/if}
-</div>
+</ClickableCard>
+
 
 <style>
 	.task-card:global(.dragging) {
 		opacity: 0.5;
+		transform: rotate(2deg);
 	}
 
 	.line-clamp-2 {

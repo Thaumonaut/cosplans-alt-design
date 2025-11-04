@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Photoshoot } from '$lib/types/domain/photoshoot'
+  import ClickableCard from '$lib/components/ui/clickable-card.svelte'
   import { Badge } from '$lib/components/ui'
   import { Calendar, MapPin, Camera, Clapperboard } from 'lucide-svelte'
 
@@ -30,12 +31,9 @@
   }
 </script>
 
-<div
-  role="button"
-  tabindex="0"
-  onclick={onclick}
-  onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="group relative overflow-hidden rounded-xl border bg-[var(--theme-card-bg)] transition-all hover:shadow-lg cursor-pointer"
+<ClickableCard
+  {onclick}
+  class="group relative overflow-hidden"
 >
   <!-- Hero Image Area - Placeholder with gradient background -->
   <div class="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-[var(--theme-primary)]/20 via-[var(--theme-accent)]/20 to-[var(--theme-info)]/20 flex items-center justify-center">
@@ -83,5 +81,4 @@
       {/if}
     </div>
   </div>
-</div>
-
+</ClickableCard>

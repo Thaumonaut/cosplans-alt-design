@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Resource, ResourceStatus } from '$lib/types/domain/resource'
+  import ClickableCard from '$lib/components/ui/clickable-card.svelte'
   import { Badge } from 'flowbite-svelte'
   import { DollarSign, Package, Link as LinkIcon, CheckSquare, X } from 'lucide-svelte'
   import { cn, formatCurrencyFromCents } from '$lib/utils'
@@ -151,12 +152,9 @@
   const metadataFields = $derived(getMetadataFields())
 </script>
 
-<div
-  role="button"
-  tabindex="0"
-  onclick={onclick}
-  onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="group relative flex min-h-[200px] overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg cursor-pointer"
+<ClickableCard
+  {onclick}
+  class="group relative flex min-h-[200px] overflow-hidden"
 >
   <!-- Cover Image (Left side) -->
   <div class="relative h-full w-56 shrink-0 overflow-hidden bg-muted">
@@ -181,7 +179,7 @@
           e.stopPropagation()
           onUnlink()
         }}
-        class="absolute right-2 top-2 z-10 size-8 rounded-md bg-[var(--theme-card-bg)]/80 backdrop-blur hover:bg-[var(--theme-card-bg)] flex items-center justify-center transition-colors"
+        class="no-click-propagation absolute right-2 top-2 z-10 size-8 rounded-md bg-[var(--theme-card-bg)]/80 backdrop-blur hover:bg-[var(--theme-card-bg)] flex items-center justify-center transition-colors"
         aria-label="Unlink resource"
       >
         <X class="size-4 text-[var(--theme-muted-foreground)]" />
@@ -298,7 +296,7 @@
       </div>
     </div>
   </div>
-</div>
+</ClickableCard>
 
 
 

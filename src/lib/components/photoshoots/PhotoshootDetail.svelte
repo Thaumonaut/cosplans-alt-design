@@ -8,11 +8,12 @@
   import { Badge } from 'flowbite-svelte'
   import { Calendar, MapPin, Camera, Users, ImageIcon, X } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
-  import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
   import ShotListEditor from '$lib/components/domain/ShotListEditor.svelte'
+  import EmbeddedTaskList from '$lib/components/tasks/EmbeddedTaskList.svelte'
   import type {
     Photoshoot,
     PhotoshootCreate,
@@ -48,7 +49,7 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let saving = $state(false)
-  let activeTab = $state<'overview' | 'shots' | 'crew' | 'gallery'>('overview')
+  let activeTab = $state<'overview' | 'shots' | 'crew' | 'tasks' | 'gallery'>('overview')
 
   // Crew state
   let crewMembers = $state<CrewMember[]>([])
@@ -326,18 +327,18 @@
         <!-- Metadata Bar -->
         <div class="flex flex-wrap items-center gap-6 text-sm">
           {#if photoshoot?.date || currentMode() === 'create'}
-            <InlineDatePicker
+            <DatePicker
               bind:value={dateValue}
-              editable={!isReadOnly()}
-              onSave={async (v: string) => {
+              placeholder="Select date"
+              disabled={isReadOnly()}
+              onchange={async (v: string | null) => {
+                const dateStr = v || '';
                 if (currentMode() === 'create') {
-                  newPhotoshoot.date = v
-                  dateValue = v
+                  newPhotoshoot.date = dateStr
                 } else {
-                  await handleSaveField('date', v || null)
+                  await handleSaveField('date', dateStr || null)
                 }
               }}
-              placeholder="Select date"
             />
           {/if}
 
@@ -382,6 +383,12 @@
           class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'crew' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
         >
           Crew
+        </button>
+        <button
+          onclick={() => activeTab = 'tasks'}
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'tasks' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
+        >
+          Tasks
         </button>
         <button
           onclick={() => activeTab = 'gallery'}
@@ -623,6 +630,19 @@
                 {/each}
               </div>
             {/if}
+          </div>
+        {:else if activeTab === 'tasks' && photoshootId}
+          <!-- Tasks Tab -->
+          <div class="mx-auto max-w-4xl">
+            <EmbeddedTaskList
+              photoshootId={photoshootId}
+              teamId={get(currentTeam)?.id || ''}
+              title="Photoshoot Tasks"
+              showViewToggle={true}
+              showQuickCreate={true}
+              showViewAllLink={true}
+              maxHeight="600px"
+            />
           </div>
         {:else if activeTab === 'gallery' && photoshootId}
           <!-- Gallery Tab -->

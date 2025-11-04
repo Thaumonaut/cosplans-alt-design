@@ -5,16 +5,31 @@
 	 * Main task management page with multiple views (list, board, calendar, timeline).
 	 * Supports filtering, sorting, grouping, and all task operations.
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { taskViewStore, activeFilterCount, filterSummary } from '$lib/stores/task-view-store';
 	import TaskListView from '$lib/components/tasks/TaskListView.svelte';
 	import TaskBoardView from '$lib/components/tasks/TaskBoardView.svelte';
 	import TaskCalendarView from '$lib/components/tasks/TaskCalendarView.svelte';
 	import ViewModeSelector from '$lib/components/tasks/ViewModeSelector.svelte';
 	import TaskFilterPanel from '$lib/components/tasks/TaskFilterPanel.svelte';
+	import TaskDetailPanel from '$lib/components/tasks/TaskDetailPanel.svelte';
+	import WhatToDoNow from '$lib/components/tasks/WhatToDoNow.svelte';
+	// FocusMode disabled - Post-MVP feature
+	// import FocusMode from '$lib/components/tasks/FocusMode.svelte';
+	import CelebrationAnimation from '$lib/components/tasks/CelebrationAnimation.svelte';
 	import ErrorToast from '$lib/components/base/ErrorToast.svelte';
+	import { Button, DropdownMenu } from '$lib/components/ui';
 	import { TaskService } from '$lib/services/task-service';
 	import { applyFilters, applySort } from '$lib/services/task-filter-service';
+	import { keyboardShortcuts } from '$lib/utils/keyboard-shortcuts';
+	import { celebration } from '$lib/stores/celebration';
+	import { taskStageService } from '$lib/api/services/taskStageService';
+	import { UserTaskStatsService } from '$lib/services/user-task-stats-service';
+	import StreakDisplay from '$lib/components/tasks/StreakDisplay.svelte';
+	import DailyProgressBar from '$lib/components/tasks/DailyProgressBar.svelte';
+	import { currentTeam } from '$lib/stores/teams';
+	import { user } from '$lib/stores/auth-store';
+	import { get } from 'svelte/store';
 	import type { PageData } from './$types';
 
 	interface Props {
@@ -29,13 +44,28 @@
 	let projectOptions = $state(data.projectOptions || []);
 	let assigneeOptions = $state(data.assigneeOptions || []);
 	let labelOptions = $state(data.labelOptions || []);
+	let completionStageIds = $state(data.completionStageIds || []);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let filterPanelOpen = $state(false);
 	let selectedTaskIds = $state(new Set<string>());
+	let detailPanelTaskId = $state<string | null>(null);
+	let isDetailPanelOpen = $state(false);
+	let showWhatToDoNow = $state(false);
+	// FocusMode disabled - Post-MVP feature
+	// let focusModeTaskId = $state<string | null>(null);
+	// let isFocusModeActive = $state(false);
+	const isFocusModeActive = false; // Disabled - Post-MVP
+	let celebrationEnabled = $state(true); // Check localStorage for user preference
+	let celebrationTrigger = $state(false);
+	let celebrationMessage = $state('');
 
 	// Services
 	const taskService = new TaskService();
+	const statsService = new UserTaskStatsService();
+	
+	// Streak display ref
+	let streakDisplayRef: StreakDisplay | null = $state(null);
 
 	// Reactive filtered and sorted tasks
 	const filteredTasks = $derived(
@@ -46,19 +76,110 @@
 		applySort(filteredTasks, $taskViewStore.sortBy)
 	);
 
+	// Calculate daily progress (completed vs total tasks)
+	const completionStageSet = $derived(new Set(completionStageIds));
+	const completedTasksCount = $derived(
+		tasks.filter(task => completionStageSet.has(task.status_id)).length
+	);
+	const totalTasksCount = $derived(tasks.length);
+
 	// View mode
 	let viewMode = $derived($taskViewStore.viewMode);
 
+	// Load celebration preference from localStorage
+	onMount(() => {
+		// FocusMode disabled - Post-MVP feature
+		// Clean up any saved focus mode state
+		if (typeof window !== 'undefined') {
+			localStorage.removeItem('focusModeTaskId');
+			document.body.classList.remove('focus-mode-active');
+
+			// Load celebration preference (default to true if not set)
+			const savedCelebrationPref = localStorage.getItem('celebrationEnabled');
+			celebrationEnabled = savedCelebrationPref !== 'false';
+
+			// Focus Mode F key shortcut disabled - Post-MVP
+			// keyboardShortcuts.register({
+			// 	key: 'f',
+			// 	callback: () => {
+			// 		if (detailPanelTaskId && !isFocusModeActive) {
+			// 			enterFocusMode(detailPanelTaskId);
+			// 		}
+			// 	},
+			// 	description: 'Enter Focus Mode for current task'
+			// });
+
+			// Subscribe to celebration store
+			const unsubscribe = celebration.subscribe((state) => {
+				if (state.trigger && celebrationEnabled) {
+					celebrationTrigger = true;
+					celebrationMessage = state.message;
+					// Reset trigger after animation completes
+					setTimeout(() => {
+						celebrationTrigger = false;
+					}, 3500);
+				}
+			});
+
+			return () => {
+				unsubscribe();
+			};
+		}
+	});
+
+	// FocusMode disabled - Post-MVP feature
+	// $effect(() => {
+	// 	if (isFocusModeActive && isDetailPanelOpen) {
+	// 		isDetailPanelOpen = false;
+	// 		detailPanelTaskId = null;
+	// 	}
+	// });
+
+	onDestroy(() => {
+		// Cleanup
+		if (typeof window !== 'undefined') {
+			// FocusMode disabled - Post-MVP
+			// keyboardShortcuts.unregister({
+			// 	key: 'f',
+			// 	callback: () => {}
+			// });
+			document.body.classList.remove('focus-mode-active');
+		}
+	});
+
 	// Handlers
 	async function handleTaskClick(event: CustomEvent<{ id: string }>) {
-		// Navigate to task detail (will implement in Phase 4)
-		console.log('Task clicked:', event.detail.id);
+		detailPanelTaskId = event.detail.id;
+		isDetailPanelOpen = true;
+	}
+
+	function handleDetailPanelClose() {
+		isDetailPanelOpen = false;
+		detailPanelTaskId = null;
+	}
+
+	function handleTaskSave(updatedTask: any) {
+		// If task doesn't exist (new task), add it to the list
+		const existingIndex = tasks.findIndex(t => t.id === updatedTask.id);
+		if (existingIndex >= 0) {
+			// Update existing task
+			tasks = tasks.map((task) => 
+				task.id === updatedTask.id ? { ...task, ...updatedTask } : task
+			);
+		} else {
+			// Add new task to the beginning of the list
+			tasks = [updatedTask, ...tasks];
+		}
 	}
 
 	async function handleStatusChange(event: CustomEvent<{ id: string; status_id: string }>) {
 		try {
 			loading = true;
 			error = null;
+
+			// Get current task to check if it's moving to a completion stage
+			const currentTask = tasks.find(t => t.id === event.detail.id);
+			const previousStatusId = currentTask?.status_id;
 
 			const result = await taskService.updateTask(event.detail.id, {
 				status_id: event.detail.status_id,
@@ -72,6 +193,36 @@
 			tasks = tasks.map((task) =>
 				task.id === event.detail.id ? { ...task, status_id: event.detail.status_id } : task
 			);
+
+			// Check if task moved to a completion stage
+			if (previousStatusId !== event.detail.status_id) {
+				const team = get(currentTeam);
+				if (team) {
+					try {
+						const stages = await taskStageService.list(team.id);
+						const newStage = stages.find(s => s.id === event.detail.status_id);
+						
+						if (newStage?.isCompletionStage) {
+							// Task was completed! Trigger celebration and update stats
+							celebration.celebrate(currentTask?.title);
+							
+							// Update streak stats
+							const currentUser = get(user);
+							if (currentUser) {
+								try {
+									await statsService.incrementTaskCompletion(currentUser.id, team.id);
+									// Refresh streak display
+									streakDisplayRef?.refresh();
+								} catch (err) {
+									console.error('Failed to update task stats:', err);
+								}
+							}
+						}
+					} catch (err) {
+						console.error('Failed to check stage completion status:', err);
+					}
+				}
+			}
 		} catch (err: any) {
 			error = err.message || 'Failed to update task status';
 		} finally {
@@ -159,6 +310,58 @@
 	function toggleFilterPanel() {
 		filterPanelOpen = !filterPanelOpen;
 	}
+
+	function handleNewTaskClick() {
+		detailPanelTaskId = null; // null = create mode
+		isDetailPanelOpen = true;
+	}
+
+	function handleWhatToDoNowClick() {
+		showWhatToDoNow = !showWhatToDoNow;
+	}
+
+	function handleWhatToDoNowTaskSelect(taskId: string) {
+		detailPanelTaskId = taskId;
+		isDetailPanelOpen = true;
+		showWhatToDoNow = false; // Close suggestions when task is selected
+	}
+
+	// FocusMode disabled - Post-MVP feature
+	// function enterFocusMode(taskId: string) {
+	// 	// Close detail panel first
+	// 	isDetailPanelOpen = false;
+	// 	detailPanelTaskId = null;
+	// 	
+	// 	// Activate focus mode (drawer will be hidden via display: none)
+	// 	focusModeTaskId = taskId;
+	// 	isFocusModeActive = true;
+	// 	
+	// 	// Save to localStorage
+	// 	if (typeof window !== 'undefined') {
+	// 		localStorage.setItem('focusModeTaskId', taskId);
+	// 		document.body.classList.add('focus-mode-active');
+	// 	}
+	// }
+
+	// function exitFocusMode() {
+	// 	focusModeTaskId = null;
+	// 	isFocusModeActive = false;
+	// 	// Remove from localStorage
+	// 	if (typeof window !== 'undefined') {
+	// 		localStorage.removeItem('focusModeTaskId');
+	// 		document.body.classList.remove('focus-mode-active');
+	// 	}
+	// }
+
+	// function handleStartWorking(taskId: string) {
+	// 	enterFocusMode(taskId);
+	// }
+	
+	// Placeholder function to prevent errors
+	function handleStartWorking(_taskId: string) {
+		// FocusMode disabled - Post-MVP
+		console.log('Focus Mode is disabled - Post-MVP feature');
+	}
 </script>
 
 <svelte:head>
@@ -167,49 +370,92 @@
 
 <div class="tasks-page flex flex-col h-full">
 	<!-- Page Header -->
-	<div class="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+	<div class="flex-shrink-0 border-b p-4" style="background-color: var(--theme-section-bg, rgba(255, 255, 255, 0.9)); border-color: var(--theme-border, rgba(120, 113, 108, 0.2));">
 		<div class="max-w-7xl mx-auto">
 			<!-- Top Row -->
-			<div class="flex items-center justify-between mb-4">
-				<div>
-					<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
-					<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-						{sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
-						{#if $activeFilterCount > 0}
-							<span class="text-blue-600 dark:text-blue-400">
-								({$activeFilterCount} {$activeFilterCount === 1 ? 'filter' : 'filters'} active)
-							</span>
-						{/if}
-					</p>
+			<div class="flex items-center justify-between mb-3">
+				<div class="flex items-center gap-4">
+					<div>
+						<h1 class="text-2xl font-bold" style="color: var(--theme-foreground, #1c1917);">Tasks</h1>
+						<p class="text-sm mt-1" style="color: var(--theme-text-muted, #78716c);">
+							{sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}
+							{#if $activeFilterCount > 0}
+								<span style="color: var(--theme-primary, #8b5cf6);">
+									({$activeFilterCount} {$activeFilterCount === 1 ? 'filter' : 'filters'} active)
+								</span>
+							{/if}
+						</p>
+					</div>
+
+					<!-- Daily Progress Bar -->
+					{#if totalTasksCount > 0}
+						<DailyProgressBar
+							completedTasks={completedTasksCount}
+							totalTasks={totalTasksCount}
+						/>
+					{/if}
+
+					<!-- Streak Display -->
+					<StreakDisplay
+						bind:this={streakDisplayRef}
+						onStreakBreak={(longestStreak) => {
+							// Show encouragement when streak breaks
+							if (longestStreak > 0) {
+								celebration.celebrate(
+									undefined,
+									`Your best streak was ${longestStreak} days! You're doing great - keep going!`
+								);
+							}
+						}}
+					/>
 				</div>
 
 				<div class="flex items-center gap-3">
-					<!-- Filter Button -->
-					<button
-						type="button"
-						on:click={toggleFilterPanel}
-						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {$activeFilterCount > 0 ? 'ring-2 ring-blue-500' : ''}"
-					>
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-							/>
-						</svg>
-						Filters
-						{#if $activeFilterCount > 0}
-							<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">
-								{$activeFilterCount}
-							</span>
-						{/if}
-					</button>
+					<!-- Filter Button with Popover -->
+					<DropdownMenu bind:open={filterPanelOpen} placement="bottom-end">
+						{#snippet trigger()}
+							<Button
+								variant="outline"
+								class={$activeFilterCount > 0 ? 'ring-2' : ''}
+								style={$activeFilterCount > 0 ? '--tw-ring-color: var(--theme-primary, #8b5cf6);' : ''}
+							>
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+									/>
+								</svg>
+								Filters
+								{#if $activeFilterCount > 0}
+									<span class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full" style="background-color: var(--theme-primary, #8b5cf6);">
+										{$activeFilterCount}
+									</span>
+								{/if}
+							</Button>
+						{/snippet}
+						
+						{#snippet children()}
+							<div class="w-[600px] max-h-[80vh] overflow-y-auto p-6">
+								<TaskFilterPanel
+									open={true}
+									filters={$taskViewStore.filters}
+									{statusOptions}
+									{projectOptions}
+									{assigneeOptions}
+									{labelOptions}
+									on:change={handleFilterChange}
+									on:clear={handleFilterClear}
+									on:save={handleFilterSave}
+								/>
+							</div>
+						{/snippet}
+					</DropdownMenu>
 
 					<!-- New Task Button -->
-					<button
-						type="button"
-						class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+					<Button
+						onclick={()=>handleNewTaskClick()}
 					>
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
@@ -220,8 +466,27 @@
 							/>
 						</svg>
 						New Task
-					</button>
+					</Button>
 				</div>
+			</div>
+
+			<!-- Second Row: What Should I Do Now -->
+			<div class="flex items-center justify-end mb-4">
+				<Button
+					variant="outline"
+					onclick={handleWhatToDoNowClick}
+					class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors {showWhatToDoNow ? 'ring-2 ring-purple-500' : ''}"
+				>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+						/>
+					</svg>
+					What should I do now?
+				</Button>
 			</div>
 
 			<!-- View Controls Row -->
@@ -235,30 +500,22 @@
 				{#if selectedTaskIds.size > 0}
 					<div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 						<span>{selectedTaskIds.size} selected</span>
-						<button type="button" class="text-blue-600 dark:text-blue-400 hover:underline">
+						<Button variant="link" size="sm">
 							Bulk Edit
-						</button>
+						</Button>
 					</div>
 				{/if}
 			</div>
 		</div>
 	</div>
 
-	<!-- Filter Panel (Collapsible) -->
-	{#if filterPanelOpen}
-		<div class="flex-shrink-0 p-4 bg-gray-50 dark:bg-gray-900">
+	<!-- Filter Panel is now a popover - removed inline panel -->
+
+	<!-- What To Do Now Panel (Collapsible) -->
+	{#if showWhatToDoNow}
+		<div class="flex-shrink-0 p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
 			<div class="max-w-7xl mx-auto">
-				<TaskFilterPanel
-					open={filterPanelOpen}
-					filters={$taskViewStore.filters}
-					{statusOptions}
-					{projectOptions}
-					{assigneeOptions}
-					{labelOptions}
-					on:change={handleFilterChange}
-					on:clear={handleFilterClear}
-					on:save={handleFilterSave}
-				/>
+				<WhatToDoNow onTaskSelect={handleWhatToDoNowTaskSelect} />
 			</div>
 		</div>
 	{/if}
@@ -267,7 +524,7 @@
 	<div class="flex-1 overflow-hidden">
 		{#if viewMode === 'list'}
 			<TaskListView
-				tasks={sortedTasks}
+				tasks={sortedTasks as any}
 				{statusOptions}
 				selectable={true}
 				bind:selectedIds={selectedTaskIds}
@@ -278,19 +535,29 @@
 				on:dueDateChange={handleDueDateChange}
 			/>
 		{:else if viewMode === 'board'}
-			<TaskBoardView
-				tasks={sortedTasks}
-				stages={statusOptions}
-				{statusOptions}
-				on:taskClick={handleTaskClick}
-				on:statusChange={handleStatusChange}
-				on:priorityChange={handlePriorityChange}
-				on:dueDateChange={handleDueDateChange}
-				on:taskDrop={handleTaskDrop}
-			/>
+			{#if statusOptions.length > 0}
+				<TaskBoardView
+					tasks={sortedTasks as any}
+					stages={statusOptions.map(opt => ({ 
+						id: opt.value || '', 
+						name: opt.label || '', 
+						color: opt.color || undefined
+					}))}
+					{statusOptions}
+					on:taskClick={handleTaskClick}
+					on:statusChange={handleStatusChange}
+					on:priorityChange={handlePriorityChange}
+					on:dueDateChange={handleDueDateChange}
+					on:taskDrop={handleTaskDrop}
+				/>
+			{:else}
+				<div class="flex flex-col items-center justify-center py-12 text-center">
+					<p class="text-sm text-gray-500">No task stages available. Please configure task stages first.</p>
+				</div>
+			{/if}
 		{:else if viewMode === 'calendar'}
 			<TaskCalendarView
-				tasks={sortedTasks}
+				tasks={sortedTasks as any}
 				on:taskClick={handleTaskClick}
 			/>
 		{:else}
@@ -308,6 +575,33 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Focus Mode - Disabled (Post-MVP feature) -->
+<!-- {#if isFocusModeActive && focusModeTaskId}
+	<FocusMode
+		taskId={focusModeTaskId}
+		onExit={exitFocusMode}
+	/>
+{/if} -->
+
+<!-- Task Detail Panel -->
+<TaskDetailPanel
+	bind:open={isDetailPanelOpen}
+	taskId={detailPanelTaskId}
+	onClose={handleDetailPanelClose}
+	onSave={handleTaskSave}
+	onStartWorking={handleStartWorking}
+/>
+
+<!-- Celebration Animation -->
+<CelebrationAnimation
+	trigger={celebrationTrigger}
+	message={celebrationMessage}
+	enabled={celebrationEnabled}
+	onComplete={() => {
+		celebrationTrigger = false;
+	}}
+/>
 
 <!-- Error Toast -->
 {#if error}

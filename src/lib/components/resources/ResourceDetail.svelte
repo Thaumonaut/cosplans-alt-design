@@ -15,6 +15,7 @@
   import MaterialSelector from '$lib/components/base/MaterialSelector.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
   import UsedInProjectsSection from './UsedInProjectsSection.svelte'
+  import EmbeddedTaskList from '$lib/components/tasks/EmbeddedTaskList.svelte'
   import type { Resource, ResourceCreate, ResourceCategory } from '$lib/types/domain/resource'
   import { get } from 'svelte/store'
 
@@ -42,7 +43,7 @@
   let saving = $state(false)
   let deleting = $state(false)
   let showDeleteDialog = $state(false)
-  let activeTab = $state<'overview' | 'details' | 'gallery'>('overview')
+  let activeTab = $state<'overview' | 'details' | 'tasks' | 'gallery'>('overview')
 
   let costValue = $state(0)
   $effect(() => {
@@ -480,6 +481,12 @@
           Details
         </button>
         <button
+          onclick={() => activeTab = 'tasks'}
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'tasks' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+        >
+          Tasks
+        </button>
+        <button
           onclick={() => activeTab = 'gallery'}
           class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'gallery' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
         >
@@ -567,6 +574,20 @@
                 />
               </div>
             {/if}
+          </div>
+
+        {:else if activeTab === 'tasks' && resourceId}
+          <!-- Tasks Tab -->
+          <div class="mx-auto max-w-4xl">
+            <EmbeddedTaskList
+              {resourceId}
+              teamId={get(currentTeam)?.id || ''}
+              title="Resource Tasks"
+              showViewToggle={true}
+              showQuickCreate={true}
+              showViewAllLink={true}
+              maxHeight="600px"
+            />
           </div>
 
         {:else if activeTab === 'gallery'}

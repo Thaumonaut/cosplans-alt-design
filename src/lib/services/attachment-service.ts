@@ -14,19 +14,46 @@ export class AttachmentService extends BaseService {
 	 */
 	async getAttachments(taskId: string): Promise<ServiceResponse<TaskAttachment[]>> {
 		return this.execute(async () => {
-			return await this.client
+			// Fetch attachments (uploaded_by references auth.users, can't join directly)
+			const { data: attachments, error } = await this.client
 				.from('task_attachments')
-				.select(`
-					*,
-					uploader:users!task_attachments_uploaded_by_fkey(
-						id,
-						email,
-						first_name,
-						last_name
-					)
-				`)
+				.select('*')
 				.eq('task_id', taskId)
 				.order('created_at', { ascending: false });
+
+			if (error) return { data: null, error };
+
+			// Fetch users separately from public.users (IDs match auth.users)
+			const userIds = [...new Set(attachments?.map((a: any) => a.uploaded_by).filter(Boolean) || [])];
+			let usersMap: Record<string, any> = {};
+			
+			if (userIds.length > 0) {
+				const { data: users } = await this.client
+					.from('users')
+					.select('id, email, name, avatar_url')
+					.in('id', userIds);
+
+				if (users) {
+					users.forEach((u: any) => {
+						const nameParts = u.name?.split(' ') || [];
+						usersMap[u.id] = {
+							id: u.id,
+							email: u.email,
+							first_name: nameParts[0] || null,
+							last_name: nameParts.slice(1).join(' ') || null,
+							avatar_url: u.avatar_url
+						};
+					});
+				}
+			}
+
+			// Attach user data to attachments
+			const attachmentsWithUsers = (attachments || []).map((a: any) => ({
+				...a,
+				uploader: usersMap[a.uploaded_by] || null
+			}));
+
+			return { data: attachmentsWithUsers, error: null };
 		});
 	}
 
@@ -41,12 +68,12 @@ export class AttachmentService extends BaseService {
 		try {
 			// Generate unique file path
 			const timestamp = Date.now();
-			const sanitized FileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+			const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
 			const storageKey = `tasks/${taskId}/${timestamp}_${sanitizedFileName}`;
 
-			// Upload to storage bucket
+			// Upload to storage bucket (use cosplay-images bucket that exists)
 			const { data: uploadData, error: uploadError } = await this.client.storage
-				.from('task-attachments')
+				.from('cosplay-images')
 				.upload(storageKey, file, {
 					cacheControl: '3600',
 					upsert: false,
@@ -58,7 +85,7 @@ export class AttachmentService extends BaseService {
 
 			// Get public URL
 			const { data: { publicUrl } } = this.client.storage
-				.from('task-attachments')
+				.from('cosplay-images')
 				.getPublicUrl(storageKey);
 
 			// Create attachment record
@@ -110,11 +137,11 @@ export class AttachmentService extends BaseService {
 			// Extract storage path from URL
 			const url = new URL(attachment.storage_url);
 			const pathParts = url.pathname.split('/');
-			const storageKey = pathParts.slice(pathParts.indexOf('task-attachments') + 1).join('/');
+			const storageKey = pathParts.slice(pathParts.indexOf('cosplay-images') + 1).join('/');
 
 			// Delete from storage
 			await this.client.storage
-				.from('task-attachments')
+				.from('cosplay-images')
 				.remove([storageKey]);
 
 			// Delete from database
@@ -147,11 +174,11 @@ export class AttachmentService extends BaseService {
 			// Extract storage path
 			const url = new URL(attachment.storage_url);
 			const pathParts = url.pathname.split('/');
-			const storageKey = pathParts.slice(pathParts.indexOf('task-attachments') + 1).join('/');
+			const storageKey = pathParts.slice(pathParts.indexOf('cosplay-images') + 1).join('/');
 
 			// Generate signed URL
 			const { data, error } = await this.client.storage
-				.from('task-attachments')
+				.from('cosplay-images')
 				.createSignedUrl(storageKey, expiresIn);
 
 			return { data: data?.signedUrl || null, error };

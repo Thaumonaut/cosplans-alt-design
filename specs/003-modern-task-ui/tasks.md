@@ -129,21 +129,21 @@
 
 ### Implementation for User Story 2
 
-- [ ] T055 [P] [US2] Create TaskDetailPanel component in src/lib/components/tasks/TaskDetailPanel.svelte (unified panel for view/edit)
-- [ ] T056 [P] [US2] Create SubtaskList component in src/lib/components/tasks/SubtaskList.svelte (manage subtasks with progress)
-- [ ] T057 [P] [US2] Create CommentThread component in src/lib/components/tasks/CommentThread.svelte (comment list with @mentions)
-- [ ] T058 [P] [US2] Create CommentInput component in src/lib/components/tasks/CommentInput.svelte (@mention autocomplete)
-- [ ] T059 [P] [US2] Create AttachmentList component in src/lib/components/tasks/AttachmentList.svelte (file uploads via drag-drop)
-- [ ] T060 [P] [US2] Create ActivityLog component in src/lib/components/tasks/ActivityLog.svelte (task history timeline)
-- [ ] T061 [US2] Implement @mention parsing in src/lib/utils/mention-parser.ts (extract user IDs from text)
-- [ ] T062 [US2] Implement @mention autocomplete in src/lib/utils/mention-autocomplete.ts (team member search)
-- [ ] T063 [US2] Implement file upload to Cloudflare R2 in src/lib/services/upload-service.ts
-- [ ] T064 [US2] Generate signed URLs for file downloads in AttachmentService
-- [ ] T065 [US2] Wire up task detail panel to open from task cards (modal or side panel)
-- [ ] T066 [US2] Implement living document editing for task fields (inline editing on blur/enter)
-- [ ] T067 [US2] Add optimistic UI updates for all task field changes
-- [ ] T068 [US2] Handle errors with inline error messages and retry buttons
-- [ ] T069 [US2] Calculate and display subtask completion percentage
+- [X] T055 [P] [US2] Create TaskDetailPanel component in src/lib/components/tasks/TaskDetailPanel.svelte (unified panel for view/edit)
+- [X] T056 [P] [US2] Create SubtaskList component in src/lib/components/tasks/SubtaskList.svelte (manage subtasks with progress)
+- [X] T057 [P] [US2] Create CommentThread component in src/lib/components/tasks/CommentThread.svelte (comment list with @mentions)
+- [X] T058 [P] [US2] Create CommentInput component in src/lib/components/tasks/CommentInput.svelte (@mention autocomplete)
+- [X] T059 [P] [US2] Create AttachmentList component in src/lib/components/tasks/AttachmentList.svelte (file uploads via drag-drop)
+- [X] T060 [P] [US2] Create ActivityLog component in src/lib/components/tasks/ActivityLog.svelte (task history timeline)
+- [X] T061 [US2] Implement @mention parsing in src/lib/utils/mention-parser.ts (extract user IDs from text)
+- [X] T062 [US2] Implement @mention autocomplete in src/lib/utils/mention-autocomplete.ts (team member search)
+- [X] T063 [US2] Implement file upload to Cloudflare R2 in src/lib/api/services/taskAttachmentService.ts
+- [X] T064 [US2] Generate signed URLs for file downloads in taskAttachmentService
+- [X] T065 [US2] Wire up task detail panel to open from task cards (modal or side panel)
+- [X] T066 [US2] Implement living document editing for task fields (inline editing on blur/enter)
+- [X] T067 [US2] Add optimistic UI updates for all task field changes
+- [X] T068 [US2] Handle errors with inline error messages and retry buttons
+- [X] T069 [US2] Calculate and display subtask completion percentage
 
 **Checkpoint**: Users can manage rich task details with subtasks, comments, attachments ✅
 
@@ -157,14 +157,14 @@
 
 ### Implementation for User Story 3
 
-- [ ] T070 [P] [US3] Create EmbeddedTaskList component in src/lib/components/tasks/EmbeddedTaskList.svelte (reusable filtered task view)
-- [ ] T071 [P] [US3] Create QuickTaskCreate component in src/lib/components/tasks/QuickTaskCreate.svelte (inline task creation)
-- [ ] T072 [US3] Add task section to Project detail page in src/routes/(app)/projects/[id]/+page.svelte
-- [ ] T073 [US3] Add task section to Photoshoot detail page in src/routes/(app)/photoshoots/[id]/+page.svelte
-- [ ] T074 [US3] Add task section to Resource detail page in src/routes/(app)/resources/[id]/+page.svelte
-- [ ] T075 [US3] Implement context-aware task creation (auto-link to parent entity)
-- [ ] T076 [US3] Add "View All Tasks" link from embedded views to main Tasks page with pre-applied filter
-- [ ] T077 [US3] Ensure embedded task views respect team RLS policies
+- [X] T070 [P] [US3] Create EmbeddedTaskList component in src/lib/components/tasks/EmbeddedTaskList.svelte (reusable filtered task view)
+- [X] T071 [P] [US3] Create QuickTaskCreate component in src/lib/components/tasks/QuickTaskCreate.svelte (inline task creation)
+- [X] T072 [US3] Add task section to Project detail page in src/routes/(app)/projects/[id]/+page.svelte
+- [X] T073 [US3] Add task section to Photoshoot detail page in src/routes/(app)/photoshoots/[id]/+page.svelte
+- [X] T074 [US3] Add task section to Resource detail page in src/routes/(app)/resources/[id]/+page.svelte
+- [X] T075 [US3] Implement context-aware task creation (auto-link to parent entity)
+- [X] T076 [US3] Add "View All Tasks" link from embedded views to main Tasks page with pre-applied filter
+- [X] T077 [US3] Ensure embedded task views respect team RLS policies
 
 **Checkpoint**: Tasks appear in context and auto-link to parent entities ✅
 
@@ -172,51 +172,53 @@
 
 ## Phase 6: User Story 9 - ADHD-Friendly Task Management (Priority: P1)
 
-**Goal**: ADHD users get decision support, focus mode, celebrations, streaks, stage deadlines, and gentle prompts
+**Goal**: ADHD users get decision support, celebrations, streaks, stage deadlines, and gentle prompts (Focus Mode is post-MVP - currently disabled)
 
-**Independent Test**: Create 10 tasks with various priorities/due dates. Click "What should I do now?" and verify algorithm suggests appropriate task. Complete task, verify celebration plays. Check streak updates. Enable Focus Mode, verify UI simplifies.
+**Independent Test**: Create 10 tasks with various priorities/due dates. Click "What should I do now?" and verify algorithm suggests appropriate task. Complete task, verify celebration plays. Check streak updates.
 
 ### Implementation for User Story 9
 
 #### Task Suggestion Algorithm
 
-- [ ] T078 [P] [US9] Implement TaskSuggestionService in src/lib/services/task-suggestion-service.ts (prioritization algorithm)
-- [ ] T079 [P] [US9] Create WhatToDoNow component in src/lib/components/tasks/WhatToDoNow.svelte (displays suggestions with reasoning)
-- [ ] T080 [US9] Add "What should I do now?" button to Tasks page header
-- [ ] T081 [US9] Implement algorithm scoring: due date urgency (40%), priority (30%), dependencies (20%), effort (10%)
+- [X] T078 [P] [US9] Implement TaskSuggestionService in src/lib/services/task-suggestion-service.ts (prioritization algorithm)
+- [X] T079 [P] [US9] Create WhatToDoNow component in src/lib/components/tasks/WhatToDoNow.svelte (displays suggestions with reasoning)
+- [X] T080 [US9] Add "What should I do now?" button to Tasks page header
+- [X] T081 [US9] Implement algorithm scoring: due date urgency (40%), priority (30%), dependencies (20%), effort (10%)
 
-#### Focus Mode
+#### Focus Mode (Post-MVP - Currently Disabled)
 
-- [ ] T082 [P] [US9] Create FocusMode component in src/lib/components/tasks/FocusMode.svelte (full-screen single-task view)
-- [ ] T083 [US9] Implement Focus Mode keyboard shortcut ('F' key) in src/lib/utils/keyboard-shortcuts.ts
-- [ ] T084 [US9] Add "Start Working" button to task detail panel that activates Focus Mode
-- [ ] T085 [US9] Store Focus Mode state in localStorage for persistence across navigation
-- [ ] T086 [US9] Add ESC key and "Exit Focus" button to leave Focus Mode
+**Note**: Focus Mode is disabled as it currently adds no value - users can't edit values or see useful information, only leave comments. Will be redesigned for post-MVP.
+
+- [X] T082 [P] [US9] Create FocusMode component in src/lib/components/tasks/FocusMode.svelte (full-screen single-task view) - **DISABLED: Post-MVP**
+- [X] T083 [US9] Implement Focus Mode keyboard shortcut ('F' key) in src/lib/utils/keyboard-shortcuts.ts - **DISABLED: Post-MVP**
+- [X] T084 [US9] Add "Start Working" button to task detail panel that activates Focus Mode - **DISABLED: Post-MVP**
+- [X] T085 [US9] Store Focus Mode state in localStorage for persistence across navigation - **DISABLED: Post-MVP**
+- [X] T086 [US9] Add ESC key and "Exit Focus" button to leave Focus Mode - **DISABLED: Post-MVP**
 
 #### Celebration System
 
-- [ ] T087 [P] [US9] Create CelebrationAnimation component in src/lib/components/tasks/CelebrationAnimation.svelte (canvas-confetti integration)
-- [ ] T088 [US9] Implement celebration trigger on task completion in TaskService
-- [ ] T089 [US9] Add prefers-reduced-motion CSS media query detection
-- [ ] T090 [US9] Add user preference toggle for celebration animations in user settings
-- [ ] T091 [US9] Generate encouraging messages (randomized, positive, non-judgmental)
+- [X] T087 [P] [US9] Create CelebrationAnimation component in src/lib/components/tasks/CelebrationAnimation.svelte (canvas-confetti integration)
+- [X] T088 [US9] Implement celebration trigger on task completion in TaskService
+- [X] T089 [US9] Add prefers-reduced-motion CSS media query detection
+- [X] T090 [US9] Add user preference toggle for celebration animations in user settings
+- [X] T091 [US9] Generate encouraging messages (randomized, positive, non-judgmental)
 
 #### Streak Tracking
 
-- [ ] T092 [P] [US9] Implement UserTaskStatsService in src/lib/services/user-task-stats-service.ts (streak logic)
-- [ ] T093 [US9] Create StreakDisplay component in src/lib/components/tasks/StreakDisplay.svelte (flame icon, counter)
-- [ ] T094 [US9] Add StreakDisplay to Tasks page header
-- [ ] T095 [US9] Implement streak logic: increment on first task completion of day, grace period handling
-- [ ] T096 [US9] Create Supabase Edge Function for daily stats reset: `supabase/functions/daily-streak-check/index.ts`
-- [ ] T097 [US9] Schedule daily cron job for streak checking (midnight UTC, respects user timezone)
-- [ ] T098 [US9] Display "best streak" stat when streak breaks with encouragement message
+- [X] T092 [P] [US9] Implement UserTaskStatsService in src/lib/services/user-task-stats-service.ts (streak logic)
+- [X] T093 [US9] Create StreakDisplay component in src/lib/components/tasks/StreakDisplay.svelte (flame icon, counter)
+- [X] T094 [US9] Add StreakDisplay to Tasks page header
+- [X] T095 [US9] Implement streak logic: increment on first task completion of day, grace period handling
+- [X] T096 [US9] Create Supabase Edge Function for daily stats reset: `supabase/functions/daily-streak-check/index.ts`
+- [X] T097 [US9] Schedule daily cron job for streak checking (midnight UTC, respects user timezone) - Note: Cron must be configured in Supabase Dashboard
+- [X] T098 [US9] Display "best streak" stat when streak breaks with encouragement message
 
 #### Progress Visibility
 
-- [ ] T099 [P] [US9] Create DailyProgressBar component in src/lib/components/tasks/DailyProgressBar.svelte ("3/8 tasks complete")
-- [ ] T100 [US9] Add DailyProgressBar to Tasks page header
-- [ ] T101 [US9] Add subtask completion percentage to TaskCard component (e.g., "60% complete")
-- [ ] T102 [US9] Update progress bars in real-time when tasks/subtasks complete
+- [X] T099 [P] [US9] Create DailyProgressBar component in src/lib/components/tasks/DailyProgressBar.svelte ("3/8 tasks complete")
+- [X] T100 [US9] Add DailyProgressBar to Tasks page header
+- [X] T101 [US9] Add subtask completion percentage to TaskCard component (e.g., "60% complete")
+- [X] T102 [US9] Update progress bars in real-time when tasks/subtasks complete
 
 #### Stage-Level Deadlines
 

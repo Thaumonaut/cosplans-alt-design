@@ -34,6 +34,7 @@
     bind:checked
     onchange={handleChange}
     disabled={!editable}
+    class="rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
     class:saving={isSaving}
     class:error={!!error}
   />

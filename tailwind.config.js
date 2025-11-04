@@ -53,9 +53,9 @@ export default {
         info: 'var(--theme-info)'
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)'
+        lg: 'calc(var(--radius) - .6rem)',
+        md: 'calc(var(--radius) - .5rem)',
+        sm: 'calc(var(--radius) - .5rem)'
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

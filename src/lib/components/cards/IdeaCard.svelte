@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Card, Button } from 'flowbite-svelte'
-  import { Badge } from '$lib/components/ui'
+  import ClickableCard from '$lib/components/ui/clickable-card.svelte'
+  import { Button, Badge } from '$lib/components/ui'
   import { Calendar, DollarSign, Clock, ArrowRight, Star } from 'lucide-svelte'
   import HighlightedText from '$lib/components/base/HighlightedText.svelte'
   import type { Idea } from '$lib/types/domain/idea'
@@ -70,17 +70,9 @@
 </script>
 
 {#if variant === 'list'}
-  <Card 
-    class="group overflow-hidden transition-all hover:shadow-md cursor-pointer bg-[var(--theme-card-bg)]" 
-    onclick={onclick}
-    role="button"
-    tabindex={0}
-    onkeydown={(e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onclick?.()
-      }
-    }}
+  <ClickableCard
+    {onclick}
+    class="group overflow-hidden bg-[var(--theme-card-bg)]"
   >
     <div class="flex gap-4 p-4">
       <div class="relative size-32 shrink-0 overflow-hidden rounded-lg bg-[var(--theme-section-bg)]">
@@ -158,23 +150,23 @@
               <span>{new Date(dateAdded).toLocaleDateString()}</span>
             </div>
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 no-click-propagation">
             <Button 
-              color="light" 
-              size="sm" 
-              class="!p-2"
+              variant="ghost"
+              size="icon-sm"
               onclick={handleFavoriteToggle}
-              onkeydown={(e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  handleFavoriteToggle(e as any)
-                }
-              }}
+              class="no-click-propagation"
             >
               <Star class="size-4 transition-colors {isFavorite ? 'fill text-[var(--theme-primary)]' : ''}" />
             </Button>
-            <Button size="sm">
+            <Button 
+              size="sm"
+              onclick={(e) => {
+                e.stopPropagation()
+                onclick?.()
+              }}
+              class="no-click-propagation"
+            >
               Start Planning
               <ArrowRight class="ml-2 size-4" />
             </Button>
@@ -182,19 +174,11 @@
         </div>
       </div>
     </div>
-  </Card>
+  </ClickableCard>
 {:else}
-  <Card 
-    class="group overflow-hidden transition-all hover:shadow-lg cursor-pointer bg-[var(--theme-card-bg)]" 
-    onclick={onclick}
-    role="button"
-    tabindex={0}
-    onkeydown={(e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onclick?.()
-      }
-    }}
+  <ClickableCard
+    {onclick}
+    class="group overflow-hidden bg-[var(--theme-card-bg)]"
   >
     <div class="relative aspect-[4/3] overflow-hidden bg-[var(--theme-input-bg)] rounded-t-lg">
       {#if image && !imageError}
@@ -233,17 +217,10 @@
         <Badge variant="default" class={difficultyBadgeClass(difficulty)} style={difficultyStyle(difficulty)}>{difficulty}</Badge>
       </div>
       <Button
-        color="light"
-        size="sm"
-        class="absolute left-3 top-3 bg-[var(--theme-card-bg)]/80 backdrop-blur hover:bg-[var(--theme-card-bg)] !p-2 z-10"
+        variant="ghost"
+        size="icon-sm"
         onclick={handleFavoriteToggle}
-        onkeydown={(e: KeyboardEvent) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            e.stopPropagation()
-            handleFavoriteToggle(e as any)
-          }
-        }}
+        class="no-click-propagation absolute left-3 top-3 bg-[var(--theme-card-bg)]/80 backdrop-blur hover:bg-[var(--theme-card-bg)] z-10"
       >
         <Star class="size-4 transition-colors {isFavorite ? 'fill text-[var(--theme-primary)]' : ''}" />
       </Button>
@@ -287,8 +264,8 @@
           <span>{estimatedTime}</span>
         </div>
       </div>
-            <Button 
-        class="w-full" 
+      <Button 
+        class="w-full no-click-propagation" 
         size="sm"
         onclick={(e: MouseEvent) => {
           e.stopPropagation()
@@ -299,5 +276,5 @@
         <ArrowRight class="ml-2 size-4" />
       </Button>
     </div>
-  </Card>
+  </ClickableCard>
 {/if}

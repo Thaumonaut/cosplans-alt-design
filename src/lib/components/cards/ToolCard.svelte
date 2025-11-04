@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Tool } from '$lib/types/domain/tool'
+  import ClickableCard from '$lib/components/ui/clickable-card.svelte'
   import { Badge } from 'flowbite-svelte'
   import { Wrench, Camera } from 'lucide-svelte'
   import { cn } from '$lib/utils'
@@ -30,12 +31,9 @@
   const Icon = categoryIcon[category] || Wrench
 </script>
 
-<div
-  role="button"
-  tabindex="0"
-  onclick={onclick}
-  onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="group relative overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
+<ClickableCard
+  {onclick}
+  class="group relative overflow-hidden"
 >
   <!-- Cover Image -->
   {#if tool.images && tool.images.length > 0}
@@ -103,6 +101,6 @@
       </div>
     {/if}
   </div>
-</div>
+</ClickableCard>
 
 

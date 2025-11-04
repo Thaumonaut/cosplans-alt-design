@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Project } from '$lib/types/domain/project'
+  import ClickableCard from '$lib/components/ui/clickable-card.svelte'
   import { Badge } from 'flowbite-svelte'
   import { Calendar, DollarSign, Target } from 'lucide-svelte'
   import { cn, formatCurrencyFromCents } from '$lib/utils'
@@ -25,7 +26,6 @@
     archived: 'Archived',
   }
 
-
   function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -39,12 +39,9 @@
   )
 </script>
 
-<div
-  role="button"
-  tabindex="0"
-  onclick={onclick}
-  onkeydown={(e) => e.key === 'Enter' && onclick?.()}
-  class="group relative overflow-hidden rounded-lg border bg-card transition-all hover:shadow-lg"
+<ClickableCard
+  {onclick}
+  class="group relative overflow-hidden"
 >
   <!-- Cover Image -->
   {#if project.coverImage}
@@ -137,6 +134,4 @@
       </div>
     {/if}
   </div>
-</div>
-
-
+</ClickableCard>

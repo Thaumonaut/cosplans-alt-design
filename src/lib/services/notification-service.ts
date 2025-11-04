@@ -97,6 +97,22 @@ export class NotificationService extends BaseService {
 	 * Create a new notification
 	 */
 	async createNotification(data: TaskNotificationInsert): Promise<ServiceResponse<TaskNotification>> {
+		// Validate all required UUIDs are present and not undefined/null or the string "undefined"
+		if (
+			!data.user_id ||
+			!data.task_id ||
+			!data.event_type ||
+			data.user_id === 'undefined' ||
+			data.task_id === 'undefined'
+		) {
+			return {
+				error: {
+					code: 'VALIDATION_ERROR',
+					message: `Missing required fields: user_id=${data.user_id}, task_id=${data.task_id}, event_type=${data.event_type}`,
+				},
+			};
+		}
+
 		const validated = TaskNotificationInsertSchema.parse(data);
 
 		return this.execute(async () => {

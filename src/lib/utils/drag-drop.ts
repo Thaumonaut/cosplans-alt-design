@@ -103,9 +103,11 @@ export function handleDragOver(
 	}
 	
 	event.preventDefault();
+	event.stopPropagation();
 	
-	if (event.target instanceof HTMLElement) {
-		event.target.classList.add('drag-over');
+	// Find the drop zone element (the node that has the dropzone action)
+	if (event.currentTarget instanceof HTMLElement) {
+		event.currentTarget.classList.add('drag-over');
 	}
 	
 	if (event.dataTransfer) {
@@ -119,8 +121,16 @@ export function handleDragOver(
  * Handle drag leave (for drop zones)
  */
 export function handleDragLeave(event: DragEvent): void {
-	if (event.target instanceof HTMLElement) {
-		event.target.classList.remove('drag-over');
+	// Only remove drag-over class if we're leaving the drop zone itself, not just a child element
+	if (event.currentTarget instanceof HTMLElement) {
+		const rect = event.currentTarget.getBoundingClientRect();
+		const x = event.clientX;
+		const y = event.clientY;
+		
+		// Check if we're actually leaving the drop zone bounds
+		if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+			event.currentTarget.classList.remove('drag-over');
+		}
 	}
 }
 
@@ -133,14 +143,16 @@ export function handleDrop(
 	onDrop: (data: DragData) => void | Promise<void>
 ): void {
 	event.preventDefault();
+	event.stopPropagation();
 	
 	const data = getDragData(event);
 	if (!data || !acceptedTypes.includes(data.type)) {
 		return;
 	}
 	
-	if (event.target instanceof HTMLElement) {
-		event.target.classList.remove('drag-over');
+	// Remove drag-over class from the drop zone
+	if (event.currentTarget instanceof HTMLElement) {
+		event.currentTarget.classList.remove('drag-over');
 	}
 	
 	onDrop(data);
@@ -265,17 +277,17 @@ export function dropzone(
 ) {
 	const handleOver = (event: DragEvent) => handleDragOver(event, config.acceptedTypes, config.onDragOver);
 	const handleLeave = (event: DragEvent) => handleDragLeave(event);
-	const handleDrop = (event: DragEvent) => handleDrop(event, config.acceptedTypes, config.onDrop);
+	const handleDropEvent = (event: DragEvent) => handleDrop(event, config.acceptedTypes, config.onDrop);
 	
 	node.addEventListener('dragover', handleOver);
 	node.addEventListener('dragleave', handleLeave);
-	node.addEventListener('drop', handleDrop);
+	node.addEventListener('drop', handleDropEvent);
 	
 	return {
 		destroy() {
 			node.removeEventListener('dragover', handleOver);
 			node.removeEventListener('dragleave', handleLeave);
-			node.removeEventListener('drop', handleDrop);
+			node.removeEventListener('drop', handleDropEvent);
 		},
 		update(newConfig: typeof config) {
 			config = newConfig;

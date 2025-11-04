@@ -13,6 +13,7 @@
 	interface Task {
 		id: string;
 		title: string;
+		description?: string | null;
 		status_id: string;
 		priority: 'low' | 'medium' | 'high';
 		due_date?: string | null;
@@ -101,7 +102,8 @@
 		<!-- Empty State -->
 		<div class="flex flex-col items-center justify-center h-full p-8 text-center">
 			<svg
-				class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4"
+				class="w-16 h-16 mb-4"
+				style="color: var(--theme-text-muted, #78716c);"
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
@@ -113,8 +115,8 @@
 					d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
 				/>
 			</svg>
-			<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No tasks found</h3>
-			<p class="text-sm text-gray-600 dark:text-gray-400">
+			<h3 class="text-lg font-semibold mb-2" style="color: var(--theme-foreground, #1c1917);">No tasks found</h3>
+			<p class="text-sm" style="color: var(--theme-text-muted, #78716c);">
 				Try adjusting your filters or create a new task to get started.
 			</p>
 		</div>
