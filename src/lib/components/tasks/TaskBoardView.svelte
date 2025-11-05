@@ -166,6 +166,8 @@
 					// Initialize Sortable with all column containers for cross-column dragging
 					sortableInstance = new Sortable(containers, {
 						draggable: '.task-card-wrapper',
+						// Only allow dragging when starting from the drag handle
+						handle: '.task-drag-handle',
 						// Fix mirror offset by using proper mirror configuration
 						mirror: {
 							constrainDimensions: true,
@@ -811,7 +813,7 @@
 							{...task}
 							{statusOptions}
 							viewMode="board"
-								draggable={false}
+							draggable={true}
 							on:click={handleTaskClick}
 							on:statusChange={handleStatusChange}
 							on:priorityChange={handlePriorityChange}

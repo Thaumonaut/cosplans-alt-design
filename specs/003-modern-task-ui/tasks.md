@@ -249,17 +249,36 @@
 
 ### Implementation for User Story 4
 
-- [ ] T114 [P] [US4] Implement native HTML5 drag-and-drop in TaskBoardView component
+- [X] T114 [P] [US4] Implement drag-and-drop in TaskBoardView component using @shopify/draggable (upgraded from native HTML5 for better cross-browser and touch support)
+  - ✅ Cross-column dragging working
+  - ✅ Auto-scrolling when dragging near horizontal edges
+  - ✅ Column auto-expand on hover during drag
+  - ✅ Error recovery for lost drag control (30s timeout, cancel event listener)
+  - ✅ Simplified column tracking (single `autoExpandedColumnId` variable)
+  - ✅ Comprehensive logging for debugging
 - [ ] T115 [P] [US4] Create TaskBulkActions component in src/lib/components/tasks/TaskBulkActions.svelte (bulk operations UI)
 - [ ] T116 [US4] Add checkbox selection to TaskCard component
 - [ ] T117 [US4] Implement bulk stage change in TaskService
 - [ ] T118 [US4] Implement bulk priority change in TaskService
 - [ ] T119 [US4] Implement bulk assignee change in TaskService
-- [ ] T120 [US4] Add optimistic UI updates for drag-and-drop with rollback on failure
-- [ ] T121 [US4] Add drag animations and visual feedback (ghost card, drop zone highlighting)
+- [X] T120 [US4] Add optimistic UI updates for drag-and-drop with rollback on failure - ✅ Complete
+- [X] T121 [US4] Add drag animations and visual feedback (ghost card, drop zone highlighting) - ✅ Complete
+  - ✅ Ghost card follows cursor
+  - ✅ Drop zone highlighting
+  - ✅ Column auto-expansion during drag
+  - ✅ Auto-scrolling at horizontal edges
 - [ ] T122 [US4] Enable inline quick-edit for status badge (click → dropdown)
 - [ ] T123 [US4] Enable inline quick-edit for due date (click → date picker)
 - [ ] T124 [US4] Enable inline quick-edit for priority (click → selector)
+
+**Additional Work Completed (Not in Original Tasks):**
+- ✅ Task stage color customization (custom colors per stage)
+- ✅ Column collapse/expand with horizontal collapse and task/subtask counts
+- ✅ Simplified column auto-expand tracking (single variable instead of multiple Sets)
+- ✅ Fixed column closing after drop bug
+- ✅ Theme color improvements for priority badges and dark mode variants
+- ✅ Error handling for lost drag control with recovery mechanism
+- ✅ Comprehensive logging throughout drag lifecycle
 
 **Checkpoint**: Users can efficiently manipulate tasks with drag-and-drop and bulk actions ✅
 
@@ -665,29 +684,56 @@ After P2 features are stable:
 ## Summary
 
 **Total Tasks**: 255
-- Phase 1 (Setup): 9 tasks (T001-T009) ✅ Complete
-- Phase 2 (Foundational): 32 tasks (T010-T041) ✅ Complete
-- Phase 3 (US1 - Quick Overview): 13 tasks (T042-T054)
-- Phase 4 (US2 - Rich Details): 15 tasks (T055-T069)
-- Phase 5 (US3 - Contextual): 8 tasks (T070-T077)
-- Phase 6 (US9 - ADHD Features): 36 tasks (T078-T113)
-- Phase 7 (US4 - Manipulation): 11 tasks (T114-T124)
-- Phase 8 (US5 - Standalone): 6 tasks (T125-T130)
-- Phase 9 (US6 - Filtering): 10 tasks (T114-T140)
-- Phase 10 (US8 - Labels): 12 tasks (T141-T152)
-- Phase 11 (US10 - Breakdown): 14 tasks (T153-T166)
-- Phase 12 (US7 - Quick Create): 11 tasks (T167-T177)
-- Phase 13 (US11 - Custom Fields): 15 tasks (T178-T192)
-- Phase 14 (Real-time): 21 tasks (T193-T213)
-- Phase 15 (Polish): 42 tasks (T214-T255)
+- Phase 1 (Setup): 9 tasks (T001-T009) ✅ **Complete** (9/9)
+- Phase 2 (Foundational): 32 tasks (T010-T041) ✅ **Complete** (32/32)
+- Phase 3 (US1 - Quick Overview): 13 tasks (T042-T054) ✅ **Complete** (13/13)
+- Phase 4 (US2 - Rich Details): 15 tasks (T055-T069) ✅ **Complete** (15/15)
+- Phase 5 (US3 - Contextual): 8 tasks (T070-T077) ✅ **Complete** (8/8)
+- Phase 6 (US9 - ADHD Features): 36 tasks (T078-T113) 🔄 **Partially Complete** (28/36)
+  - ✅ Task Suggestion Algorithm (T078-T081)
+  - ✅ Celebration System (T087-T091)
+  - ✅ Streak Tracking (T092-T098)
+  - ✅ Progress Visibility (T099-T102)
+  - ❌ Stage-Level Deadlines (T103-T108) - Not started
+  - ❌ Gentle Prompts (T109-T113) - Not started
+- Phase 7 (US4 - Manipulation): 11 tasks (T114-T124) 🔄 **In Progress** (3/11)
+  - ✅ Drag-and-drop (T114) - Using @shopify/draggable
+  - ✅ Optimistic UI updates (T120)
+  - ✅ Drag animations (T121)
+  - ❌ Bulk actions (T115-T119) - Not started
+  - ❌ Inline quick-edit (T122-T124) - Not started
+- Phase 8 (US5 - Standalone): 6 tasks (T125-T130) ⏳ **Not Started**
+- Phase 9 (US6 - Filtering): 10 tasks (T131-T140) ⏳ **Not Started**
+- Phase 10 (US8 - Labels): 12 tasks (T141-T152) ⏳ **Not Started**
+- Phase 11 (US10 - Breakdown): 14 tasks (T153-T166) ⏳ **Not Started**
+- Phase 12 (US7 - Quick Create): 11 tasks (T167-T177) ⏳ **Not Started**
+- Phase 13 (US11 - Custom Fields): 15 tasks (T178-T192) ⏳ **Not Started**
+- Phase 14 (Real-time): 21 tasks (T193-T213) ⏳ **Not Started**
+- Phase 15 (Polish): 42 tasks (T214-T255) ⏳ **Not Started**
+
+**Progress Summary**:
+- **Completed**: 101 tasks (40%)
+- **In Progress**: 3 tasks (1%)
+- **Remaining**: 151 tasks (59%)
 
 **MVP Scope**: Phases 1-6 (113 tasks for core functionality)
+- **MVP Progress**: 101/113 tasks complete (89%)
+- **MVP Remaining**: 12 tasks (stage deadlines + gentle prompts)
+
 **Full Feature Set**: All 255 tasks
+- **Overall Progress**: 101/255 tasks complete (40%)
 
 **Parallel Opportunities**: ~120 tasks marked [P] can be parallelized
 
 **Independent Tests**: Each user story has clear acceptance criteria for validation
 
+**Recent Work** (Not in original task list):
+- ✅ Task stage color customization
+- ✅ Column collapse/expand functionality
+- ✅ Simplified drag tracking
+- ✅ Error recovery for lost drag control
+- ✅ Theme improvements
+
 ---
 
-**Tasks Complete**: ✅ Ready for implementation
+**Status**: ✅ MVP Core (89% complete) - Ready for completion of remaining ADHD features and bulk operations

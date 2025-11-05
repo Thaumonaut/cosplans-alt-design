@@ -14,25 +14,28 @@
   }
   
   interface Props {
-    options: TagOption[]
-    currentValue: string
+    options?: TagOption[]
+    currentValue?: string
     editable?: boolean
-    onChange: (value: string) => Promise<void> | void
+    onChange?: (value: string) => Promise<void> | void
     getTagColor?: (option: TagOption | null) => string
     getDotColor?: (option: TagOption | null) => string
     placeholder?: string
     class?: string
+    // Legacy props for components that use TagSelector incorrectly
+    onAddTag?: (tag: string) => void
   }
   
   let { 
-    options, 
-    currentValue, 
+    options = [], 
+    currentValue = '', 
     editable = true, 
     onChange,
     getTagColor,
     getDotColor,
     placeholder = 'Select...',
-    class: className = ''
+    class: className = '',
+    onAddTag
   }: Props = $props()
   
   const currentOption = $derived(options.find(opt => opt.value === currentValue) || null)
@@ -57,12 +60,77 @@
   
   async function selectOption(option: TagOption) {
     if (!editable || option.value === currentValue) return
-    await onChange(option.value)
+    if (onChange) {
+      await onChange(option.value)
+    }
+  }
+  
+  // Handle legacy onAddTag prop - show a simple add button
+  let showAddTagInput = $state(false)
+  let newTagValue = $state('')
+  
+  function handleAddTag() {
+    if (onAddTag && newTagValue.trim()) {
+      onAddTag(newTagValue.trim())
+      newTagValue = ''
+      showAddTagInput = false
+    }
   }
 </script>
 
 <div class={cn('relative inline-block', className)}>
-  {#if editable}
+  {#if onAddTag}
+    <!-- Legacy mode: Tag adder instead of selector -->
+    {#if showAddTagInput}
+      <div class="flex items-center gap-1">
+        <input
+          type="text"
+          bind:value={newTagValue}
+          onkeydown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleAddTag()
+            } else if (e.key === 'Escape') {
+              showAddTagInput = false
+              newTagValue = ''
+            }
+          }}
+          placeholder="Add tag..."
+          class="px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+          style="border-color: var(--theme-border); background-color: var(--theme-input-bg); color: var(--theme-foreground);"
+          autofocus
+        />
+        <button
+          type="button"
+          onclick={handleAddTag}
+          class="px-2 py-1 text-sm rounded bg-primary text-primary-foreground hover:opacity-90"
+          style="background-color: var(--theme-primary); color: white;"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onclick={() => {
+            showAddTagInput = false
+            newTagValue = ''
+          }}
+          class="px-2 py-1 text-sm rounded hover:bg-muted"
+          style="color: var(--theme-foreground);"
+        >
+          Cancel
+        </button>
+      </div>
+    {:else}
+      <button
+        type="button"
+        onclick={() => showAddTagInput = true}
+        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-all cursor-pointer hover:opacity-90 hover:shadow-sm bg-muted text-muted-foreground border-transparent"
+        style="border-color: var(--theme-border);"
+      >
+        <span>+ Add Tag</span>
+      </button>
+    {/if}
+  {:else if editable}
     <DropdownMenu placement="bottom-start">
       {#snippet trigger()}
         <button

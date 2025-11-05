@@ -128,10 +128,35 @@
 <ClickableCard
 	onclick={handleCardClick}
 	{selected}
-	draggable={isDraggable}
-	dragData={isDraggable ? dragData : null}
-	class="task-card rounded-lg p-4 hover:shadow-lg transition-all border-[var(--theme-border)] {viewMode === 'board' ? 'mb-5 min-h-[200px]' : 'mb-5'}"
+	draggable={false}
+	dragData={null}
+	class="task-card rounded-lg p-4 hover:shadow-lg transition-all border-[var(--theme-border)] {viewMode === 'board' ? 'mb-5 min-h-[200px]' : 'mb-5'} group/card relative"
 >
+	<!-- Drag Handle (only visible on hover, only in board view when draggable) -->
+	{#if isDraggable && viewMode === 'board'}
+		<div 
+			class="task-drag-handle absolute top-2 left-2 opacity-0 group-hover/card:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 p-1.5 rounded hover:bg-muted/50 touch-none"
+			style="color: var(--theme-text-muted, #78716c);"
+			onmousedown={(e) => {
+				// Stop propagation to prevent card click, but allow drag to start
+				e.stopPropagation();
+			}}
+			onclick={(e) => {
+				// Prevent card click when clicking handle
+				e.stopPropagation();
+				e.preventDefault();
+			}}
+			role="button"
+			aria-label="Drag to move task"
+			tabindex="-1"
+		>
+			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16" />
+			</svg>
+		</div>
+	{/if}
+
 	<!-- Header Row: Checkbox, Title -->
 	<div class="flex items-start gap-3 mb-2">
 		<!-- Checkbox (if selectable) -->
@@ -179,17 +204,17 @@
 	<div class="grid grid-cols-1 gap-2 mb-3">
 		<!-- Due Date (always shown) -->
 		<div class="flex items-center gap-2 text-sm" style="color: var(--theme-foreground, #1c1917);">
-			<svg class="w-4 h-4 shrink-0" style="color: var(--theme-text-muted, #78716c);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg class="w-4 h-4 shrink-0" style="color: var(--theme-text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 			</svg>
 			<div class="flex items-center gap-2 flex-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="none">
-				<span class="shrink-0" style="color: var(--theme-text-muted, #78716c);">Due Date:</span>
+				<span class="shrink-0" style="color: var(--theme-text-muted);">Due Date:</span>
 				<div class="inline-flex items-center gap-1 min-w-0">
 					<DatePicker
 						value={dateValue}
 						placeholder="Not set"
 						onchange={handleDueDateChange}
-						class="text-sm min-w-[100px]"
+						class="text-sm min-w-[100px] text-[var(--theme-text-muted)]!"
 					/>
 				</div>
 				{#if due_date}
@@ -306,5 +331,13 @@
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+	}
+
+	:global(.task-drag-handle) {
+		pointer-events: auto;
+	}
+
+	:global(.task-drag-handle:active) {
+		cursor: grabbing;
 	}
 </style>

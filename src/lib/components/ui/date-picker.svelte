@@ -76,7 +76,6 @@
       {disabled}
       {required}
       {id}
-      {name}
       inputClass={cn(
         'w-full min-w-[80px] text-sm',
         'rounded-md outline-none',
@@ -158,13 +157,87 @@
     display: none !important;
   }
   
-  /* Hide any button that appears after the input */
-  :global(.datepicker-wrapper) button:not([data-datepicker-day]) {
-    display: none !important;
-  }
-  
   /* Style placeholder text to use theme colors */
   :global(input::placeholder) {
     color: var(--theme-text-muted, #78716c) !important;
+  }
+  
+  /* Calendar dropdown background and container */
+  :global(.datepicker-dropdown),
+  :global([data-datepicker-calendar]),
+  :global(.datepicker-calendar),
+  :global(.datepicker-wrapper .datepicker-dropdown) {
+    background-color: var(--theme-card-bg, rgba(255, 255, 255, 0.9)) !important;
+    border-color: var(--theme-border, rgba(120, 113, 108, 0.2)) !important;
+    color: var(--theme-foreground, #1c1917) !important;
+  }
+  
+  /* Calendar header (month/year navigation) */
+  :global(.datepicker-header),
+  :global(.datepicker-header button),
+  :global([data-datepicker-header]),
+  :global([data-datepicker-header] button) {
+    color: var(--theme-foreground, #1c1917) !important;
+    background-color: transparent !important;
+  }
+  
+  :global(.datepicker-header button:hover),
+  :global([data-datepicker-header] button:hover) {
+    background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
+    color: var(--theme-foreground, #1c1917) !important;
+  }
+  
+  /* Calendar day buttons - default state */
+  :global(.datepicker-day),
+  :global([data-datepicker-day]),
+  :global(button[data-datepicker-day]) {
+    color: var(--theme-foreground, #1c1917) !important;
+    background-color: transparent !important;
+  }
+  
+  :global(.datepicker-day:hover),
+  :global([data-datepicker-day]:hover),
+  :global(button[data-datepicker-day]:hover) {
+    background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
+    color: var(--theme-foreground, #1c1917) !important;
+  }
+  
+  /* Today indicator */
+  :global(.datepicker-day.today),
+  :global([data-datepicker-day].today),
+  :global(button[data-datepicker-day].today) {
+    border-color: var(--theme-primary, #8b5cf6) !important;
+    color: var(--theme-foreground, #1c1917) !important;
+  }
+  
+  /* Disabled dates */
+  :global(.datepicker-day.disabled),
+  :global([data-datepicker-day].disabled),
+  :global(button[data-datepicker-day].disabled) {
+    color: var(--theme-text-muted, #78716c) !important;
+    opacity: 0.5 !important;
+  }
+  
+  /* Weekday labels */
+  :global(.datepicker-weekday),
+  :global([data-datepicker-weekday]) {
+    color: var(--theme-text-muted, #78716c) !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Month/year navigation arrows */
+  :global(.datepicker-prev),
+  :global(.datepicker-next),
+  :global([data-datepicker-prev]),
+  :global([data-datepicker-next]) {
+    color: var(--theme-foreground, #1c1917) !important;
+  }
+  
+  :global(.datepicker-prev:hover),
+  :global(.datepicker-next:hover),
+  :global([data-datepicker-prev]:hover),
+  :global([data-datepicker-next]:hover) {
+    background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
+    color: var(--theme-primary, #8b5cf6) !important;
   }
 </style>
