@@ -173,6 +173,23 @@ export function buildTheme(config: ThemeConfig): Record<string, string> {
     '--theme-info': '#3b82f6',
     '--theme-info-bg': mode === 'light' ? '#dbeafe' : '#1e3a8a',
     
+    // === PRIORITY BADGE COLORS (theme-aware for better contrast) ===
+    // Low priority - blue
+    '--theme-priority-low-bg': mode === 'light' ? '#dbeafe' : '#1e3a8a',
+    '--theme-priority-low-text': mode === 'light' ? '#1e40af' : '#93c5fd',
+    '--theme-priority-low-border': mode === 'light' ? '#93c5fd' : '#3b82f6',
+    '--theme-priority-low-dot': '#3b82f6',
+    // Medium priority - amber
+    '--theme-priority-medium-bg': mode === 'light' ? '#fef3c7' : '#78350f',
+    '--theme-priority-medium-text': mode === 'light' ? '#92400e' : '#fde68a',
+    '--theme-priority-medium-border': mode === 'light' ? '#fbbf24' : '#f59e0b',
+    '--theme-priority-medium-dot': '#f59e0b',
+    // High priority - rose
+    '--theme-priority-high-bg': mode === 'light' ? '#fce7f3' : '#7f1d1d',
+    '--theme-priority-high-text': mode === 'light' ? '#9f1239' : '#f9a8d4',
+    '--theme-priority-high-border': mode === 'light' ? '#f472b6' : '#ec4899',
+    '--theme-priority-high-dot': '#ef4444',
+    
     // === SIDEBAR (uses neutrals for clarity) ===
     '--theme-sidebar-bg': mode === 'light' ? '#ffffff' : neutrals[50],
     '--theme-sidebar-text': neutrals[900],

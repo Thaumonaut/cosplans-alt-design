@@ -236,8 +236,8 @@
 			<svg class="w-4 h-4" style="color: var(--theme-text-muted, #78716c);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
 			</svg>
-			<span class="text-sm" style="color: var(--theme-foreground, #1c1917);">
-				{completed_subtasks}/{total_subtasks} subtasks
+			<span class="text-sm" style="color: var(--theme-text-muted, #78716c);">
+				{completed_subtasks || 0}/{total_subtasks || 0} subtasks
 			</span>
 			{#if total_subtasks > 0}
 				<span class="text-xs" style="color: var(--theme-text-muted, #78716c);">

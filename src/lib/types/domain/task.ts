@@ -47,6 +47,7 @@ export interface TaskStage {
   name: string
   displayOrder: number
   isCompletionStage: boolean
+  color?: string | null // Hex color code (e.g., #8b5cf6)
   createdAt: string
   updatedAt: string
 }
@@ -56,12 +57,14 @@ export interface TaskStageCreate {
   name: string
   displayOrder: number
   isCompletionStage?: boolean // Defaults to false
+  color?: string | null // Hex color code
 }
 
 export interface TaskStageUpdate {
   name?: string
   displayOrder?: number
   isCompletionStage?: boolean
+  color?: string | null // Hex color code
 }
 
 // ========== NEW ENTITIES FOR MODERN TASK UI ==========

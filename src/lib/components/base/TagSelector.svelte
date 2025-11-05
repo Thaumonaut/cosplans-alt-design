@@ -9,6 +9,8 @@
     color?: string
     dotColor?: string
     badge?: string
+    style?: string
+    dotStyle?: string
   }
   
   interface Props {
@@ -69,10 +71,11 @@
             'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-all cursor-pointer hover:opacity-90 hover:shadow-sm',
             tagColorFn(currentOption)
           )}
+          style={currentOption?.style || undefined}
         >
           {#if currentOption}
-            {#if dotColorFn(currentOption)}
-              <div class={cn('size-2 rounded-full', dotColorFn(currentOption))}></div>
+            {#if dotColorFn(currentOption) || currentOption.dotStyle}
+              <div class={cn('size-2 rounded-full', dotColorFn(currentOption))} style={currentOption?.dotStyle || undefined}></div>
             {/if}
             <span>{currentOption.label}</span>
             {#if currentOption.badge}
@@ -91,8 +94,8 @@
             <DropdownMenuItem onclick={() => selectOption(option)}>
               <div class="flex w-full items-center justify-between gap-3 text-left">
                 <div class="flex items-center gap-2">
-                  {#if dotColorFn(option)}
-                    <div class={cn('size-2 rounded-full', dotColorFn(option))}></div>
+                  {#if dotColorFn(option) || option.dotStyle}
+                    <div class={cn('size-2 rounded-full', dotColorFn(option))} style={option?.dotStyle || undefined}></div>
                   {/if}
                   <span class="text-sm font-medium text-left">{option.label}</span>
                   {#if option.badge}
@@ -114,10 +117,11 @@
         'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium cursor-default',
         tagColorFn(currentOption)
       )}
+      style={currentOption?.style || undefined}
     >
       {#if currentOption}
-        {#if dotColorFn(currentOption)}
-          <div class={cn('size-2 rounded-full', dotColorFn(currentOption))}></div>
+        {#if dotColorFn(currentOption) || currentOption.dotStyle}
+          <div class={cn('size-2 rounded-full', dotColorFn(currentOption))} style={currentOption?.dotStyle || undefined}></div>
         {/if}
         <span>{currentOption.label}</span>
         {#if currentOption.badge}

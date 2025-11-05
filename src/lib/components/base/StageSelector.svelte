@@ -36,7 +36,18 @@
   // Convert stages to TagOptions
   const stageOptions = $derived(
     Array.isArray(stages) && stages.length > 0
-      ? stages.map(stage => ({
+      ? stages.map(stage => {
+          // Use custom color if provided, otherwise use default based on completion status
+          if (stage.color) {
+            return {
+              value: stage.id,
+              label: stage.name,
+              style: `background-color: ${stage.color}20; color: ${stage.color}; border-color: ${stage.color}40;`,
+              dotStyle: `background-color: ${stage.color};`,
+              badge: stage.isCompletionStage ? '✓' : undefined
+            }
+          }
+          return {
           value: stage.id,
           label: stage.name,
           color: stage.isCompletionStage
@@ -44,7 +55,8 @@
             : 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
           dotColor: stage.isCompletionStage ? 'bg-emerald-500' : 'bg-blue-500',
           badge: stage.isCompletionStage ? '✓' : undefined
-        }))
+          }
+        })
       : []
   )
   

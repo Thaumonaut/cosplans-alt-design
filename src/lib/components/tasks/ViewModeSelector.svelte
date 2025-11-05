@@ -61,7 +61,7 @@
 	}
 </script>
 
-<div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1" role="tablist">
+<div class="flex items-center gap-1 rounded-lg p-1" style="background-color: var(--theme-section-bg, rgba(255, 255, 255, 0.9));" role="tablist">
 	{#each modes as mode}
 		<button
 			type="button"
@@ -71,11 +71,26 @@
 			title={mode.tooltip}
 			disabled={disabled}
 			class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors {value === mode.value
-				? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-				: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'} {disabled
+				? 'shadow-sm'
+				: ''} {disabled
 				? 'opacity-50 cursor-not-allowed'
 				: 'cursor-pointer'}"
-			on:click={() => selectMode(mode.value)}
+			style={value === mode.value
+				? 'background-color: var(--theme-card-bg, white); color: var(--theme-primary, #8b5cf6);'
+				: 'color: var(--theme-text-muted, #78716c); background-color: transparent;'}
+			onmouseenter={(e) => {
+				if (value !== mode.value && !disabled) {
+					e.currentTarget.style.backgroundColor = 'var(--theme-card-bg, white)';
+					e.currentTarget.style.opacity = '0.8';
+				}
+			}}
+			onmouseleave={(e) => {
+				if (value !== mode.value && !disabled) {
+					e.currentTarget.style.backgroundColor = 'transparent';
+					e.currentTarget.style.opacity = '1';
+				}
+			}}
+			onclick={() => selectMode(mode.value)}
 		>
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path

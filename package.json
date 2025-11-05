@@ -29,6 +29,8 @@
     "deploy:cf": "wrangler deploy .svelte-kit/cloudflare/_worker.js"
   },
   "dependencies": {
+    "@melloware/coloris": "^0.25.0",
+    "@shopify/draggable": "^1.2.1",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
     "@tanstack/svelte-virtual": "^3.13.12",

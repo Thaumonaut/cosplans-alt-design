@@ -50,6 +50,7 @@
 	let filterPanelOpen = $state(false);
 	let selectedTaskIds = $state(new Set<string>());
 	let detailPanelTaskId = $state<string | null>(null);
+	let detailPanelInitialData = $state<any | null>(null);
 	let isDetailPanelOpen = $state(false);
 	let showWhatToDoNow = $state(false);
 	// FocusMode disabled - Post-MVP feature
@@ -148,7 +149,7 @@
 	});
 
 	// Handlers
-	async function handleTaskClick(event: CustomEvent<{ id: string }>) {
+	function handleTaskClick(event: CustomEvent<{ id: string }>) {
 		detailPanelTaskId = event.detail.id;
 		isDetailPanelOpen = true;
 	}
@@ -156,6 +157,33 @@
 	function handleDetailPanelClose() {
 		isDetailPanelOpen = false;
 		detailPanelTaskId = null;
+		detailPanelInitialData = null;
+	}
+
+	function handleAddTaskToStage(event: CustomEvent<{ stageId: string }>) {
+		const team = get(currentTeam);
+		if (!team) return;
+		
+		// Create initial task data with the stage set
+		const initialTask = {
+			id: '',
+			title: '',
+			description: '',
+			status_id: event.detail.stageId,
+			team_id: team.id,
+			priority: 'medium' as const,
+			due_date: null,
+			assigned_to: null,
+			project_id: null,
+			resource_id: null,
+			photoshoot_id: null,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+		} as any;
+		
+		detailPanelTaskId = null; // null = create mode
+		detailPanelInitialData = initialTask;
+		isDetailPanelOpen = true;
 	}
 
 	function handleTaskSave(updatedTask: any) {
@@ -172,27 +200,93 @@
 		}
 	}
 
+	// Track last processed status change to prevent duplicate updates
+	let lastStatusChange: { taskId: string; statusId: string; timestamp: number } | null = null;
+
 	async function handleStatusChange(event: CustomEvent<{ id: string; status_id: string }>) {
 		try {
 			loading = true;
 			error = null;
 
+			// CRITICAL: Validate required values before proceeding
+			if (!event.detail.id || !event.detail.status_id) {
+				console.error('[handleStatusChange] Missing required values:', {
+					id: event.detail.id,
+					status_id: event.detail.status_id
+				});
+				throw new Error('Missing task ID or status ID');
+			}
+
+			// Prevent duplicate processing of the same status change
+			const now = Date.now();
+			if (
+				lastStatusChange &&
+				lastStatusChange.taskId === event.detail.id &&
+				lastStatusChange.statusId === event.detail.status_id &&
+				now - lastStatusChange.timestamp < 500 // Within 500ms
+			) {
+				console.log('[handleStatusChange] Duplicate status change detected, skipping:', {
+					taskId: event.detail.id,
+					statusId: event.detail.status_id,
+					timeSinceLast: now - lastStatusChange.timestamp
+				});
+				return;
+			}
+
 			// Get current task to check if it's moving to a completion stage
 			const currentTask = tasks.find(t => t.id === event.detail.id);
-			const previousStatusId = currentTask?.status_id;
+			if (!currentTask) {
+				console.error('[handleStatusChange] Task not found:', event.detail.id);
+				throw new Error('Task not found');
+			}
+			
+			const previousStatusId = currentTask.status_id;
+
+			// Don't update if status hasn't actually changed
+			if (previousStatusId === event.detail.status_id) {
+				console.log('[handleStatusChange] Status unchanged, skipping update');
+				return;
+			}
+
+			// Mark this status change as processed
+			lastStatusChange = {
+				taskId: event.detail.id,
+				statusId: event.detail.status_id,
+				timestamp: now
+			};
+
+			// CRITICAL: Optimistically update local state IMMEDIATELY to prevent visual duplicates
+			// This ensures Svelte re-renders and removes the task from the old column
+			// before Shopify Draggable's DOM manipulation can create duplicates
+			tasks = tasks.map((task) =>
+				task.id === event.detail.id ? { ...task, status_id: event.detail.status_id } : task
+			);
 
 			const result = await taskService.updateTask(event.detail.id, {
 				status_id: event.detail.status_id,
 			});
 
 			if (result.error) {
-				throw new Error(result.error.message);
+				// CRITICAL: Revert the optimistic update if the backend call failed
+				// Restore the task to its previous status_id to prevent duplicates
+				console.error('[handleStatusChange] Backend update failed, reverting optimistic update:', {
+					taskId: event.detail.id,
+					previousStatusId,
+					newStatusId: event.detail.status_id,
+					error: result.error
+				});
+				
+				// Create a new array to ensure reactivity
+				tasks = tasks.map((task) => {
+					if (task.id === event.detail.id) {
+						// Restore previous status_id, or keep current if previous was null
+						return { ...task, status_id: previousStatusId || task.status_id };
+					}
+					return task;
+				});
+				
+				throw new Error(result.error.message || 'Failed to update task status');
 			}
-
-			// Update local state
-			tasks = tasks.map((task) =>
-				task.id === event.detail.id ? { ...task, status_id: event.detail.status_id } : task
-			);
 
 			// Check if task moved to a completion stage
 			if (previousStatusId !== event.detail.status_id) {
@@ -225,6 +319,26 @@
 			}
 		} catch (err: any) {
 			error = err.message || 'Failed to update task status';
+			console.error('[handleStatusChange] Error updating task status:', err);
+			
+			// The optimistic update should already be reverted in the error handler above
+			// But if we get here, it means the error was thrown before the revert
+			// So we need to ensure the task is in the correct state
+			const currentTask = tasks.find(t => t.id === event.detail.id);
+			if (currentTask) {
+				// If we still have the task, reload from the server to ensure consistency
+				try {
+					const taskResult = await taskService.getTaskDetail(event.detail.id);
+					if (taskResult.data) {
+						// Update the task in the array with the server state
+						tasks = tasks.map((task) =>
+							task.id === event.detail.id ? { ...task, ...taskResult.data } : task
+						);
+					}
+				} catch (reloadError) {
+					console.error('[handleStatusChange] Failed to reload task after error:', reloadError);
+				}
+			}
 		} finally {
 			loading = false;
 		}
@@ -281,7 +395,14 @@
 	}
 
 	function handleTaskDrop(event: CustomEvent<{ taskId: string; newStatusId: string }>) {
-		handleStatusChange(event as any);
+		// Map taskDrop event structure to statusChange event structure
+		handleStatusChange({
+			...event,
+			detail: {
+				id: event.detail.taskId,
+				status_id: event.detail.newStatusId
+			}
+		} as any);
 	}
 
 	function handleTaskSelect(event: CustomEvent<{ id: string; selected: boolean }>) {
@@ -475,7 +596,14 @@
 				<Button
 					variant="outline"
 					onclick={handleWhatToDoNowClick}
-					class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors {showWhatToDoNow ? 'ring-2 ring-purple-500' : ''}"
+					class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors {showWhatToDoNow ? 'ring-2 ring-primary' : ''}"
+					style="color: var(--theme-primary, #8b5cf6); background-color: color-mix(in srgb, var(--theme-primary, #8b5cf6) 10%, transparent); border-color: color-mix(in srgb, var(--theme-primary, #8b5cf6) 30%, transparent);"
+					onmouseenter={(e) => {
+						e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--theme-primary, #8b5cf6) 20%, transparent)';
+					}}
+					onmouseleave={(e) => {
+						e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--theme-primary, #8b5cf6) 10%, transparent)';
+					}}
 				>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
@@ -548,7 +676,7 @@
 					on:statusChange={handleStatusChange}
 					on:priorityChange={handlePriorityChange}
 					on:dueDateChange={handleDueDateChange}
-					on:taskDrop={handleTaskDrop}
+					on:addTask={handleAddTaskToStage}
 				/>
 			{:else}
 				<div class="flex flex-col items-center justify-center py-12 text-center">
@@ -588,6 +716,7 @@
 <TaskDetailPanel
 	bind:open={isDetailPanelOpen}
 	taskId={detailPanelTaskId}
+	initialData={detailPanelInitialData}
 	onClose={handleDetailPanelClose}
 	onSave={handleTaskSave}
 	onStartWorking={handleStartWorking}

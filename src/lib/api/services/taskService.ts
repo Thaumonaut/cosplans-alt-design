@@ -166,7 +166,8 @@ export const taskService = {
       const stages = await taskStageService.list(teamId)
       const firstNonCompletion = stages.find((s) => !s.isCompletionStage)
       if (!firstNonCompletion) {
-        // Fallback: ensure defaults exist
+        // If no stages exist, this means the team was created before stages were auto-created
+        // In this case, create defaults (but this should be rare)
         await taskStageService.ensureDefaults(teamId)
         const defaults = await taskStageService.list(teamId)
         stageId = defaults.find((s) => !s.isCompletionStage)?.id || defaults[0]?.id

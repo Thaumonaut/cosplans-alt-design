@@ -21,20 +21,26 @@
     { 
       value: 'low', 
       label: 'Low',
-      color: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-      dotColor: 'bg-blue-500'
+      color: '', // Use inline style instead
+      dotColor: '', // Use inline style instead
+      style: 'background-color: var(--theme-priority-low-bg, #dbeafe); color: var(--theme-priority-low-text, #1e40af); border-color: var(--theme-priority-low-border, #93c5fd);',
+      dotStyle: 'background-color: var(--theme-priority-low-dot, #3b82f6);'
     },
     { 
       value: 'medium', 
       label: 'Medium',
-      color: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-      dotColor: 'bg-amber-500'
+      color: '', // Use inline style instead
+      dotColor: '', // Use inline style instead
+      style: 'background-color: var(--theme-priority-medium-bg, #fef3c7); color: var(--theme-priority-medium-text, #92400e); border-color: var(--theme-priority-medium-border, #fbbf24);',
+      dotStyle: 'background-color: var(--theme-priority-medium-dot, #f59e0b);'
     },
     { 
       value: 'high', 
       label: 'High',
-      color: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-      dotColor: 'bg-rose-500'
+      color: '', // Use inline style instead
+      dotColor: '', // Use inline style instead
+      style: 'background-color: var(--theme-priority-high-bg, #fce7f3); color: var(--theme-priority-high-text, #9f1239); border-color: var(--theme-priority-high-border, #f472b6);',
+      dotStyle: 'background-color: var(--theme-priority-high-dot, #ef4444);'
     },
   ]
 </script>

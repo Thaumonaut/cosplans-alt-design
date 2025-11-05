@@ -36,7 +36,8 @@ const config = {
 		csp: {
 			mode: 'auto',
 			directives: {
-				'script-src': ['self', 'unsafe-hashes'],
+				'script-src': ['self', 'unsafe-hashes', 'unsafe-inline', 'unsafe-eval'],
+				'script-src-attr': ['unsafe-hashes', 'unsafe-inline'], // Allow inline event handlers
 				'img-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
 				'media-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
 				'connect-src': ['self', 'https:', 'wss:', 'ws:'],

@@ -79,15 +79,15 @@
       {name}
       inputClass={cn(
         'w-full min-w-[80px] text-sm',
-        'border-0 bg-transparent',
-        'text-gray-700 dark:text-gray-300',
-        'placeholder:text-gray-400 dark:placeholder:text-gray-500 placeholder:italic',
+        'rounded-md outline-none',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         'focus:outline-none focus:ring-0',
-        'px-0 py-0',
+        'px-0 py-0 border-0 bg-transparent',
         'hover:underline cursor-pointer',
         'transition-all',
         disabled && 'opacity-50 cursor-not-allowed hover:no-underline'
       )}
+      style="color: var(--theme-foreground, #1c1917);"
     />
   </div>
   {#if name}
@@ -146,5 +146,25 @@
   :global(button[data-datepicker-day][aria-selected="true"]:hover),
   :global(button[data-datepicker-day].active:hover) {
     background-color: var(--theme-primary-hover, #7c3aed) !important;
+  }
+  
+  /* Hide the date picker calendar icon button */
+  :global(.datepicker-wrapper button[aria-label]),
+  :global(.datepicker-wrapper button[aria-label="Open date picker"]),
+  :global(.datepicker-wrapper .absolute.inset-y-0.right-0),
+  :global(button[aria-label="Open date picker"]),
+  :global(.datepicker-wrapper > button),
+  :global(input[type="text"] + button) {
+    display: none !important;
+  }
+  
+  /* Hide any button that appears after the input */
+  :global(.datepicker-wrapper) button:not([data-datepicker-day]) {
+    display: none !important;
+  }
+  
+  /* Style placeholder text to use theme colors */
+  :global(input::placeholder) {
+    color: var(--theme-text-muted, #78716c) !important;
   }
 </style>
