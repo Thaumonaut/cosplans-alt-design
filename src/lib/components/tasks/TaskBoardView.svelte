@@ -200,7 +200,7 @@ let currentDragItemId: string | null = $state(null);
 
 	function handleConsider(e: CustomEvent, stageId: string) {
 		const { items, info } = e.detail;
-		
+
 	// CRITICAL: Always update items - this includes the insertion placeholder when dragging
 	// The library manages the items array and includes placeholders during drag
 	stageTasks = { ...stageTasks, [stageId]: items };
@@ -215,6 +215,9 @@ let currentDragItemId: string | null = $state(null);
 	if (!isDragging && trigger === 'dragStarted') {
 		isDragging = true;
 		draggedSourceStage = stageId;
+		// Register drag move listeners when drag starts
+		document.addEventListener('mousemove', handleDragMove, { passive: true });
+		document.addEventListener('touchmove', handleDragMove, { passive: true });
 	}
 
 	if (isDragging && trigger === 'draggedEntered' && collapsedColumns.has(stageId)) {
@@ -227,13 +230,19 @@ let currentDragItemId: string | null = $state(null);
 	// Directly update the array - svelte-dnd-action expects mutable updates
 	stageTasks = { ...stageTasks, [stageId]: items };
 
-	if (info) {
-		const activeIndex = info.activeIndex;
-		if (activeIndex !== undefined && activeIndex !== null) {
-			const draggedItem = items[activeIndex];
-			if (draggedItem) {
-				dispatch('statusChange', { id: draggedItem.id, status_id: stageId });
-			}
+	if (info && info.id) {
+		// Use the id from info to find the dropped item
+		// This is more reliable than using activeIndex
+		const draggedItem = items.find((item: Task) => item.id === info.id);
+
+		if (draggedItem && draggedSourceStage !== stageId) {
+			// Only dispatch if the item actually moved to a different stage
+			console.debug(`${LOG_PREFIX} handleFinalize - dispatching statusChange`, {
+				taskId: draggedItem.id,
+				fromStage: draggedSourceStage,
+				toStage: stageId
+			});
+			dispatch('statusChange', { id: draggedItem.id, status_id: stageId });
 		}
 	}
 
