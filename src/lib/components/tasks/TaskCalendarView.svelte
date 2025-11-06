@@ -188,7 +188,7 @@
 							? 'text-gray-400 dark:text-gray-600'
 							: isToday(day.date)
 							? 'text-blue-600 dark:text-blue-400 font-bold'
-							: 'text-white'}"
+							: 'text-gray-900 dark:text-white'}"
 					>
 						{day.date.getDate()}
 					</span>
@@ -226,7 +226,7 @@
 	<!-- Undated Tasks Section -->
 	{#if undatedTasks.length > 0}
 		<div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
-			<h3 class="text-sm font-semibold text-white mb-2">
+			<h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
 				No Due Date ({undatedTasks.length})
 			</h3>
 			<div class="flex flex-wrap gap-2">

@@ -8,12 +8,10 @@
 	 * Supports drag-and-drop, inline editing, and navigation to detail view.
 	 * Uses ClickableCard base component for consistent behavior.
 	 */
-	import { createEventDispatcher } from 'svelte';
-	import { draggable } from '$lib/utils/drag-drop';
+import { createEventDispatcher } from 'svelte';
 	import ClickableCard from '$lib/components/ui/clickable-card.svelte';
 	import PrioritySelector from '$lib/components/base/PrioritySelector.svelte';
 	import { DatePicker } from '$lib/components/ui';
-	import type { DragData } from '$lib/utils/drag-drop';
 
 	interface Props {
 		// Task data
@@ -65,9 +63,7 @@
 		select: { id: string; selected: boolean };
 		statusChange: { id: string; status_id: string };
 		priorityChange: { id: string; priority: string };
-		dueDateChange: { id: string; due_date: string | null };
-		dragStart: DragData;
-		dragEnd: void;
+	dueDateChange: { id: string; due_date: string | null };
 	}>();
 
 	let dateValue = $state(due_date || '');
@@ -108,12 +104,6 @@
 		return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
 	}
 
-	const dragData: DragData = {
-		type: 'task',
-		id,
-		data: { status_id, priority },
-	};
-
 	const isOverdue = due_date && new Date(due_date) < new Date();
 	const isDueSoon = due_date && !isOverdue && (new Date(due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) <= 3;
 
@@ -130,32 +120,8 @@
 	{selected}
 	draggable={false}
 	dragData={null}
-	class="task-card rounded-lg p-4 hover:shadow-lg transition-all border-[var(--theme-border)] {viewMode === 'board' ? 'mb-5 min-h-[200px]' : 'mb-5'} group/card relative"
+	class="task-card rounded-lg p-4 hover:shadow-lg transition-all border-[var(--theme-border)] {viewMode === 'board' ? 'mb-5 min-h-[200px]' : 'mb-5'} {isDraggable && viewMode === 'board' ? 'cursor-grab' : ''} relative"
 >
-	<!-- Drag Handle (only visible on hover, only in board view when draggable) -->
-	{#if isDraggable && viewMode === 'board'}
-		<div 
-			class="task-drag-handle absolute top-2 left-2 opacity-0 group-hover/card:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-10 p-1.5 rounded hover:bg-muted/50 touch-none"
-			style="color: var(--theme-text-muted, #78716c);"
-			onmousedown={(e) => {
-				// Stop propagation to prevent card click, but allow drag to start
-				e.stopPropagation();
-			}}
-			onclick={(e) => {
-				// Prevent card click when clicking handle
-				e.stopPropagation();
-				e.preventDefault();
-			}}
-			role="button"
-			aria-label="Drag to move task"
-			tabindex="-1"
-		>
-			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16" />
-			</svg>
-		</div>
-	{/if}
 
 	<!-- Header Row: Checkbox, Title -->
 	<div class="flex items-start gap-3 mb-2">
@@ -324,6 +290,29 @@
 	.task-card:global(.dragging) {
 		opacity: 0.5;
 		transform: rotate(2deg);
+		cursor: grabbing;
+	}
+
+	.task-card.cursor-grab:active {
+		cursor: grabbing;
+	}
+
+	/* Prevent transitions on drag preview - fixes disappearing elements during drag */
+	:global(.dnd-zone-item--dragging) .task-card,
+	:global(.dnd-zone-item--dragging) .task-card *,
+	:global(.dnd-zone-item--dragging) .task-card-wrapper,
+	:global(.dnd-zone-item--dragging) .task-card-wrapper * {
+		transition: none !important;
+		animation: none !important;
+		/* Force all properties to immediate change */
+		transition-property: none !important;
+		transition-duration: 0s !important;
+		transition-delay: 0s !important;
+		transition-timing-function: none !important;
+		/* Ensure visibility */
+		opacity: 1 !important;
+		visibility: visible !important;
+		display: revert !important;
 	}
 
 	.line-clamp-2 {
@@ -333,11 +322,4 @@
 		overflow: hidden;
 	}
 
-	:global(.task-drag-handle) {
-		pointer-events: auto;
-	}
-
-	:global(.task-drag-handle:active) {
-		cursor: grabbing;
-	}
 </style>

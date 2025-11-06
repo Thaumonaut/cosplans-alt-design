@@ -203,18 +203,9 @@
       return
     }
     
-    console.log('Updating color for stage:', { stageId, stageName: stage.name, color })
-    
     saving = true
     try {
-      console.log('[TaskStageSettings] Calling taskStageService.update:', { stageId, color })
       const updatedStage = await taskStageService.update(stageId, { color: color ?? null })
-      console.log('[TaskStageSettings] Stage updated:', { 
-        id: updatedStage.id, 
-        name: updatedStage.name, 
-        color: updatedStage.color,
-        isCompletion: updatedStage.isCompletionStage 
-      })
       
       // Update the local stages array directly instead of reloading to avoid closure issues
       const stageIndex = stages.findIndex(s => s.id === stageId)
@@ -236,14 +227,6 @@
         // Verify the update was applied correctly AFTER the assignment
         await Promise.resolve() // Another microtask to ensure reactivity has propagated
         const updatedStageInArray = stages.find(s => s.id === stageId)
-        console.log('[TaskStageSettings] Updated local stages array:', {
-          stageIndex,
-          updatedStage: { id: updatedStage.id, name: updatedStage.name, color: updatedStage.color },
-          stageInArray: updatedStageInArray ? { id: updatedStageInArray.id, name: updatedStageInArray.name, color: updatedStageInArray.color } : null,
-          allStages: stages.map(s => ({ id: s.id, name: s.name, color: s.color })),
-          arrayLength: stages.length,
-          arrayReference: stages === newStages
-        })
         
         // Double-check: if the color doesn't match, something went wrong
         if (!updatedStageInArray || updatedStageInArray.color !== updatedStage.color) {
@@ -282,11 +265,6 @@
       const handler = (detail: string | null | undefined) => {
         // Double-check we're using the correct stage ID
         const currentStageId = stageId
-        console.log('[TaskStageSettings] Color change handler called:', { 
-          handlerStageId: currentStageId, 
-          color: detail,
-          allStages: stages.map(s => ({ id: s.id, name: s.name, isCompletion: s.isCompletionStage }))
-        })
         handleColorChange(currentStageId, detail)
       }
       colorHandlerMap.set(stageId, handler)
@@ -306,14 +284,7 @@
 
   // Handle stage reordering via sortable
   async function handleStageSort(event: { oldIndex: number; newIndex: number; element?: HTMLElement }) {
-    console.log('[TaskStageSettings] handleStageSort called:', { 
-      canEdit: canEdit(), 
-      saving, 
-      event: { oldIndex: event.oldIndex, newIndex: event.newIndex, hasElement: !!event.element }
-    })
-    
     if (!canEdit() || saving) {
-      console.log('[TaskStageSettings] Skipping reorder:', { canEdit: canEdit(), saving })
       return
     }
     
@@ -321,23 +292,8 @@
     
     // Don't do anything if the position didn't change
     if (oldIndex === newIndex) {
-      console.log('[TaskStageSettings] Positions are the same, skipping:', { oldIndex, newIndex })
       return
     }
-    
-    // Log the actual event details for debugging
-    console.log('[TaskStageSettings] Drag event details:', {
-      oldIndex,
-      newIndex,
-      element: event.element?.tagName,
-      stagesCount: stages.length
-    })
-
-    console.log('[TaskStageSettings] Reordering stages:', { 
-      oldIndex, 
-      newIndex, 
-      currentStages: stages.map(s => ({ id: s.id, name: s.name, order: s.displayOrder, isCompletion: s.isCompletionStage }))
-    })
 
     saving = true
     try {
@@ -347,33 +303,9 @@
       const [movedStage] = newOrder.splice(oldIndex, 1)
       newOrder.splice(newIndex, 0, movedStage)
 
-      console.log('[TaskStageSettings] New order:', newOrder.map((s, i) => ({ 
-        index: i, 
-        id: s.id, 
-        name: s.name, 
-        willBeCompletion: i === newOrder.length - 1 
-      })))
-
       // Update display_order values (this will also set the last stage as completion)
       const stageIds = newOrder.map(s => s.id)
       const updatedStages = await taskStageService.reorder(get(currentTeam)!.id, stageIds)
-      
-      console.log('[TaskStageSettings] After reorder, stages from DB:', updatedStages.map(s => ({ 
-        id: s.id, 
-        name: s.name, 
-        displayOrder: s.displayOrder, 
-        isCompletion: s.isCompletionStage 
-      })))
-      
-      // Verify completion stage is set correctly before updating local state
-      const lastStage = updatedStages[updatedStages.length - 1]
-      const completionStages = updatedStages.filter(s => s.isCompletionStage)
-      console.log('[TaskStageSettings] Completion stage verification:', {
-        lastStage: { id: lastStage?.id, name: lastStage?.name, isCompletion: lastStage?.isCompletionStage },
-        completionStages: completionStages.map(s => ({ id: s.id, name: s.name })),
-        expectedLastStageId: stageIds[stageIds.length - 1],
-        allStages: updatedStages.map(s => ({ id: s.id, name: s.name, displayOrder: s.displayOrder, isCompletion: s.isCompletionStage }))
-      })
       
       // Update local state with the reordered stages (already sorted by displayOrder from DB)
       stages = [...updatedStages]

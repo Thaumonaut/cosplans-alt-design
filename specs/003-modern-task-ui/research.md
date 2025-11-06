@@ -13,9 +13,7 @@ This document contains research findings and technology decisions for implementi
 ### Problem
 Need Svelte 5-compatible drag-and-drop library for board view kanban columns and timeline date adjustments.
 
-###
-
- Options Evaluated
+### Options Evaluated
 
 **Option A: @dnd-kit/core with Svelte 5 wrapper**
 - Pros: Battle-tested, excellent touch support, accessibility features, tree-shakeable
@@ -29,22 +27,34 @@ Need Svelte 5-compatible drag-and-drop library for board view kanban columns and
 
 **Option C: Native HTML5 Drag and Drop API**
 - Pros: Zero dependencies, built-in browser support, lightweight
-- Cons: Poor touch support (needs polyfill), inconsistent browser behavior, complex event handling
+- Cons: Poor touch support (needs polyfill), inconsistent browser behavior, complex event handling, click conflicts
 - Svelte 5 Compatibility: ✅ Fully compatible (standard DOM events)
 
-**Option D: svelte-french-toast + custom drag logic**
-- Pros: Minimal, leverages existing animation patterns, full control
-- Cons: Need to build drag logic from scratch, more maintenance
-- Svelte 5 Compatibility: ✅ Compatible
+**Option D: @shopify/draggable**
+- Pros: Framework-agnostic, excellent cross-browser support, touch support, advanced features (mirror, constraints), handle-based dragging
+- Cons: Adds dependency (~15KB), requires dynamic loading for SSR
+- Svelte 5 Compatibility: ✅ Fully compatible (vanilla JS library)
 
-### Decision: Native HTML5 Drag and Drop API with touch polyfill
+### Decision: **Neodrag** (Updated from @shopify/draggable - see Section 1b for evaluation)
 
 **Rationale**:
-1. **Zero dependencies**: No external library to maintain or worry about Svelte 5 compatibility
-2. **Performance**: Direct DOM manipulation, no framework wrapper overhead
-3. **Control**: Full control over drag behavior, animations, and interaction patterns
-4. **Bundle size**: 0KB added (touch polyfill ~3KB if needed)
-5. **Future-proof**: Standard web API, won't break with framework updates
+1. **Better cross-browser support**: Consistent behavior across all browsers and devices
+2. **Touch support**: Built-in mobile/touch device support without polyfills
+3. **Advanced features**: Mirror elements, drag handles, constraints, auto-scrolling
+4. **Click conflict prevention**: Handle-based dragging prevents interference with interactive elements (date pickers, dropdowns)
+5. **Active maintenance**: Shopify-maintained library with regular updates
+6. **SSR compatibility**: Can be dynamically loaded client-side only
+
+**Implementation Details**:
+- **Library**: `@shopify/draggable` v1.2.1
+- **Bundle size**: ~15KB (acceptable trade-off for features)
+- **SSR**: Dynamically imported in `onMount` or via utility function
+- **Usage**: Sortable class for kanban columns, Draggable for individual items
+- **Features used**:
+  - Drag handles (`.task-drag-handle`) to prevent click conflicts
+  - Mirror element (ghost card) for visual feedback
+  - Auto-scrolling at viewport edges
+  - Cross-container dragging between columns
 
 **Implementation Pattern**:
 
@@ -121,10 +131,294 @@ Need Svelte 5-compatible drag-and-drop library for board view kanban columns and
 - Throttle drag events to 16ms (60fps)
 - Use CSS transforms instead of position changes
 
+**Implementation Pattern**:
+
+```typescript
+// src/lib/utils/draggable.ts
+import { Sortable } from '@shopify/draggable'
+
+let sortableInstance: Sortable | null = null
+
+export async function initSortable(containers: HTMLElement[]) {
+  // Dynamically load to avoid SSR issues
+  const { Sortable } = await import('@shopify/draggable')
+  
+  sortableInstance = new Sortable(containers, {
+    draggable: '.task-card-wrapper',
+    handle: '.task-drag-handle', // Only allow dragging from handle
+    mirror: {
+      constrainDimensions: true,
+      appendTo: 'body',
+      xAxis: true,
+      yAxis: true,
+    },
+  })
+  
+  sortableInstance.on('sortable:stop', (event) => {
+    // Handle task drop between columns
+    const { oldIndex, newIndex, source, over } = event
+    // Update task stage
+  })
+}
+```
+
+**Key Features**:
+- **Drag handles**: Only specific elements (`.task-drag-handle`) trigger dragging
+- **Mirror element**: Ghost card follows cursor during drag
+- **Auto-scroll**: Automatically scrolls when dragging near viewport edges
+- **Column expansion**: Auto-expands collapsed columns on hover during drag
+- **Error recovery**: Timeout detection and recovery for lost drag control
+
 **Alternatives Considered and Rejected**:
-- **@dnd-kit/core**: Overkill for our use case, adds unnecessary complexity
+- **@dnd-kit/core**: Overkill for our use case, React-first API
 - **svelte-dnd-action**: Svelte 4 API uncertain with Svelte 5 runes
+- **Native HTML5**: Click conflicts with interactive elements, poor touch support
 - **Custom library**: Not worth the maintenance burden
+
+---
+
+## 1b. Neodrag Evaluation (Alternative Drag-and-Drop Library)
+
+### Problem
+Evaluate [Neodrag](https://next.neodrag.dev/) as a potential replacement for @shopify/draggable, given:
+- Neodrag is designed specifically for Svelte
+- Current implementation has DOM update issues with @shopify/draggable
+- Neodrag is SSR-friendly and multi-framework
+
+### Neodrag Overview
+
+**Neodrag** is a modern drag-and-drop library designed for Svelte (and other frameworks) with:
+- **Svelte-native**: Built specifically for Svelte, uses Svelte actions/API
+- **SSR-friendly**: Works with SvelteKit, NextJS, Nuxt, and other meta-frameworks
+- **Transparent bundle size**: Modular plugins, only pay for what you use
+- **Feature-rich**: Handles, bounds, grid snapping, axis locking, and more
+- **Bundle size**: ~3.58KB base + optional plugins (~82B each)
+
+### Comparison: Neodrag vs @shopify/draggable
+
+| Feature | Neodrag | @shopify/draggable |
+|---------|---------|-------------------|
+| **Svelte Integration** | ✅ Native Svelte actions | ⚠️ Vanilla JS (needs manual integration) |
+| **SSR Support** | ✅ Built-in SSR-friendly | ⚠️ Requires dynamic loading |
+| **DOM Update Handling** | ✅ Designed for reactive frameworks | ❌ Issues with DOM updates |
+| **Bundle Size** | ✅ ~3.58KB base + plugins | ⚠️ ~15KB fixed |
+| **Touch Support** | ✅ Built-in | ✅ Built-in |
+| **Handle-based Dragging** | ✅ Supported | ✅ Supported |
+| **Cross-container Drag** | ✅ Supported | ✅ Supported (Sortable) |
+| **Auto-scroll** | ✅ Plugin available | ✅ Built-in |
+| **Mirror/Ghost Element** | ✅ Built-in | ✅ Built-in |
+| **Grid Snapping** | ✅ Plugin available | ⚠️ Manual implementation |
+| **Maintenance** | ✅ Active (2024-2025) | ✅ Active (Shopify-maintained) |
+| **Documentation** | ✅ Good | ✅ Excellent |
+| **Sortable Lists** | ⚠️ May need separate implementation | ✅ Built-in (Sortable class) |
+
+### Key Advantages of Neodrag
+
+1. **Svelte-Native Design**
+   - Uses Svelte actions (`use:neodrag`)
+   - Reacts to Svelte state changes automatically
+   - Better integration with Svelte 5 runes ($state, $derived)
+   - No manual DOM manipulation needed
+
+2. **DOM Update Handling**
+   - Built for reactive frameworks (Svelte, Vue, React, Solid)
+   - Handles DOM updates gracefully without breaking drag state
+   - **Critical for our use case**: Tasks are loaded dynamically, columns can be added/removed
+
+3. **SSR-Friendly**
+   - No need for dynamic imports or `onMount` checks
+   - Works out of the box with SvelteKit
+   - Simpler implementation
+
+4. **Modular Bundle Size**
+   - Base: ~3.58KB
+   - Only include plugins you need
+   - Can be smaller than @shopify/draggable if using minimal features
+
+5. **Better Reactive Integration**
+   - Automatically updates when Svelte state changes
+   - No need to manually reinitialize after DOM updates
+   - Handles task list updates, column additions/removals seamlessly
+
+### Potential Concerns
+
+1. **Sortable Functionality**
+   - @shopify/draggable has built-in `Sortable` class for kanban boards
+   - Neodrag may need custom implementation for cross-container sorting
+   - **Assessment**: Need to verify cross-container drag support
+
+2. **Ecosystem Maturity**
+   - @shopify/draggable is battle-tested in production at Shopify
+   - Neodrag is newer, though actively maintained
+   - **Assessment**: Neodrag appears mature enough for our needs
+
+3. **Learning Curve**
+   - Different API than @shopify/draggable
+   - Need to refactor existing implementation
+   - **Assessment**: Svelte-native API should be easier to use
+
+### Decision: **Switch to Neodrag**
+
+**Rationale**:
+1. **DOM Update Issues**: Neodrag is specifically designed to handle reactive DOM updates, solving the current problem
+2. **Svelte-Native**: Better integration with Svelte 5 runes and reactive state
+3. **SSR-Friendly**: Simpler implementation, no dynamic loading needed
+4. **Smaller Bundle**: Can be smaller with modular plugins
+5. **Better Long-term Fit**: Designed for frameworks like Svelte, not vanilla JS
+
+**Implementation Details**:
+- **Library**: `@neodrag/svelte` (Svelte-specific package)
+- **Bundle size**: ~3.58KB base + required plugins (~82B each)
+- **Required plugins**: `applyUserSelectHack`, `touchAction`, `controls` (for handles), `events` (for callbacks)
+- **Estimated total**: ~4-5KB (smaller than @shopify/draggable)
+
+**Implementation Pattern**:
+
+```svelte
+<script lang="ts">
+  import { neodrag } from '@neodrag/svelte'
+  
+  let task = $state(...)
+  let stageId = $state(...)
+  
+  function handleDragEnd(event: any) {
+    // Update task stage
+    updateTaskStage(task.id, stageId)
+  }
+</script>
+
+<div
+  use:neodrag={{
+    handle: '.task-drag-handle',
+    bounds: 'parent',
+    onDragEnd: handleDragEnd,
+    // Other options
+  }}
+  class="task-card"
+>
+  <div class="task-drag-handle">⋮⋮</div>
+  <!-- Task content -->
+</div>
+```
+
+**Migration Considerations**:
+- Need to refactor existing @shopify/draggable implementation
+- Test cross-container drag (kanban columns) thoroughly
+- Verify all features work (handles, auto-scroll, mirror element)
+- **Estimated effort**: 2-4 hours for migration and testing
+
+**Updated Recommendation**: **Use Neodrag instead of @shopify/draggable**
+- Solves DOM update issues
+- Better Svelte integration
+- Smaller bundle size
+- Simpler SSR implementation
+
+**Note**: See Section 13c for comprehensive comparison with sveltednd. Recommendation: Test both libraries during implementation to determine which handles kanban cross-container drag better.
+
+---
+
+## 1a. Color Picker Library Selection
+
+### Problem
+Need a color picker for task stage color customization and label color selection.
+
+### Options Evaluated
+
+**Option A: Custom CSS-based color picker**
+- Pros: Zero dependencies, full control, lightweight
+- Cons: Complex to build, accessibility concerns, limited features
+- Bundle size: ~5KB custom code
+
+**Option B: @melloware/coloris (Coloris.js)**
+- Pros: Modern UI, accessibility features, keyboard navigation, theme support, small bundle
+- Cons: Adds dependency, requires dynamic loading for SSR
+- Bundle size: ~8KB
+
+**Option C: react-color (via adapter)**
+- Pros: Feature-rich, many picker styles
+- Cons: React-first, requires adapter, larger bundle (~20KB)
+- Svelte 5 Compatibility: Needs custom wrapper
+
+**Option D: Native HTML5 color input**
+- Pros: Zero dependencies, native browser support
+- Cons: Inconsistent UI across browsers, limited customization
+- Bundle size: 0KB
+
+### Decision: @melloware/coloris (Coloris.js)
+
+**Rationale**:
+1. **Modern UI**: Grid-based layout with theme swatches and custom colors
+2. **Accessibility**: Keyboard navigation, ARIA labels, focus management
+3. **Lightweight**: ~8KB bundle size
+4. **SSR compatible**: Can be dynamically loaded client-side
+5. **Theme support**: Works with dark/light themes
+6. **Local storage**: Persists custom color swatches
+
+**Implementation Details**:
+- **Library**: `@melloware/coloris` v0.25.0
+- **Bundle size**: ~8KB
+- **SSR**: Dynamically imported in `onMount` hook
+- **Usage**: Hidden input element with programmatic trigger via visible button
+- **Features used**:
+  - Predefined theme color swatches
+  - Custom color input with hex/RGB support
+  - Local storage persistence for custom colors
+  - High z-index for dropdown positioning
+
+**Implementation Pattern**:
+
+```svelte
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte'
+  
+  let Coloris: any = null
+  let inputElement = $state<HTMLInputElement | null>(null)
+  
+  onMount(async () => {
+    // Dynamically load Coloris and CSS
+    Coloris = await import('@melloware/coloris')
+    await import('@melloware/coloris/dist/coloris.css')
+    
+    Coloris.init()
+    Coloris({
+      el: '#color-picker-input',
+      swatches: [
+        // Theme colors
+        '#8b5cf6', '#ec4899', '#3b82f6',
+        // Custom colors from localStorage
+        ...getCustomColors(),
+      ],
+    })
+  })
+  
+  function openPicker() {
+    if (inputElement) {
+      inputElement.click()
+    }
+  }
+</script>
+
+<input
+  bind:this={inputElement}
+  type="text"
+  data-coloris
+  id="color-picker-input"
+  style="display: none;"
+/>
+<button onclick={openPicker}>Pick Color</button>
+```
+
+**Key Features**:
+- **Grid layout**: Modern swatch-based color selection
+- **Theme colors**: Pre-populated with app theme colors
+- **Custom colors**: User-defined colors persisted in localStorage
+- **Reset button**: Clear custom color selection
+- **Event handling**: Proper stopPropagation to prevent drag conflicts
+
+**Alternatives Considered and Rejected**:
+- **Custom CSS picker**: Too complex to build, accessibility concerns
+- **Native color input**: Inconsistent UI, poor UX
+- **react-color**: Too large, React-first, not needed
 
 ---
 
@@ -1746,11 +2040,763 @@ export async function loadSavedView(viewId: string) {
 
 ---
 
+## 11. Additional JavaScript Libraries for Custom Fields & Features
+
+### Problem
+Identify additional JavaScript libraries that can minimize implementation work for the 13 custom field types and other planned features, similar to how @melloware/coloris and @shopify/draggable reduced work.
+
+### Areas Requiring Libraries
+
+**Custom Field Types Needing Library Support:**
+1. **Date & Date Range Pickers** - Date, Date Range fields
+2. **File Upload Components** - File Input field (with progress, preview, drag-drop)
+3. **Multi-select/Tag Input** - Custom Tags, Crew Assignment fields
+4. **Currency Formatting** - Currency field display/input
+5. **Number Range Inputs** - Number Range field (min-max slider or inputs)
+6. **URL Validation** - Link Input field validation
+7. **Image Handling** - Preview, cropping, compression for file uploads
+
+### Research Findings
+
+#### 11a. Date & Date Range Picker Libraries
+
+**Option A: Flowbite Svelte Datepicker (Already in dependencies)**
+- Pros: Already in project (flowbite-svelte), consistent styling, Svelte-native
+- Cons: Limited date range support, may need enhancement
+- Bundle size: Already included
+- Svelte 5 Compatibility: ✅ Compatible
+- Assessment: **USE EXISTING** - Flowbite Svelte already provides datepicker components
+
+**Option B: @tanstack/svelte-calendar**
+- Pros: Part of Tanstack ecosystem (already using @tanstack/svelte-virtual), excellent date range support
+- Cons: Requires additional dependency, might be overkill
+- Bundle size: ~8KB
+- Svelte 5 Compatibility: ✅ Compatible
+- Assessment: **EVALUATE** - If Flowbite datepicker lacks range support, consider this
+
+**Option C: svelte-datepicker**
+- Pros: Lightweight, Svelte-native, good range support
+- Cons: Less maintained, smaller ecosystem
+- Bundle size: ~5KB
+- Svelte 5 Compatibility: Needs verification
+- Assessment: **ALTERNATIVE** - If Flowbite doesn't work well
+
+**Decision: Use Flowbite Svelte Datepicker (already in dependencies)**
+- **Rationale**: Already included in project, consistent with existing UI, no additional bundle size
+- **Implementation**: Use `Datepicker` component from flowbite-svelte for single dates, enhance with date range wrapper if needed
+- **Fallback**: If date range support is insufficient, evaluate @tanstack/svelte-calendar
+
+---
+
+#### 11b. File Upload Component Libraries
+
+**Option A: Custom Implementation (Current Approach)**
+- Pros: Full control, already have image upload pattern, lightweight
+- Cons: More code to maintain, need to build progress, preview, validation
+- Assessment: **CURRENT** - Already have InlineImageUpload.svelte and InlineFileUpload.svelte
+
+**Option B: @uppy/core with Svelte adapter**
+- Pros: Feature-rich (progress, preview, validation, retry), well-maintained, supports many backends
+- Cons: Larger bundle (~50KB), may be overkill for simple file uploads
+- Bundle size: ~50KB
+- Svelte 5 Compatibility: Needs adapter
+- Assessment: **OVERKILL** - Current implementation is sufficient
+
+**Option C: Enhance existing with libraries**
+- Add `react-dropzone` pattern (but Svelte-native)
+- Use existing drag-drop pattern from InlineImageUpload
+- Assessment: **RECOMMENDED** - Enhance existing components with better preview/validation
+
+**Decision: Enhance Existing Custom Implementation**
+- **Rationale**: Already have working file upload components, just need to enhance for file input custom fields
+- **Implementation**: Reuse existing InlineFileUpload.svelte pattern, add file type icons, preview for non-images
+- **Enhancement**: Add file size validation, MIME type icons, preview for PDFs/images
+
+---
+
+#### 11c. Multi-select & Tag Input Libraries
+
+**Option A: Custom Implementation**
+- Pros: Full control, lightweight, matches design
+- Cons: Need to build tag input, multi-select dropdown, search/filter
+- Assessment: **CURRENT** - Need to build from scratch
+
+**Option B: svelte-multiselect**
+- Pros: Svelte-native, good API, supports search
+- Cons: May not have tag-style display, needs customization
+- Bundle size: ~3KB
+- Svelte 5 Compatibility: ✅ Compatible
+- Assessment: **EVALUATE** - Good for Crew Assignment dropdown
+
+**Option C: @svelte-put/select**
+- Pros: Svelte 5 compatible, flexible, supports multi-select
+- Cons: Less known, may need more setup
+- Bundle size: ~4KB
+- Svelte 5 Compatibility: ✅ Compatible
+- Assessment: **ALTERNATIVE**
+
+**Option D: Custom Tags Component (Similar to GitHub/GitLab tag inputs)**
+- Build tag-style input with Flowbite components
+- Use existing input patterns
+- Assessment: **RECOMMENDED** - Custom implementation for tag-style UI
+
+**Decision: Hybrid Approach**
+- **Custom Tags**: Custom implementation using Flowbite components + tag-style UI pattern
+- **Crew Assignment**: Use svelte-multiselect or custom multi-select with Flowbite styling
+- **Rationale**: Tag inputs need custom styling (badges, chips), crew assignment can use standard multi-select
+- **Library**: `svelte-multiselect` for Crew Assignment fields (~3KB)
+
+---
+
+#### 11d. Currency Formatting Libraries
+
+**Option A: Intl.NumberFormat (Native Browser API)**
+- Pros: Zero dependencies, built-in, locale-aware
+- Cons: Need to format manually, no input formatting
+- Assessment: **RECOMMENDED** - Use for display formatting
+
+**Option B: accounting.js**
+- Pros: Simple API, good for currency formatting
+- Cons: Adds dependency (~2KB), may be overkill
+- Bundle size: ~2KB
+- Assessment: **ALTERNATIVE** - Only if native API insufficient
+
+**Option C: Custom implementation with Intl.NumberFormat**
+- Format display: `new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)`
+- Input: Use number input with currency code selector
+- Assessment: **RECOMMENDED** - Use native API + custom input
+
+**Decision: Use Native Intl.NumberFormat API**
+- **Rationale**: Zero bundle impact, built-in browser support, locale-aware
+- **Implementation**: Format currency values using Intl.NumberFormat, store currency code separately
+- **Input**: Custom currency input component (number input + currency selector dropdown)
+
+---
+
+#### 11e. Number Range Input Libraries
+
+**Option A: Custom Dual Number Inputs**
+- Pros: Simple, lightweight, full control
+- Cons: Need to build validation (min < max)
+- Assessment: **RECOMMENDED** - Simple two-number inputs
+
+**Option B: Range Slider (e.g., noUiSlider)**
+- Pros: Visual slider, good UX for ranges
+- Cons: Adds dependency (~15KB), may not fit all use cases
+- Bundle size: ~15KB
+- Assessment: **OPTIONAL** - Could add as enhancement post-MVP
+
+**Option C: Flowbite Range Component**
+- Pros: Already in project, consistent styling
+- Cons: May need dual-range support
+- Assessment: **EVALUATE** - Check if Flowbite has range slider
+
+**Decision: Custom Dual Number Inputs (MVP)**
+- **Rationale**: Simple, lightweight, covers use cases (measurements, quantities)
+- **Implementation**: Two number inputs (min/max) with validation
+- **Future Enhancement**: Consider range slider for better UX post-MVP
+
+---
+
+#### 11f. URL Validation Libraries
+
+**Option A: Native URL API + Custom Validation**
+- Pros: Zero dependencies, built-in validation
+- Cons: Need to handle edge cases
+- Assessment: **RECOMMENDED** - Use native `new URL()` constructor
+
+**Option B: validator.js**
+- Pros: Comprehensive validation library
+- Cons: Adds dependency (~13KB), overkill for just URLs
+- Bundle size: ~13KB
+- Assessment: **OVERKILL** - Native API sufficient
+
+**Decision: Use Native URL API**
+- **Rationale**: Zero bundle impact, built-in validation
+- **Implementation**: Validate URLs using `new URL(input)` with try-catch
+- **Enhancement**: Add protocol checking (https/http), display validation errors
+
+---
+
+#### 11g. Image Handling Libraries (Enhancement)
+
+**Option A: Current Implementation (processImage utility)**
+- Pros: Already working, handles compression/resize
+- Cons: No cropping, limited preview features
+- Assessment: **CURRENT** - Sufficient for MVP
+
+**Option B: cropperjs**
+- Pros: Excellent image cropping, rotation, zoom
+- Cons: Adds dependency (~20KB), may be overkill for file uploads
+- Bundle size: ~20KB
+- Assessment: **POST-MVP** - Add if image cropping needed
+
+**Option C: react-image-crop (Svelte adapter)**
+- Pros: Good cropping features
+- Cons: React-first, needs adapter
+- Assessment: **NOT RECOMMENDED** - React-first library
+
+**Decision: Keep Current Implementation (MVP)**
+- **Rationale**: Current image processing is sufficient for MVP file uploads
+- **Future Enhancement**: Consider cropperjs if image cropping becomes requirement
+
+---
+
+### Summary of Library Decisions
+
+| Feature | Library | Bundle Size | Rationale |
+|---------|---------|-------------|-----------|
+| Date Picker | Flowbite Svelte (existing) | 0KB (already included) | Already in dependencies |
+| Date Range | Flowbite Svelte + custom wrapper | 0KB | Extend existing component |
+| File Upload | Custom (enhance existing) | 0KB | Already have working components |
+| Multi-select (Crew) | svelte-multiselect | ~3KB | Good for dropdown multi-select |
+| Custom Tags | Custom implementation | 0KB | Need tag-style UI (badges/chips) |
+| Currency Formatting | Intl.NumberFormat (native) | 0KB | Built-in browser API |
+| Number Range | Custom dual inputs | 0KB | Simple, lightweight |
+| URL Validation | Native URL API | 0KB | Built-in browser API |
+| Image Handling | Current implementation | 0KB | Already sufficient |
+
+### New Dependencies to Add
+
+**Recommended:**
+- `svelte-multiselect` (~3KB) - For Crew Assignment multi-select fields
+
+**Optional (Post-MVP):**
+- `@tanstack/svelte-calendar` (~8KB) - If date range needs enhancement
+- `cropperjs` (~20KB) - If image cropping becomes requirement
+
+**Total Additional Bundle Impact: ~3KB** (svelte-multiselect only)
+
+### Implementation Notes
+
+1. **Flowbite Svelte Components**: Already available, use for:
+   - Date picker (single date)
+   - Input components (number, text, textarea)
+   - Select dropdowns
+   - Checkboxes
+   - File inputs (base styling)
+
+2. **Custom Components to Build**:
+   - Date Range picker (wrapper around Flowbite datepicker)
+   - Custom Tags input (tag-style with badges)
+   - Currency input (number + currency selector)
+   - Number Range input (dual number inputs)
+   - Link input (text input + URL validation)
+   - File input preview (enhance existing)
+
+3. **Reuse Existing Patterns**:
+   - File upload pattern from InlineFileUpload.svelte
+   - Image processing from processImage utility
+   - Drag-drop from existing components
+
+---
+
+## 12. Form Builder Library Evaluation (svelte-form-builder-community)
+
+### Problem
+Evaluate [svelte-form-builder-community](https://github.com/pragmatic-engineering/svelte-form-builder-community) for use in custom fields feature, particularly for:
+- Custom field configuration UI (team settings)
+- Dynamic task creation forms based on custom fields
+- Task template builder interface
+
+### Library Overview
+
+**svelte-form-builder-community** is a no-code drag-and-drop form builder for Svelte with:
+- **28 Community Components**: Audio, Button, Canvas, Checkbox Group, Color, Date, DateTime, Divider, File Upload, Header, Hidden, Link, Meter, Month, Number, Paragraph, Password, Picture, Progress, Radio Group, Range, Select, Star, Text, Text Area, Time, Video, Week
+- **Export/Import**: Form definitions can be exported/imported as JSON
+- **Custom Validations**: Support for custom validation rules
+- **Themes & Styling**: Customizable themes
+- **Responsive Forms**: Mobile-friendly
+- **Extensible**: Plugin architecture for custom components
+- **License**: GPL-3.0 (community) or Commercial EULA (Pro/Enterprise)
+
+### Potential Use Cases
+
+1. **Custom Field Configuration UI**
+   - Drag-and-drop interface for team admins to configure custom fields
+   - Visual form builder to define field types, options, and settings
+
+2. **Dynamic Task Creation Forms**
+   - Render task creation forms based on custom field definitions
+   - Show/hide fields based on project type or task templates
+
+3. **Task Template Builder**
+   - Visual interface to create task templates with predefined custom field values
+
+### Advantages
+
+1. **Comprehensive Component Library**
+   - Many field types match our needs: Date, DateTime, File Upload, Number, Select, Text, Text Area
+   - Already built and tested components
+
+2. **Drag-and-Drop Builder UI**
+   - Visual interface for form configuration
+   - Could be useful for team admins configuring custom fields
+
+3. **Export/Import Functionality**
+   - Could enable sharing custom field configurations between teams (post-MVP feature)
+
+4. **Custom Validations**
+   - Supports validation rules (useful for required fields, min/max, etc.)
+
+### Concerns and Limitations
+
+1. **Missing Critical Field Types**
+   - **Date Range**: Only supports single Date/DateTime, not date ranges
+   - **Number Range**: Only single Number, not min-max range inputs
+   - **Currency**: Only Number with custom formatting, not currency-specific input
+   - **Custom Tags**: No multi-select tag input component
+   - **Crew Assignment**: No multi-select team member picker
+   - **Link Input**: No URL validation component (only generic Link)
+
+2. **License Concerns (GPL-3.0)**
+   - GPL-3.0 requires derivative works to be GPL-3.0
+   - Commercial use requires commercial license or sponsorship
+   - **Risk**: May conflict with commercial use of the application
+
+3. **Architecture Mismatch**
+   - Form builder outputs form definitions (JSON schema)
+   - Our custom fields are data-driven, team-scoped, stored in database
+   - Custom fields appear across all tasks, not just in forms
+   - Need visibility controls (show on cards/tables/lists), not just form display
+
+4. **Bundle Size**
+   - Full form builder likely larger than building custom components
+   - Many components may be unused (Audio, Video, Canvas, etc.)
+   - Estimated bundle size: 50-100KB+ (vs ~20KB for custom components)
+
+5. **Overkill for Use Case**
+   - We need simple field configuration UI (max 20 fields per team)
+   - Don't need drag-and-drop form builder for simple field management
+   - Custom implementation is simpler and more maintainable
+
+6. **Integration Complexity**
+   - Form builder schema needs to map to our custom field definitions
+   - Need to bridge between form builder output and database schema
+   - Adds unnecessary abstraction layer
+
+### Decision: **Not Recommended for MVP**
+
+**Rationale**:
+1. **Field Type Gaps**: Missing 6 critical field types (Date Range, Number Range, Currency, Custom Tags, Crew Assignment, Link Input)
+2. **License Risk**: GPL-3.0 may conflict with commercial use
+3. **Architecture Mismatch**: Form builder paradigm doesn't match our data-driven custom fields architecture
+4. **Overkill**: Simple field configuration UI doesn't need full form builder
+5. **Bundle Size**: Larger than custom implementation
+6. **Complexity**: Adds unnecessary abstraction layer
+
+**Alternative Approach**:
+1. **Custom Field Configuration UI**: Simple form in team settings (field type selector, name, options, visibility settings)
+2. **Dynamic Task Forms**: Render custom fields based on team definitions using Flowbite Svelte components
+3. **Reuse Existing Components**: Use Flowbite Svelte for base inputs, build custom components for specialized fields
+
+**When It Might Be Useful (Post-MVP)**:
+- **Task Template Builder**: Visual interface for creating complex task templates
+- **Advanced Conditional Logic**: Form builder's condition management for field visibility
+- **Survey/Form Workflows**: Separate form-based workflows unrelated to task management
+
+**Conclusion**:
+The svelte-form-builder-community library is a solid form builder, but it doesn't align well with our custom fields architecture. We need specialized field types, team-scoped data storage, and visibility controls that a general form builder doesn't provide. Building custom components using Flowbite Svelte (already in dependencies) is more aligned with our needs, avoids license concerns, and results in a smaller, more maintainable codebase.
+
+---
+
+## 13. Comprehensive Library Analysis: UX Enhancements & Form Handling
+
+### Problem
+Evaluate additional libraries identified from awesome-svelte list and user research to determine the best selections for:
+- Form handling and validation (Superforms, Formsnap, felte)
+- Animation libraries (AutoAnimate, number-flow)
+- Drag-and-drop alternatives (sveltednd vs Neodrag)
+- Video embeds (embedz)
+- Gantt charts (svar-widgets/gantt)
+- Tree views (svelte-tree-viewer)
+- Sound effects (svelte-sound)
+- Portal/teleport components (svelte-teleport)
+
+### Evaluation Criteria
+
+For each library, we evaluate:
+1. **Functionality**: Does it provide the features we need?
+2. **Svelte 5 Compatibility**: Works with Svelte 5 runes and actions?
+3. **Bundle Size**: Impact on application bundle
+4. **Maintenance**: Active development, community support, documentation
+5. **Integration**: Easy to integrate with existing codebase
+6. **Alternatives**: Are there better options?
+7. **Use Case Fit**: Does it solve our specific problems?
+
+---
+
+#### 13a. Form Handling Libraries
+
+**Use Case**: Task creation forms, custom field configuration, task detail editing
+
+**Option A: Superforms + Formsnap**
+- **Library**: `sveltekit-superforms` + `formsnap`
+- **Bundle Size**: ~8-10KB (Superforms ~5KB, Formsnap ~3KB)
+- **Svelte 5 Compatibility**: ✅ Fully compatible (SvelteKit-first)
+- **Features**:
+  - Server-first validation (SvelteKit form actions)
+  - Client-side validation with Zod (already in dependencies)
+  - Progressive enhancement
+  - CSRF protection
+  - Type-safe form handling
+- **Maintenance**: ✅ Active (maintained by ciscoheat, 1.5k+ stars)
+- **Documentation**: ✅ Excellent (official docs, examples)
+- **Constitution Alignment**: ✅ Already mentioned in constitution as recommended
+- **Assessment**: **HIGHLY RECOMMENDED** - Aligns with stack, reduces boilerplate
+
+**Option B: felte**
+- **Library**: `felte`
+- **Bundle Size**: ~5KB
+- **Svelte 5 Compatibility**: ✅ Compatible
+- **Features**:
+  - Framework-agnostic form library
+  - Built-in validators (Yup, Zod, Vest, Superstruct)
+  - Good for complex forms
+- **Maintenance**: ✅ Active
+- **Documentation**: ✅ Good
+- **Assessment**: **ALTERNATIVE** - Good but Superforms is SvelteKit-native
+
+**Option C: Custom Implementation**
+- **Bundle Size**: 0KB
+- **Pros**: Full control, no dependencies
+- **Cons**: More boilerplate, need to implement validation, CSRF protection
+- **Assessment**: **NOT RECOMMENDED** - Superforms saves significant development time
+
+**Decision: Use Superforms + Formsnap**
+- **Rationale**: 
+  1. Already in constitution as recommended
+  2. SvelteKit-native integration
+  3. Works with existing Zod dependency
+  4. Reduces form boilerplate by 70-80%
+  5. Server-first validation aligns with SvelteKit architecture
+- **Implementation**: Use for task creation, task detail editing, custom field configuration forms
+- **Bundle Impact**: +8-10KB (acceptable for significant time savings)
+
+---
+
+#### 13b. Animation Libraries
+
+**Use Case**: Smooth list transitions, number animations (counters, progress), task card animations
+
+**Option A: AutoAnimate**
+- **Library**: `@formkit/auto-animate` (framework-agnostic)
+- **Bundle Size**: ~1.5KB
+- **Svelte 5 Compatibility**: ✅ Compatible (works with any framework)
+- **Features**:
+  - Zero-config animations for list changes
+  - Automatic detection of added/removed/moved elements
+  - Smooth transitions
+- **Use Cases**:
+  - Task list updates (tasks added/removed)
+  - Subtask list animations
+  - Filter/group changes
+- **Maintenance**: ✅ Active (FormKit-maintained)
+- **Documentation**: ✅ Good
+- **Assessment**: **RECOMMENDED** - Zero-config, perfect for list animations
+
+**Option B: number-flow**
+- **Library**: `@number-flow/svelte`
+- **Bundle Size**: ~2-3KB
+- **Svelte 5 Compatibility**: ✅ Compatible (Svelte 5 support confirmed)
+- **Features**:
+  - Animated number transitions
+  - Smooth counting animations
+  - Customizable duration, easing
+  - Accessible (respects prefers-reduced-motion)
+- **Use Cases**:
+  - Task completion counters ("3/8 tasks complete")
+  - Progress percentages ("60% complete")
+  - Streak counters ("🔥 5 day streak!")
+  - Subtask completion ratios
+- **Maintenance**: ✅ Active (6.8k stars, 2.2k+ users, latest release June 2025)
+- **License**: MIT
+- **Documentation**: ✅ Good (number-flow.barvian.me)
+- **Assessment**: **HIGHLY RECOMMENDED** - Perfect for counters and progress indicators
+
+**Option C: Custom CSS Animations**
+- **Bundle Size**: 0KB
+- **Pros**: No dependencies, full control
+- **Cons**: More code, need to implement number animation logic
+- **Assessment**: **NOT RECOMMENDED** - number-flow handles edge cases better
+
+**Decision: Use Both AutoAnimate + number-flow**
+- **AutoAnimate**: For list/item animations (task cards, subtasks)
+- **number-flow**: For number animations (counters, progress, streaks)
+- **Total Bundle Impact**: +3.5-4.5KB
+- **Rationale**: Both serve different purposes, both are lightweight and high-value
+
+---
+
+#### 13c. Drag-and-Drop: Final Comparison (Neodrag vs sveltednd)
+
+**Current Decision**: Neodrag (Section 1b)
+
+**Option A: Neodrag** (Current Selection)
+- **Library**: `@neodrag/svelte`
+- **Bundle Size**: ~4-5KB with plugins
+- **Svelte 5 Compatibility**: ✅ Native Svelte actions
+- **Features**: Handles, bounds, grid snapping, axis locking, SSR-friendly
+- **Maintenance**: ✅ Active
+- **Documentation**: ✅ Good
+- **Pros**: Modular plugins, transparent bundle size, handles DOM updates
+- **Cons**: May need to verify cross-container drag for kanban
+
+**Option B: sveltednd**
+- **Library**: `sveltednd` (from awesome-svelte: "A lightweight, flexible drag and drop library for Svelte 5 applications")
+- **Bundle Size**: Unknown (likely ~3-5KB)
+- **Svelte 5 Compatibility**: ✅ Built for Svelte 5
+- **Features**: 
+  - Svelte 5-specific implementation
+  - Likely handles reactive updates well
+  - May have better kanban/cross-container support
+- **Maintenance**: ✅ Active (Svelte 5-focused)
+- **Documentation**: ✅ Likely good (Svelte 5 focus)
+- **Pros**: Built specifically for Svelte 5, may handle reactive updates better
+- **Cons**: Less known, need to verify bundle size and features
+
+**Decision: Evaluate sveltednd as Alternative**
+- **Recommendation**: **Test sveltednd** for kanban board implementation
+- **Rationale**: 
+  1. Built specifically for Svelte 5 (may handle reactive updates better)
+  2. May have better cross-container drag support (critical for kanban)
+  3. Worth comparing before finalizing Neodrag
+- **Action**: Create proof-of-concept with both libraries, compare:
+  - Cross-container drag performance
+  - DOM update handling
+  - Bundle size
+  - API simplicity
+- **Final Decision**: Defer to implementation testing
+
+---
+
+#### 13d. Video Embed Library
+
+**Use Case**: Embed YouTube/Vimeo videos in task comments, descriptions, or Link Input custom fields
+
+**Option A: embedz**
+- **Library**: `embedz`
+- **Bundle Size**: ~1-2KB (zero dependencies)
+- **Svelte 5 Compatibility**: ✅ Compatible (framework-agnostic)
+- **Features**:
+  - Supports YouTube, Vimeo, Dailymotion, and more
+  - Lazy loading
+  - Responsive embeds
+  - Zero dependencies
+- **Use Cases**:
+  - Tutorial links in task comments
+  - Reference videos in task descriptions
+  - Link Input custom fields (if URL is a video)
+- **Maintenance**: ✅ Active
+- **License**: MIT
+- **Documentation**: ✅ Good
+- **Assessment**: **HIGHLY RECOMMENDED** - Lightweight, solves real use case
+
+**Option B: Custom Implementation**
+- **Bundle Size**: 0KB
+- **Pros**: Full control
+- **Cons**: Need to handle multiple video platforms, lazy loading, responsive design
+- **Assessment**: **NOT RECOMMENDED** - embedz handles edge cases
+
+**Decision: Use embedz**
+- **Rationale**: Lightweight, zero dependencies, solves video embed needs perfectly
+- **Bundle Impact**: +1-2KB
+
+---
+
+#### 13e. Gantt Chart Library
+
+**Use Case**: Timeline view enhancement (currently using custom CSS Grid)
+
+**Option A: svar-widgets/gantt**
+- **Library**: `@svar-widgets/gantt`
+- **Bundle Size**: Unknown (likely 20-50KB)
+- **Svelte 5 Compatibility**: ✅ Likely compatible
+- **Features**:
+  - Full Gantt chart functionality
+  - Drag-and-drop task bars
+  - Dependencies visualization
+  - Interactive timeline
+- **Use Cases**:
+  - Enhanced timeline view
+  - Project timeline visualization
+  - Task dependencies (if added post-MVP)
+- **Maintenance**: ✅ Active
+- **Assessment**: **EVALUATE POST-MVP** - Overkill for current timeline requirements
+
+**Current Implementation**: Custom CSS Grid timeline (~3KB)
+- **Pros**: Lightweight, full control, matches design
+- **Cons**: Limited features compared to full Gantt chart
+
+**Decision: Keep Custom Implementation (MVP), Evaluate Gantt Post-MVP**
+- **Rationale**: 
+  1. Current custom timeline is sufficient for MVP
+  2. Gantt chart is larger bundle (~20-50KB)
+  3. Can add post-MVP if advanced features needed
+- **Recommendation**: Test custom timeline first, add Gantt if needed for dependencies/drag-to-resize
+
+---
+
+#### 13f. Tree View Library
+
+**Use Case**: Nested/hierarchical subtasks visualization
+
+**Option A: svelte-tree-viewer**
+- **Library**: `svelte-tree-viewer`
+- **Bundle Size**: Unknown (~5-10KB estimated)
+- **Svelte 5 Compatibility**: ✅ Likely compatible
+- **Features**:
+  - Tree/hierarchical view
+  - Expand/collapse nodes
+  - Drag-and-drop reordering
+- **Use Cases**:
+  - Nested subtasks (if hierarchical subtasks added)
+  - Task breakdown visualization
+  - Subtask organization view
+- **Current State**: Subtasks are flat (no nesting in spec)
+- **Maintenance**: ✅ Active
+- **Assessment**: **OPTIONAL POST-MVP** - Only if nested subtasks are added
+
+**Decision: Not Needed for MVP**
+- **Rationale**: 
+  1. Spec doesn't include nested subtasks
+  2. Current flat subtask list is sufficient
+  3. Can add if hierarchical subtasks become requirement
+
+---
+
+#### 13g. Sound Library
+
+**Use Case**: Notification sounds, interaction feedback, celebration sounds (ADHD-friendly)
+
+**Option A: svelte-sound**
+- **Library**: `svelte-sound` (from awesome-svelte: "Svelte Actions to play interaction sounds on target DOM events")
+- **Bundle Size**: Minimal (~1KB estimated)
+- **Svelte 5 Compatibility**: ✅ Compatible (Svelte actions)
+- **Features**:
+  - Play sounds on DOM events
+  - Simple API
+  - Works with Svelte actions
+- **Use Cases**:
+  - Task completion celebration sounds
+  - Notification sounds (optional)
+  - Interaction feedback (click sounds, drag sounds)
+  - ADHD-friendly dopamine hits
+- **Maintenance**: ✅ Active
+- **License**: MIT
+- **Assessment**: **RECOMMENDED (with accessibility considerations)**
+
+**Accessibility Requirements**:
+- Must be user-configurable (enable/disable in settings)
+- Respect browser audio preferences
+- Respect prefers-reduced-motion (if applicable)
+- Provide visual feedback alternatives
+
+**Decision: Use svelte-sound (Optional Feature)**
+- **Rationale**: 
+  1. Enhances ADHD-friendly features (celebration, feedback)
+  2. Minimal bundle size
+  3. Simple integration
+- **Implementation**: 
+  - Make sounds optional (settings toggle)
+  - Use subtle sounds for interactions
+  - Celebration sounds for task completion
+- **Bundle Impact**: +1KB
+
+---
+
+#### 13h. Portal/Teleport Library
+
+**Use Case**: Fix calendar positioning issues, modals, dropdowns, tooltips
+
+**Option A: svelte-teleport**
+- **Library**: `svelte-teleport`
+- **Bundle Size**: ~1KB
+- **Svelte 5 Compatibility**: ✅ Compatible
+- **Features**:
+  - Portal elements outside component tree
+  - Fixes z-index issues
+  - Better positioning control
+- **Use Cases**:
+  - Calendar positioning (if inside cards causes issues)
+  - Modal overlays
+  - Dropdown menus
+  - Tooltips/popovers
+- **Maintenance**: ✅ Active
+- **License**: MIT
+- **Assessment**: **RECOMMENDED** - Solves positioning issues, lightweight
+
+**Alternative: svelte-portal**
+- **Library**: `svelte-portal` (also in awesome-svelte)
+- **Bundle Size**: ~1KB
+- **Similar features**: Portal functionality
+- **Assessment**: Either works, svelte-teleport is newer
+
+**Decision: Use svelte-teleport**
+- **Rationale**: Lightweight, solves positioning issues, useful for modals/dropdowns
+- **Bundle Impact**: +1KB
+
+---
+
+### Summary of Library Recommendations
+
+| Category | Library | Priority | Bundle Size | Use Case |
+|----------|---------|----------|-------------|----------|
+| **Form Handling** | Superforms + Formsnap | **HIGH** | ~8-10KB | Task forms, custom field config |
+| **List Animations** | AutoAnimate | **HIGH** | ~1.5KB | Task list, subtask animations |
+| **Number Animations** | number-flow | **HIGH** | ~2-3KB | Counters, progress, streaks |
+| **Video Embeds** | embedz | **HIGH** | ~1-2KB | Tutorial links in tasks |
+| **Portal/Teleport** | svelte-teleport | **HIGH** | ~1KB | Positioning fixes, modals |
+| **Sound Effects** | svelte-sound | **MEDIUM** | ~1KB | Notification/interaction sounds |
+| **Drag-and-Drop** | Neodrag (current) or sveltednd | **HIGH** | ~4-5KB | Kanban board (test both) |
+| **Gantt Chart** | svar-widgets/gantt | **LOW** | ~20-50KB | Timeline enhancement (post-MVP) |
+| **Tree View** | svelte-tree-viewer | **LOW** | ~5-10KB | Nested subtasks (post-MVP) |
+
+### Updated Bundle Size Calculation
+
+**Current Dependencies**:
+- `@neodrag/svelte` (~4-5KB) or `sveltednd` (~3-5KB)
+- `@melloware/coloris` (~8KB)
+- `@tanstack/virtual-core` (~10KB)
+- `svelte-multiselect` (~3KB)
+
+**New Recommended Dependencies**:
+- `sveltekit-superforms` + `formsnap` (~8-10KB)
+- `@formkit/auto-animate` (~1.5KB)
+- `@number-flow/svelte` (~2-3KB)
+- `embedz` (~1-2KB)
+- `svelte-teleport` (~1KB)
+- `svelte-sound` (~1KB) - Optional
+
+**Total Bundle Impact**: ~25-26KB (current) + ~14-18KB (new) = **~39-44KB**
+
+**Assessment**: Still acceptable for feature richness. High-value libraries that significantly improve UX and reduce development time.
+
+### Final Recommendations
+
+**Must-Have (High Priority)**:
+1. ✅ **Superforms + Formsnap** - Form handling (constitution-aligned)
+2. ✅ **AutoAnimate** - List animations
+3. ✅ **number-flow** - Number animations
+4. ✅ **embedz** - Video embeds
+5. ✅ **svelte-teleport** - Portal/positioning
+6. ✅ **Neodrag or sveltednd** - Test both, choose better for kanban
+
+**Nice-to-Have (Medium Priority)**:
+7. ⚠️ **svelte-sound** - Sound effects (optional, user-configurable)
+
+**Post-MVP (Low Priority)**:
+8. 🔮 **svar-widgets/gantt** - If timeline needs advanced features
+9. 🔮 **svelte-tree-viewer** - If nested subtasks are added
+
+---
+
 ## Summary of Decisions
 
 | Research Area | Decision | Key Benefit |
 |---------------|----------|-------------|
-| 1. Drag-and-Drop | Native HTML5 DnD API | Zero dependencies, 0KB bundle |
+| 1. Drag-and-Drop | **Neodrag or sveltednd** (test both, see Section 13c) | Svelte-native, handles DOM updates, SSR-friendly, smaller bundle |
+| 1a. Color Picker | @melloware/coloris | Modern UI, accessibility, theme support |
 | 2. Virtual Scrolling | Tanstack Virtual | Best-in-class, framework-agnostic |
 | 3. Calendar View | Custom CSS Grid | Lightweight (5KB), full control |
 | 4. Timeline View | Custom CSS Grid | Simple, efficient, 3KB |
@@ -1760,15 +2806,67 @@ export async function loadSavedView(viewId: string) {
 | 8. File Storage | Existing Supabase + R2 | Reuse infrastructure, consistent |
 | 9. Realtime Notifications | Supabase Realtime + Polling | Instant delivery, graceful fallback |
 | 10. State Management | URL + LocalStorage + Stores | Shareable + persistent + reactive |
+| 11. Additional Libraries | Flowbite Svelte (existing), svelte-multiselect, Native APIs | Minimal bundle impact, maximize reuse |
+| 12. Form Builder Library | Not recommended (svelte-form-builder-community) | Field type gaps, license concerns, architecture mismatch |
+| 13. UX Enhancement Libraries | Superforms, AutoAnimate, number-flow, embedz, svelte-teleport, svelte-sound | Enhanced UX, form handling, animations, video embeds |
 
 **Total New Dependencies**:
+- `@neodrag/svelte` or `sveltednd` (~4-5KB) - **Replaces @shopify/draggable** (test both)
+- `@melloware/coloris` v0.25.0 (~8KB)
 - `@tanstack/virtual-core` (~10KB)
+- `svelte-multiselect` (~3KB) - For Crew Assignment multi-select fields
+- `sveltekit-superforms` + `formsnap` (~8-10KB) - Form handling and validation
+- `@formkit/auto-animate` (~1.5KB) - List animations
+- `@number-flow/svelte` (~2-3KB) - Number animations (counters, progress)
+- `embedz` (~1-2KB) - Video embeds in tasks
+- `svelte-teleport` (~1KB) - Portal/positioning fixes
+- `svelte-sound` (~1KB) - Sound effects (optional, user-configurable)
 - Resend API (server-side only, no client bundle impact)
-- Mobile-drag-drop polyfill (~3KB, optional)
 
-**Total Bundle Size Impact**: ~18KB (acceptable for feature richness)
+**Total Bundle Size Impact**: ~39-44KB (increased from ~25-26KB with high-value UX enhancements)
 
 **All Technical Unknowns Resolved**: ✅ Ready for Phase 1 (Data Model & Contracts)
+
+---
+
+### Final Library Selection Summary
+
+**Must-Have Libraries (High Priority - MVP)**:
+
+| Library | Purpose | Bundle | Decision Rationale |
+|---------|---------|--------|-------------------|
+| `@neodrag/svelte` or `sveltednd` | Drag-and-drop (kanban) | ~4-5KB | Test both, choose better for cross-container drag |
+| `sveltekit-superforms` + `formsnap` | Form handling/validation | ~8-10KB | Constitution-aligned, reduces boilerplate 70-80% |
+| `@formkit/auto-animate` | List animations | ~1.5KB | Zero-config, perfect for task/subtask lists |
+| `@number-flow/svelte` | Number animations | ~2-3KB | Counters, progress, streaks - smooth UX |
+| `embedz` | Video embeds | ~1-2KB | Tutorial links in tasks - lightweight |
+| `svelte-teleport` | Portal/positioning | ~1KB | Fixes calendar positioning, modals |
+| `@melloware/coloris` | Color picker | ~8KB | Already decided (Section 1a) |
+| `@tanstack/virtual-core` | Virtual scrolling | ~10KB | Already decided (Section 2) |
+| `svelte-multiselect` | Multi-select | ~3KB | Already decided (Section 11c) |
+
+**Optional Libraries (Medium Priority)**:
+
+| Library | Purpose | Bundle | Notes |
+|---------|---------|--------|-------|
+| `svelte-sound` | Sound effects | ~1KB | Optional, user-configurable, ADHD-friendly |
+
+**Post-MVP Libraries (Low Priority - Deferred)**:
+
+| Library | Purpose | Bundle | When to Consider |
+|---------|---------|--------|------------------|
+| `@svar-widgets/gantt` | Gantt charts | ~20-50KB | If timeline needs drag-to-resize, dependencies |
+| `svelte-tree-viewer` | Tree view | ~5-10KB | If nested subtasks are added |
+
+**Total MVP Bundle Impact**: ~39-44KB (includes all high-priority libraries)
+
+**Key Decisions**:
+- ✅ **Form handling**: Superforms (constitution-aligned, significant time savings)
+- ✅ **Animations**: AutoAnimate + number-flow (complementary, lightweight)
+- ✅ **Video embeds**: embedz (lightweight, solves real use case)
+- ✅ **Portal**: svelte-teleport (fixes positioning issues)
+- ⚠️ **Drag-and-drop**: Test Neodrag vs sveltednd (both viable, choose based on kanban testing)
+- ⚠️ **Sound**: Optional feature (user-configurable)
 
 ---
 

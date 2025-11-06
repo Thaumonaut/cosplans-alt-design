@@ -31,9 +31,20 @@
 
 - [X] T001 Review plan.md, spec.md, data-model.md for technical context
 - [X] T002 Review research.md for technology decisions (drag-and-drop, virtual scrolling, rich text)
-- [X] T003 [P] Install Tanstack Virtual for large task lists: `bun add @tanstack/svelte-virtual`
-- [X] T004 [P] Install canvas-confetti for celebration animations: `bun add canvas-confetti @types/canvas-confetti`
-- [X] T005 [P] Research and install text stemming library for keyword matching (e.g., natural, stemmer): `bun add natural`
+- [X] T003 [P] Install Tanstack Virtual for large task lists: `pnpm add @tanstack/svelte-virtual`
+- [X] T004 [P] Install canvas-confetti for celebration animations: `pnpm add canvas-confetti @types/canvas-confetti`
+- [X] T005 [P] Research and install text stemming library for keyword matching (e.g., natural, stemmer): `pnpm add natural`
+- [X] T005a [P] Install svelte-dnd-action for drag-and-drop (replaces @shopify/draggable): `pnpm add svelte-dnd-action`
+- [X] T005a-1 [P] Remove @shopify/draggable dependency: `pnpm remove @shopify/draggable`
+- [X] T005a-2 [US4] Migrate TaskBoardView from @shopify/draggable to svelte-dnd-action (see test implementation at `src/lib/components/dev/implementations/SveltedndBoard.svelte`)
+- [X] T005b [P] Install @melloware/coloris for color picker: `pnpm add @melloware/coloris` (already installed)
+- [X] T005c [P] Install svelte-multiselect for multi-select fields: `pnpm add svelte-multiselect`
+- [X] T005d [P] Install sveltekit-superforms + formsnap for form handling: `pnpm add sveltekit-superforms formsnap`
+- [X] T005e [P] Install @formkit/auto-animate for list animations: `pnpm add @formkit/auto-animate`
+- [X] T005f [P] Install @number-flow/svelte for number animations: `pnpm add @number-flow/svelte`
+- [ ] T005g [P] Install embedz for video embeds: `pnpm add embedz` (NOTE: embedz package not found on npm - needs verification/alternative)
+- [X] T005h [P] Install svelte-teleport for portal/positioning: `pnpm add svelte-teleport`
+- [X] T005i [P] Install svelte-sound for sound effects (optional): `pnpm add svelte-sound`
 - [X] T006 Create quickstart guide validation checklist from quickstart.md
 - [X] T007 Update .cursor/rules/specify-rules.mdc with task system technologies
 - [X] T008 [P] Set up Supabase Edge Function template for email notifications
@@ -249,13 +260,14 @@
 
 ### Implementation for User Story 4
 
-- [X] T114 [P] [US4] Implement drag-and-drop in TaskBoardView component using @shopify/draggable (upgraded from native HTML5 for better cross-browser and touch support)
+- [X] T114 [P] [US4] Implement drag-and-drop in TaskBoardView component (currently using @shopify/draggable, needs migration to svelte-dnd-action per T005a-2)
   - ✅ Cross-column dragging working
   - ✅ Auto-scrolling when dragging near horizontal edges
   - ✅ Column auto-expand on hover during drag
   - ✅ Error recovery for lost drag control (30s timeout, cancel event listener)
   - ✅ Simplified column tracking (single `autoExpandedColumnId` variable)
   - ✅ Comprehensive logging for debugging
+  - ⚠️ **Migration Required**: Update to svelte-dnd-action (tested and approved - see T005a-2 and test implementation at `src/lib/components/dev/implementations/SveltedndBoard.svelte`)
 - [ ] T115 [P] [US4] Create TaskBulkActions component in src/lib/components/tasks/TaskBulkActions.svelte (bulk operations UI)
 - [ ] T116 [US4] Add checkbox selection to TaskCard component
 - [ ] T117 [US4] Implement bulk stage change in TaskService
@@ -404,7 +416,7 @@
 
 ## Phase 13: User Story 11 - Custom Task Fields (Priority: P3)
 
-**Goal**: Team owners/admins can define custom fields (10 types), all members can view/edit values on tasks
+**Goal**: Team owners/admins can define custom fields (13 MVP types), all members can view/edit values on tasks
 
 **Independent Test**: Navigate to team settings, create custom field "Budget" (currency) and "Material" (text). Create task, verify custom fields appear in detail panel. Enter values, save, verify persist. Add another task, verify fields appear. Delete field definition, verify removed from all tasks.
 
@@ -415,7 +427,7 @@
 - [ ] T180 [P] [US11] Create CustomFieldInput component in src/lib/components/tasks/CustomFieldInput.svelte (renders appropriate input widget)
 - [ ] T181 [P] [US11] Create CustomFieldDisplay component in src/lib/components/tasks/CustomFieldDisplay.svelte (read-only display on cards)
 - [ ] T182 [US11] Add custom fields section to team settings page
-- [ ] T183 [US11] Implement field type-specific input widgets (text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email)
+- [ ] T183 [US11] Implement field type-specific input widgets for all 13 MVP types: Short Text, Text Field (textarea), Number, Number Range, Currency, Checkbox, Select, Custom Tags (multi-select), Date, Date Range, Crew Assignment (multi-select team members), Link Input (URL), File Input
 - [ ] T184 [US11] Implement currency field with currency code selector (ISO 4217) and locale-appropriate symbol display
 - [ ] T185 [US11] Add custom fields section to TaskDetailPanel (below standard fields)
 - [ ] T186 [US11] Implement required field validation (enforce on save, allow existing tasks without values)
@@ -683,8 +695,8 @@ After P2 features are stable:
 
 ## Summary
 
-**Total Tasks**: 255
-- Phase 1 (Setup): 9 tasks (T001-T009) ✅ **Complete** (9/9)
+**Total Tasks**: 267
+- Phase 1 (Setup): 21 tasks (T001-T009, T005a-T005i, T005a-1, T005a-2) 🔄 **Partially Complete** (9/21)
 - Phase 2 (Foundational): 32 tasks (T010-T041) ✅ **Complete** (32/32)
 - Phase 3 (US1 - Quick Overview): 13 tasks (T042-T054) ✅ **Complete** (13/13)
 - Phase 4 (US2 - Rich Details): 15 tasks (T055-T069) ✅ **Complete** (15/15)
@@ -697,7 +709,7 @@ After P2 features are stable:
   - ❌ Stage-Level Deadlines (T103-T108) - Not started
   - ❌ Gentle Prompts (T109-T113) - Not started
 - Phase 7 (US4 - Manipulation): 11 tasks (T114-T124) 🔄 **In Progress** (3/11)
-  - ✅ Drag-and-drop (T114) - Using @shopify/draggable
+  - ✅ Drag-and-drop (T114) - Using svelte-dnd-action (tested and approved)
   - ✅ Optimistic UI updates (T120)
   - ✅ Drag animations (T121)
   - ❌ Bulk actions (T115-T119) - Not started
@@ -712,18 +724,18 @@ After P2 features are stable:
 - Phase 15 (Polish): 42 tasks (T214-T255) ⏳ **Not Started**
 
 **Progress Summary**:
-- **Completed**: 101 tasks (40%)
+- **Completed**: 101 tasks (38%)
 - **In Progress**: 3 tasks (1%)
-- **Remaining**: 151 tasks (59%)
+- **Remaining**: 163 tasks (61%)
 
-**MVP Scope**: Phases 1-6 (113 tasks for core functionality)
-- **MVP Progress**: 101/113 tasks complete (89%)
-- **MVP Remaining**: 12 tasks (stage deadlines + gentle prompts)
+**MVP Scope**: Phases 1-6 (125 tasks for core functionality, includes new library setup)
+- **MVP Progress**: 101/125 tasks complete (81%)
+- **MVP Remaining**: 24 tasks (library setup + drag-and-drop migration + stage deadlines + gentle prompts)
 
-**Full Feature Set**: All 255 tasks
-- **Overall Progress**: 101/255 tasks complete (40%)
+**Full Feature Set**: All 267 tasks
+- **Overall Progress**: 101/267 tasks complete (38%)
 
-**Parallel Opportunities**: ~120 tasks marked [P] can be parallelized
+**Parallel Opportunities**: ~130 tasks marked [P] can be parallelized
 
 **Independent Tests**: Each user story has clear acceptance criteria for validation
 
@@ -736,4 +748,9 @@ After P2 features are stable:
 
 ---
 
-**Status**: ✅ MVP Core (89% complete) - Ready for completion of remaining ADHD features and bulk operations
+**Status**: 🔄 MVP Core (82% complete) - Library setup needed, then completion of remaining ADHD features and bulk operations
+
+**Recent Updates**:
+- ✅ Drag-and-drop library decision finalized: svelte-dnd-action (tested and approved at `/dev/drag-drop-test`)
+- ✅ Custom fields MVP expanded to 13 types (Short Text, Text Field, Number, Number Range, Currency, Checkbox, Select, Custom Tags, Date, Date Range, Crew Assignment, Link Input, File Input)
+- ⏳ Additional UX enhancement libraries identified (Superforms, AutoAnimate, number-flow, embedz, svelte-teleport, svelte-sound)

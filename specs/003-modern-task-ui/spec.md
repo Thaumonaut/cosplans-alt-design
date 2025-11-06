@@ -2,7 +2,8 @@
 
 **Feature Branch**: `003-modern-task-ui`  
 **Created**: 2025-11-03  
-**Status**: Draft  
+**Last Updated**: 2025-11-04  
+**Status**: Draft (Updated with library decisions and priority adjustments)  
 **Input**: User description: "I want to update the task list to look and feel more like a modern task list like what you would find in monday, asana, trello, or clickup. I want a complete UI redesign of the tasks system built from the ground up to be beautiful and functional that will integrate into all the relevant resources and projects and photoshoots and any other section of the application that should have tracking as well as a way for general tracking for tasks not related to any single project like shopping lists, team management, or other such tasks. I have included some images for reference. I want something that will look just as good and have as deep of functionality"
 
 **Constitution Alignment**: 
@@ -17,6 +18,10 @@
 ### Session 2025-11-03
 
 - Q: How should the system handle failed operations (network errors, permission issues, server problems)? → A: Show inline error messages with retry option, maintain UI state (user can manually revert if needed)
+- Q: Should we implement bulk actions in MVP? → A: **No, deferred post-MVP** - Opinionated workflow encourages users to move tasks individually through stages rather than batch-updating. This aligns with ADHD-friendly, linear task progression. Bulk actions may be reconsidered post-MVP with detailed design.
+- Q: What custom field types should be in MVP? → A: **MVP Core (P1)**: Text, Number, Currency, Select, Checkbox, Date. **Post-MVP**: Textarea, Multi-select, URL, Email. Custom fields are essential for flexibility across different user types (cosplayers, wig makers, prop creators). Note: Updated terminology from "Dropdown" to "Select" to match database schema.
+- Q: What drag-and-drop library should we use? → A: **@shopify/draggable** - Better cross-browser support, touch support, handle-based dragging to prevent click conflicts. Updated from original native HTML5 DnD decision.
+- Q: What color picker library should we use? → A: **@melloware/coloris** - Modern UI, accessibility features, theme support, small bundle (~8KB).
 - Q: When a user deletes a project with active tasks, what should happen to those tasks? → A: Orphan tasks: Convert project tasks to standalone tasks, remove project link
 - Q: Should the system send notifications for task events, and if so, which events? → A: Both in-app and email notifications for all task events (assignments, comments, status changes, @mentions)
 - Q: How do users watch/subscribe to tasks they're not assigned to? → A: No watching mechanism: Users only get notifications for tasks they're assigned to
@@ -32,7 +37,10 @@
 - Q: How should task completion streaks handle missed days? → A: Forgiving approach - streak "pauses" for 1 grace day (shows "🔥 5 day streak (paused)"), breaks after 2 consecutive days with no completed tasks
 - Q: What algorithm should power task breakdown pattern matching? → A: Keyword matching with stored successful patterns - detect keywords in task title, query task_breakdown_patterns table for matches, rank by success rate
 
-### Post-MVP Features (Noted for Future Specs)
+### Session 2025-11-04
+
+- Q: What custom field type naming should we standardize on (database uses 'select', spec uses 'dropdown')? → A: **Use 'select' everywhere** - Update spec and TypeScript to use 'select' terminology to match database. Keep 'date' in database constraint (available for MVP use).
+- Q: What custom field types should be in MVP? → A: **Expanded MVP list**: Short text, Text field (textarea), Number, Date, Date range (from-to), Number range (min-max), Currency, Checkbox, Select, File input, Custom tags (multi-select tags), Crew assignment (multi-select team members), Link input. All custom fields must support visibility control on cards/tables/list views.
 
 The following features were discussed and are valuable but deferred to post-MVP to maintain focused scope:
 
@@ -270,36 +278,116 @@ As a user planning complex cosplay projects, I need help breaking large overwhel
 
 ---
 
-### User Story 11 - Custom Task Fields (Priority: P3)
+### User Story 11 - Custom Task Fields (Priority: P1 - MVP Core)
 
-As a power user, I need to add custom fields to my task cards so I can track additional information specific to my workflow that wasn't anticipated by the default fields.
+As a cosplayer, wig maker, prop creator, or specialist, I need to add custom fields to my task cards so I can track additional information specific to my workflow that wasn't anticipated by the default fields (material usage, measurements, budget tracking, etc.).
 
-**Why this priority**: Different users have different tracking needs (budget, measurements, material specs, etc.). Custom fields provide flexibility without cluttering the default UI for everyone.
+**Why this priority**: Different users have fundamentally different tracking needs. A regular cosplayer might need basic fields, but a wig maker needs to track hair fiber types, lengths, and dye batches. A prop creator needs material specifications, tool requirements, and safety notes. Custom fields provide the flexibility needed to support diverse user types without cluttering the default UI for everyone.
 
-**Independent Test**: Navigate to team settings, create a custom field "Budget" (currency type) and "Material" (text type). Create a task, verify custom fields appear in task detail panel. Enter values, save, verify data persists. Add another task, verify custom field appears there too. Delete custom field definition, verify it's removed from all tasks.
+**MVP Scope**: Core custom field functionality that enables flexibility for different user types while maintaining simplicity.
 
-**Acceptance Scenarios**:
+**MVP Custom Field Types** (Phase 1 - Essential):
+
+1. **Short Text**: Single-line text input
+   - Use cases: Material names, tool names, supplier names, brand names
+   - Examples: "Worbla", "EVA Foam", "Smooth-On", "Wig Brand: Arda"
+
+2. **Text Field** (Textarea): Multi-line text input
+   - Use cases: Notes, descriptions, instructions, detailed specifications
+   - Examples: "Material Notes", "Construction Instructions", "Safety Warnings"
+
+3. **Number**: Numeric input with optional min/max
+   - Use cases: Measurements, quantities, counts, dimensions
+   - Examples: "Yardage: 3", "Hair Length: 12 inches", "Foam Thickness: 5mm"
+
+4. **Number Range**: Two numeric inputs (min and max)
+   - Use cases: Measurement ranges, quantity ranges, tolerance values
+   - Examples: "Length Range: 10-15 inches", "Quantity: 5-10 units", "Temperature: 350-400°F"
+
+5. **Currency**: Number with currency code (ISO 4217) selector
+   - Use cases: Material costs, budget tracking, expense tracking
+   - Examples: "Material Cost: $45.99", "Budget: €120.00"
+   - Display: Shows with locale-appropriate symbol (USD→$, EUR→€, GBP→£)
+
+6. **Checkbox**: Boolean yes/no
+   - Use cases: Flags, yes/no questions, completion indicators
+   - Examples: "Needs Safety Gear", "Requires Ventilation", "Has Pattern"
+
+7. **Select**: Single-select from predefined options
+   - Use cases: Material types, difficulty levels, status categories
+   - Examples: "Hair Type: [Synthetic, Human, Heat-Resistant]", "Difficulty: [Beginner, Intermediate, Advanced]"
+
+8. **Custom Tags**: Multi-select tags (team-defined tag options)
+   - Use cases: Flexible categorization, multiple attributes, workflow tags
+   - Examples: "Material Tags: [Foam, Fabric, Metal]", "Skill Tags: [Sewing, Painting, Welding]"
+   - Note: Separate from TaskLabel feature; these are custom field-specific tags
+
+9. **Date**: Date picker (single date)
+   - Use cases: Order dates, delivery dates, deadline tracking, milestone dates
+   - Examples: "Order Date", "Delivery Expected", "Pattern Deadline"
+   - Note: Separate from task due_date field; allows tracking additional dates per task
+
+10. **Date Range**: Two date inputs (start date and end date)
+    - Use cases: Event periods, rental periods, production windows
+    - Examples: "Convention Dates: Nov 15-17", "Photoshoot Window: Dec 1-5"
+
+11. **Crew Assignment**: Multi-select team members
+    - Use cases: Assigning multiple people to specialized roles, crew coordination
+    - Examples: "Photographers: [Alice, Bob]", "Makeup Artists: [Carol]", "Models: [Dave, Eve]"
+    - Note: Different from single task assignee; allows tracking multiple people per custom field
+
+12. **Link Input**: URL input with validation
+    - Use cases: Reference links, supplier links, tutorial links, product pages
+    - Examples: "Tutorial Link", "Supplier Website", "Reference Image"
+
+13. **File Input**: File upload (stored as custom field value)
+    - Use cases: Pattern files, reference documents, specifications, receipts
+    - Examples: "Pattern File", "Reference PDF", "Material Spec Sheet"
+    - Note: Stored separately from task attachments; allows field-specific file tracking
+    - Storage: Uses same Supabase Storage + R2 pattern as task attachments
+
+**Visibility Control**:
+- All custom fields MUST support visibility configuration: show on cards, show in table columns, show in list view, or hidden from all views
+- Team admins can configure per-field visibility settings
+- Custom fields visible on cards/tables/lists display with appropriate formatting (currency symbols, date formats, tag badges, file icons)
+
+**Post-MVP Custom Field Types** (Phase 2 - Advanced):
+- **Email**: Email input with validation (deferred - can use text field for MVP)
+
+**Independent Test**: Navigate to team settings, create custom fields: "Material Cost" (currency type), "Hair Fiber Type" (select type), "Photoshoot Dates" (date-range type), "Crew Members" (crew-assignment type). Create a task, verify all custom fields appear in task detail panel. Enter values, save, verify data persists. Configure visibility: set "Material Cost" to show on cards, "Crew Members" to show in table view. Verify visibility settings work correctly. Delete a custom field definition, verify it's removed from all tasks.
+
+**MVP Acceptance Scenarios**:
 
 1. **Given** I am a team owner/admin, **When** I navigate to team settings → Custom Fields, **Then** I see a list of existing custom fields and an "Add Custom Field" button
-2. **Given** I click "Add Custom Field", **When** I specify field name "Budget", type "Currency", and save, **Then** the custom field appears in task detail panels for all tasks in this team
-3. **Given** I have custom fields defined, **When** I open any task detail panel, **Then** I see a "Custom Fields" section showing all team custom fields with appropriate input widgets
-4. **Given** I am editing a task with custom fields, **When** I enter a value in a custom text field and save, **Then** the value persists and displays on task reopening
-5. **Given** I have a custom dropdown field "Status Type" with options ["In Review", "Blocked", "Waiting"], **When** I select "Blocked" for a task, **Then** the selection saves and displays correctly
-6. **Given** I have custom fields with values on multiple tasks, **When** I delete a custom field definition, **Then** the field and all its values are removed from all tasks (with confirmation warning)
-7. **Given** I have custom fields defined, **When** I view task cards in list/board view, **Then** I can optionally show selected custom fields as additional metadata on the card
-8. **Given** I am filtering tasks, **When** I open the filter panel, **Then** I can filter by custom field values (e.g., Budget > $100, Material = "Vinyl")
+2. **Given** I click "Add Custom Field", **When** I specify field name "Material Cost", type "Currency", default currency "USD", and save, **Then** the custom field appears in task detail panels for all tasks in this team
+3. **Given** I create a select field "Hair Type" with options ["Synthetic", "Human", "Heat-Resistant"], **When** I save the field, **Then** it appears in all task detail panels with a select dropdown
+4. **Given** I have custom fields defined, **When** I open any task detail panel, **Then** I see a "Custom Fields" section showing all team custom fields with appropriate input widgets
+5. **Given** I am editing a task with custom fields, **When** I enter a value in a custom text field "Material" and save, **Then** the value persists and displays on task reopening
+6. **Given** I have a custom currency field "Budget", **When** I enter "$50.00" and select currency "USD", **Then** the value saves and displays as "$50.00" with USD symbol
+7. **Given** I have custom fields with values on multiple tasks, **When** I delete a custom field definition, **Then** the system shows a confirmation warning and removes the field and all its values from all tasks
+8. **Given** I have custom fields defined, **When** I view task cards in list/board view, **Then** I can optionally show selected custom fields as additional metadata on the card (MVP: show 1-2 most important fields)
+9. **Given** I am filtering tasks, **When** I open the filter panel, **Then** I can filter by custom field values (e.g., Budget > $100, Material contains "Worbla", Order Date before 2025-12-01)
+10. **Given** I have a select field with existing task values, **When** I remove an option from the select, **Then** existing tasks with that value are preserved with a warning badge indicating the option was removed
 
-**Custom Field Types Supported**:
-- **Text**: Single-line text input
-- **Textarea**: Multi-line text input
-- **Number**: Numeric input with optional min/max
-- **Currency**: Number with currency code (ISO 4217) selector; displays with appropriate symbol based on selected currency (e.g., USD→$, EUR→€, GBP→£)
-- **Dropdown**: Single-select from predefined options
-- **Multi-select**: Multiple selections from predefined options
-- **Checkbox**: Boolean yes/no
-- **Date**: Date picker
-- **URL**: Link input with validation
-- **Email**: Email input with validation
+**MVP Custom Field Features**:
+- ✅ Create/edit/delete custom field definitions (team owners/admins only)
+- ✅ All team members can view and edit custom field values on tasks
+- ✅ Maximum 20 custom fields per team (prevents UI clutter)
+- ✅ Required field validation (enforce on save, not on existing tasks)
+- ✅ Default values for new tasks
+- ✅ Display custom fields in task detail panel
+- ✅ Optional display on task cards (1-2 most important fields)
+- ✅ Basic filtering by custom field values
+- ✅ Field ordering/reordering (control display order)
+
+**Post-MVP Custom Field Features**:
+- ❌ Export/import custom field definitions between teams
+- ❌ Custom field templates/presets
+- ❌ Advanced filtering (complex queries, multiple conditions)
+- ❌ Custom field validation rules (regex, custom validators)
+- ❌ Custom field calculations/formulas
+- ❌ Custom field history tracking in activity log
+- ❌ Custom field search indexing
 
 ---
 
@@ -353,6 +441,8 @@ As a power user, I need to add custom fields to my task cards so I can track add
 
 - **FR-006**: List view MUST show task cards with visible properties: title, status badge, priority indicator, assignee avatar, due date, project tag, and completion progress
 - **FR-007**: Board view MUST organize tasks into vertical columns representing stages, with column headers showing stage name and task count
+- **FR-007a**: Board view MUST support horizontal column collapse/expand with task and subtask counts displayed when collapsed
+- **FR-007b**: Task stages MUST support custom colors per stage for visual organization and differentiation
 - **FR-008**: Task cards MUST display subtask completion as a progress bar (e.g., "3/5 complete" with 60% filled bar)
 - **FR-009**: System MUST use color coding for priority levels: High (red/orange), Medium (blue), Low (gray)
 - **FR-010**: System MUST display assignee avatars as circular profile images or initials on colored backgrounds
@@ -374,11 +464,14 @@ As a power user, I need to add custom fields to my task cards so I can track add
 
 **Drag-and-Drop Interactions**
 
-- **FR-023**: Board view MUST support dragging task cards between stage columns to update task stage
-- **FR-024**: System MUST provide visual feedback during drag operations (card follows cursor, target column highlights)
+- **FR-023**: Board view MUST support dragging task cards between stage columns to update task stage using @shopify/draggable library
+- **FR-023a**: Drag operations MUST use drag handles (`.task-drag-handle`) to prevent click conflicts with interactive elements (date pickers, dropdowns)
+- **FR-024**: System MUST provide visual feedback during drag operations (ghost card follows cursor, target column highlights, auto-scroll at edges)
 - **FR-025**: Dropping a task on a new column MUST immediately update the task's stage with optimistic UI update
-- **FR-026**: Timeline view MUST allow dragging task bars horizontally to adjust due dates
-- **FR-027**: System MUST support drag-to-reorder tasks within a single column or list to adjust custom sort order
+- **FR-025a**: System MUST auto-expand collapsed columns when dragging tasks over them during drag operations
+- **FR-025b**: System MUST handle lost drag control with error recovery mechanism (timeout detection, restore to original position)
+- **FR-026**: Timeline view MUST allow dragging task bars horizontally to adjust due dates (deferred post-MVP)
+- **FR-027**: System MUST support drag-to-reorder tasks within a single column or list to adjust custom sort order (deferred post-MVP)
 
 **Filtering and Search**
 
@@ -401,13 +494,15 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-041**: Group sections MUST be collapsible/expandable to manage visual complexity
 - **FR-042**: System MUST preserve grouping preference per view mode (List grouping separate from Board grouping)
 
-**Bulk Operations**
+**Bulk Operations** (Post-MVP - Deferred)
 
-- **FR-043**: List view MUST support multi-select via checkboxes on task cards
-- **FR-044**: System MUST provide bulk actions menu when tasks are selected: Change Stage, Set Priority, Assign To, Add Tags, Delete
-- **FR-045**: Bulk actions MUST update all selected tasks simultaneously with single confirmation
-- **FR-046**: System MUST show progress indicator for bulk operations affecting 10+ tasks
-- **FR-047**: Users MUST be able to select all tasks matching current filters with "Select All" option
+- **FR-043**: ~~List view MUST support multi-select via checkboxes on task cards~~ **DEFERRED**: Opinionated workflow - users must move tasks individually through stages
+- **FR-044**: ~~System MUST provide bulk actions menu when tasks are selected~~ **DEFERRED**: Opinionated workflow - encourages proper task progression
+- **FR-045**: ~~Bulk actions MUST update all selected tasks simultaneously~~ **DEFERRED**: To be designed in detail post-MVP if needed
+- **FR-046**: ~~System MUST show progress indicator for bulk operations~~ **DEFERRED**
+- **FR-047**: ~~Users MUST be able to select all tasks matching current filters~~ **DEFERRED**
+
+**Note**: Bulk operations are intentionally deferred from MVP to maintain an opinionated workflow that encourages users to properly move tasks through stages rather than batch-updating them. This aligns with the app's focus on ADHD-friendly, linear task progression. Bulk operations may be reconsidered post-MVP with detailed design to ensure they fit the app's vision.
 
 **Contextual Task Views**
 
@@ -500,8 +595,8 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-107**: System MUST provide a "What should I do now?" button that suggests 1-3 tasks based on priority algorithm
 - **FR-108**: Task suggestion algorithm MUST consider: due dates (urgent first), task priority, project priority, estimated effort (if set), and dependencies
 - **FR-109**: Suggested tasks MUST display with reasoning (e.g., "Due tomorrow", "High priority", "Blocks 3 other tasks")
-- **FR-110**: System MUST provide a Focus Mode that displays only the current task in a distraction-free full-screen layout
-- **FR-111**: Focus Mode MUST hide navigation, sidebar, and all other tasks, showing only task title, description, subtasks, and "Mark Complete" button
+- **FR-110**: ~~System MUST provide a Focus Mode that displays only the current task in a distraction-free full-screen layout~~ **DEFERRED POST-MVP**: Component created but disabled - needs redesign to align with app vision
+- **FR-111**: ~~Focus Mode MUST hide navigation, sidebar, and all other tasks~~ **DEFERRED POST-MVP**
 - **FR-112**: Completing a task MUST trigger a celebration animation (confetti via lightweight library like canvas-confetti, or checkmark swoosh via CSS) with encouraging message
 - **FR-112a**: Users MUST be able to disable celebration animations in settings for reduced motion preference (respects prefers-reduced-motion CSS media query)
 - **FR-112b**: When animations are disabled, celebration MUST still show encouraging message without motion effects
@@ -519,8 +614,8 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-121**: System MUST provide gentle prompt when user opens app if no tasks completed today, suggesting an easy task to build momentum (client-side check)
 - **FR-121a**: System MUST send email reminder if user has no activity (no tasks completed, no app opens) for 3-7 days, encouraging return with motivational message (server-side cron job)
 - **FR-122**: All progress indicators, streaks, and celebrations MUST use positive, encouraging language (never punishing or guilt-inducing)
-- **FR-123**: Focus Mode MUST be accessible via keyboard shortcut (e.g., 'F' key) for quick activation
-- **FR-124**: Users MUST be able to exit Focus Mode easily (ESC key or visible "Exit Focus" button)
+- **FR-123**: ~~Focus Mode MUST be accessible via keyboard shortcut (e.g., 'F' key) for quick activation~~ **DEFERRED POST-MVP**
+- **FR-124**: ~~Users MUST be able to exit Focus Mode easily (ESC key or visible "Exit Focus" button)~~ **DEFERRED POST-MVP**
 
 **Task Breakdown Assistance**
 
@@ -542,25 +637,36 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-133a**: Patterns with <20% acceptance rate after 10+ offers MUST be marked as "low quality" and deprioritized in ranking
 - **FR-134**: Breakdown suggestions MUST include logical workflow order (e.g., Research before Construction)
 
-**Custom Task Fields**
+**Custom Task Fields** (MVP Core - Priority: P1)
 
+**MVP Custom Field Types** (Phase 1):
+- **FR-137-MVP**: System MUST support MVP custom field types: **short-text, text-field (textarea), number, number-range, currency, checkbox, select, custom-tags (multi-select), date, date-range, crew-assignment (multi-select team members), link-input, file-input**
+- **FR-137-POST**: Post-MVP custom field types: email (deferred - can use text field for MVP)
+
+**Custom Field Management**:
 - **FR-135**: Team owners and admins MUST be able to define custom fields for their team in team settings
 - **FR-136**: All team members MUST be able to view and edit custom field values on tasks they have permission to edit, regardless of who created the field definition
-- **FR-137**: System MUST support custom field types: text, textarea, number, currency, dropdown, multi-select, checkbox, date, URL, email
 - **FR-138**: Currency fields MUST store both numeric value and currency code (ISO 4217) separately and display with locale-appropriate symbol (e.g., "$100.00" for USD, "€100.00" for EUR)
-- **FR-139**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., dropdown choices)
+- **FR-139**: Custom field definitions MUST include: field name, field type, required flag, default value (optional), and field-specific options (e.g., select choices, currency code)
 - **FR-140**: Required custom fields MUST be enforced only on task creation and when editing/saving existing tasks; existing tasks without required field values are allowed to remain unchanged
 - **FR-141**: Custom fields MUST appear in task detail panel in a dedicated "Custom Fields" section below standard fields
-- **FR-142**: System MUST render appropriate input widget for each custom field type (text input, dropdown, date picker, etc.)
+- **FR-142**: System MUST render appropriate input widget for each custom field type (text input for Short Text, textarea for Text Field, number input for Number, number range inputs for Number Range, currency input with selector for Currency, checkbox for Checkbox, select dropdown for Select, multi-select tag picker for Custom Tags, date picker for Date, date range pickers for Date Range, multi-select team member picker for Crew Assignment, URL input with validation for Link Input, file upload for File Input)
 - **FR-143**: Custom field values MUST be saved automatically when task detail panel is updated
-- **FR-144**: Users MUST be able to configure which custom fields appear on task cards in list/board view in team settings
-- **FR-145**: Task filters MUST support filtering by custom field values (text contains, number comparison, dropdown selection, etc.)
+- **FR-144-MVP**: Users MUST be able to configure which custom fields appear on task cards in list/board/table views (MVP: show 1-2 most important fields, full configuration post-MVP)
+- **FR-144a**: Custom field visibility control MUST allow team admins to set per-field visibility: show on cards, show in table columns, show in list view, or hidden from all views
+- **FR-144b**: When custom fields are visible on cards/tables/lists, they MUST display with appropriate formatting (currency symbols, date formats, tag badges, file icons)
+- **FR-145-MVP**: Task filters MUST support basic filtering by custom field values (text contains, number comparison, number range overlap, select selection, custom tag match, date comparison, date range overlap, crew assignment match, link presence, file presence) - advanced filtering deferred post-MVP
 - **FR-146**: Custom fields MUST be team-scoped (each team has its own custom field definitions)
 - **FR-147**: Maximum 20 custom fields per team MUST be enforced to prevent UI clutter and performance degradation
 - **FR-148**: Deleting a custom field definition MUST show confirmation warning and CASCADE delete all task values for that field
 - **FR-149**: Custom field definitions MUST be orderable/reorderable by team admins to control display order
-- **FR-150**: Dropdown/multi-select custom fields MUST support adding/editing/deleting options from team settings
-- **FR-151**: Changing dropdown options MUST preserve existing task values even if option is removed (show with warning badge)
+- **FR-150-MVP**: Select custom fields MUST support adding/editing/deleting options from team settings
+- **FR-150a**: Custom Tags fields MUST support adding/editing/deleting tag options from team settings (team-scoped tag library)
+- **FR-150b**: Crew Assignment fields MUST automatically populate with current team members (updates when team membership changes)
+- **FR-151**: Changing select or custom tag options MUST preserve existing task values even if option is removed (show with warning badge)
+- **FR-151a**: When team members are removed from team, Crew Assignment field values MUST show "Former Member" badge or remove from selection
+
+**Post-MVP Custom Field Features** (Deferred):
 - **FR-152**: Task templates MUST support saving and applying custom field values
 - **FR-153**: Custom field values MUST be included in task search when searching by "all fields"
 - **FR-154**: Custom field history changes MUST appear in task activity log
@@ -569,6 +675,10 @@ As a power user, I need to add custom fields to my task cards so I can track add
 - **FR-157**: When importing custom field definitions, system MUST detect name conflicts and prompt user to rename, skip, or merge
 - **FR-158**: Task exports (CSV, JSON) MUST include custom field values with field names as column headers
 - **FR-159**: Task imports MUST support mapping imported custom field data to existing field definitions in the destination team
+- **FR-160**: Email custom field type (deferred post-MVP - can use text field for MVP)
+- **FR-165**: Advanced filtering with complex queries (deferred post-MVP)
+- **FR-166**: Custom field validation rules (regex, custom validators) (deferred post-MVP)
+- **FR-167**: Custom field calculations/formulas (deferred post-MVP)
 
 ### Key Entities *(existing entities, enhanced UI only)*
 
@@ -623,15 +733,27 @@ As a power user, I need to add custom fields to my task cards so I can track add
   - Business rules: Team-scoped, patterns improve with usage (increment usageCount), top 10 patterns per type; rule-based matching uses keywords + stored patterns
 
 - **CustomFieldDefinition** (new related entity): Custom field definitions for teams
-  - Properties: id, teamId, fieldName, fieldType (text, textarea, number, currency, dropdown, multi-select, checkbox, date, url, email), required (boolean), defaultValue (nullable), options (JSON array for dropdown/multi-select; for currency type stores default currency code), displayOrder, showOnCard (boolean), createdAt, updatedAt
-  - Used for: Defining team-specific custom fields, configuring field behavior, controlling display
-  - Business rules: Max 20 per team, unique field names per team, cascade delete field values on definition delete; currency fields must specify default currency code in options
+  - Properties: id, teamId, fieldName, fieldType (short-text, text-field, number, number-range, currency, checkbox, select, custom-tags, date, date-range, crew-assignment, link-input, file-input), required (boolean), defaultValue (nullable), options (JSON array for select/custom-tags; for currency type stores default currency code; for custom-tags stores team tag library), displayOrder, showOnCard (boolean), showInTable (boolean), showInList (boolean), createdAt, updatedAt
+  - Used for: Defining team-specific custom fields, configuring field behavior, controlling display visibility
+  - Business rules: Max 20 per team, unique field names per team, cascade delete field values on definition delete; currency fields must specify default currency code in options; custom-tags fields maintain team-scoped tag library; crew-assignment fields auto-populate from team members
   - Permissions: Only team owners and admins can create/edit/delete field definitions; all team members can view definitions and edit field values on tasks
 
 - **TaskCustomFieldValue** (new related entity): Custom field values for individual tasks
   - Properties: id, taskId, fieldDefinitionId, value (TEXT), createdAt, updatedAt
   - Used for: Storing custom field data per task, querying/filtering by custom values
-  - Business rules: All values stored as TEXT with type-specific formatting (JSON array string for multi-select, ISO 8601 date string for dates, numeric string for numbers, JSON object for currency with structure {"amount": "100.00", "currency": "USD"}); application layer handles parsing and validation; null allowed for non-required fields
+  - Business rules: All values stored as TEXT with type-specific formatting:
+    - Short-text/text-field: plain text
+    - Number: numeric string
+    - Number-range: JSON object {"min": "10", "max": "20"}
+    - Currency: JSON object {"amount": "100.00", "currency": "USD"}
+    - Select: single option value string
+    - Custom-tags: JSON array ["tag1", "tag2"]
+    - Date: ISO 8601 date string
+    - Date-range: JSON object {"start": "2025-11-01", "end": "2025-11-05"}
+    - Crew-assignment: JSON array of user IDs ["uuid1", "uuid2"]
+    - Link-input: URL string
+    - File-input: storage URL string (references Supabase Storage)
+    - Application layer handles parsing and validation; null allowed for non-required fields
 
 ## Success Criteria *(mandatory)*
 
