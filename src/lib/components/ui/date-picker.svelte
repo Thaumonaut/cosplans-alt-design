@@ -166,23 +166,34 @@
   :global(.datepicker-dropdown),
   :global([data-datepicker-calendar]),
   :global(.datepicker-calendar),
-  :global(.datepicker-wrapper .datepicker-dropdown) {
+  :global(.datepicker-wrapper .datepicker-dropdown),
+  :global(.datepicker-picker),
+  :global(.datepicker-view),
+  :global(div[class*="datepicker"]) {
     background-color: var(--theme-card-bg, rgba(255, 255, 255, 0.9)) !important;
     border-color: var(--theme-border, rgba(120, 113, 108, 0.2)) !important;
     color: var(--theme-foreground, #1c1917) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   }
   
   /* Calendar header (month/year navigation) */
   :global(.datepicker-header),
   :global(.datepicker-header button),
   :global([data-datepicker-header]),
-  :global([data-datepicker-header] button) {
+  :global([data-datepicker-header] button),
+  :global(.datepicker-controls),
+  :global(.datepicker-controls button),
+  :global(.datepicker-view button),
+  :global(button.datepicker-button) {
     color: var(--theme-foreground, #1c1917) !important;
     background-color: transparent !important;
   }
   
   :global(.datepicker-header button:hover),
-  :global([data-datepicker-header] button:hover) {
+  :global([data-datepicker-header] button:hover),
+  :global(.datepicker-controls button:hover),
+  :global(.datepicker-view button:hover),
+  :global(button.datepicker-button:hover) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-foreground, #1c1917) !important;
   }
@@ -190,14 +201,18 @@
   /* Calendar day buttons - default state */
   :global(.datepicker-day),
   :global([data-datepicker-day]),
-  :global(button[data-datepicker-day]) {
+  :global(button[data-datepicker-day]),
+  :global(.datepicker-cell),
+  :global(.datepicker-cell button) {
     color: var(--theme-foreground, #1c1917) !important;
     background-color: transparent !important;
   }
   
   :global(.datepicker-day:hover),
   :global([data-datepicker-day]:hover),
-  :global(button[data-datepicker-day]:hover) {
+  :global(button[data-datepicker-day]:hover),
+  :global(.datepicker-cell:hover),
+  :global(.datepicker-cell button:hover) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-foreground, #1c1917) !important;
   }
@@ -229,15 +244,35 @@
   :global(.datepicker-prev),
   :global(.datepicker-next),
   :global([data-datepicker-prev]),
-  :global([data-datepicker-next]) {
+  :global([data-datepicker-next]),
+  :global(button[aria-label*="Previous"]),
+  :global(button[aria-label*="Next"]) {
     color: var(--theme-foreground, #1c1917) !important;
   }
   
   :global(.datepicker-prev:hover),
   :global(.datepicker-next:hover),
   :global([data-datepicker-prev]:hover),
-  :global([data-datepicker-next]:hover) {
+  :global([data-datepicker-next]:hover),
+  :global(button[aria-label*="Previous"]:hover),
+  :global(button[aria-label*="Next"]:hover) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-primary, #8b5cf6) !important;
+  }
+  
+  /* Month/year selector text */
+  :global(.datepicker-title),
+  :global(.datepicker-title button),
+  :global(button[data-datepicker-title]),
+  :global(.view-switch) {
+    color: var(--theme-foreground, #1c1917) !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Grid layout for days */
+  :global(.datepicker-grid),
+  :global(.datepicker-days),
+  :global(.days) {
+    background-color: transparent !important;
   }
 </style>
