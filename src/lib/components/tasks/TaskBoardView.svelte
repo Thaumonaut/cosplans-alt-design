@@ -6,7 +6,8 @@
 	 * Supports drag-and-drop between columns.
 	 */
 import { createEventDispatcher } from 'svelte';
-import { dndzone } from 'svelte-dnd-action';
+import { tick } from 'svelte';
+import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action';
 import TaskCard from './TaskCard.svelte';
 
 	interface Task {
@@ -97,8 +98,9 @@ const LOG_PREFIX = '[TaskBoardView]';
 	let collapsedColumns = $state(new Set<string>()); // Track which columns are collapsed
 	let autoExpandedColumnId: string | null = $state(null); // Track single auto-expanded column during drag
 	let draggedSourceStage: string | null = $state(null);
-let lastHoveredStageId: string | null = null;
-let currentDragItemId: string | null = $state(null);
+	let lastHoveredStageId: string | null = null;
+	let currentDragItemId: string | null = $state(null);
+	let finalizedZones = $state(new Set<string>()); // Track which zones have finalized
 
 	// Create reactive arrays for each stage's tasks
 	let stageTasks: Record<string, Task[]> = $state(
@@ -108,6 +110,20 @@ let currentDragItemId: string | null = $state(null);
 		}, {} as Record<string, Task[]>)
 	);
 
+	function shallowEqualTask(a: Task, b: Task) {
+		if (a === b) return true;
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		if (keysA.length !== keysB.length) return false;
+		for (const key of keysA) {
+			const typedKey = key as keyof Task;
+			if (a[typedKey] !== b[typedKey]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// Update stage tasks when tasks prop changes
 	// Skip update during drag to prevent interference with drag preview
 	$effect(() => {
@@ -115,11 +131,55 @@ let currentDragItemId: string | null = $state(null);
 		if (isDragging) {
 			return;
 		}
-		
-		stageTasks = stages.reduce((acc, stage) => {
+
+		// Build next snapshot from the incoming tasks prop
+		const nextStageTasks = stages.reduce((acc, stage) => {
 			acc[stage.id] = tasks.filter((task) => task.status_id === stage.id);
 			return acc;
 		}, {} as Record<string, Task[]>);
+
+		let mergedStageTasks: Record<string, Task[]> = { ...stageTasks };
+		let shouldUpdate = false;
+
+		for (const stage of stages) {
+			const stageId = stage.id;
+			const currentItems = stageTasks[stageId] || [];
+			const nextItems = nextStageTasks[stageId] || [];
+
+			const currentIds = new Set(currentItems.map((task) => task.id));
+			const nextIds = new Set(nextItems.map((task) => task.id));
+
+			const idsChanged =
+				currentIds.size !== nextIds.size ||
+				[...currentIds].some((id) => !nextIds.has(id)) ||
+				[...nextIds].some((id) => !currentIds.has(id));
+
+			if (idsChanged) {
+				// Items were added/removed/moved between stages – accept incoming order
+				mergedStageTasks[stageId] = nextItems;
+				shouldUpdate = true;
+			} else {
+				// Same set of items – preserve current order but update task data
+				const nextItemMap = new Map(nextItems.map((task) => [task.id, task]));
+				let dataMutated = false;
+				for (let i = 0; i < currentItems.length; i += 1) {
+					const currentTask = currentItems[i];
+					const nextTask = nextItemMap.get(currentTask.id);
+					if (nextTask && !shallowEqualTask(currentTask, nextTask)) {
+						Object.assign(currentTask, nextTask);
+						dataMutated = true;
+					}
+				}
+				if (dataMutated) {
+					mergedStageTasks = { ...mergedStageTasks, [stageId]: [...currentItems] };
+					shouldUpdate = true;
+				}
+			}
+		}
+
+		if (shouldUpdate) {
+			stageTasks = mergedStageTasks;
+		}
 	});
 
 	// Auto-scroll when dragging near horizontal edges
@@ -201,49 +261,125 @@ let currentDragItemId: string | null = $state(null);
 	function handleConsider(e: CustomEvent, stageId: string) {
 		const { items, info } = e.detail;
 		
-	// CRITICAL: Always update items - this includes the insertion placeholder when dragging
-	// The library manages the items array and includes placeholders during drag
-	stageTasks = { ...stageTasks, [stageId]: items };
+		// CRITICAL: Always update items - this includes the insertion placeholder when dragging
+		// The library manages the items array and includes placeholders during drag
+		// Per svelte-dnd-action docs: each zone should independently update its items array
+		stageTasks = { ...stageTasks, [stageId]: items };
 
-	if (!info) {
-		return;
-	}
+		if (!info) {
+			return;
+		}
 
-	const { trigger, id } = info;
-	currentDragItemId = id ?? currentDragItemId;
+		const { trigger, id } = info;
+		currentDragItemId = id ?? currentDragItemId;
 
-	if (!isDragging && trigger === 'dragStarted') {
-		isDragging = true;
-		draggedSourceStage = stageId;
-	}
+		if (!isDragging && trigger === 'dragStarted') {
+			isDragging = true;
+			draggedSourceStage = stageId;
+			finalizedZones = new Set(); // Reset finalized zones tracking
+			document.addEventListener('mousemove', handleDragMove, { passive: true });
+			document.addEventListener('touchmove', handleDragMove, { passive: true });
+		}
 
-	if (isDragging && trigger === 'draggedEntered' && collapsedColumns.has(stageId)) {
-		autoExpandedColumnId = stageId;
-	}
-	}
-
-	function handleFinalize(e: CustomEvent, stageId: string) {
-	const { items, info } = e.detail;
-	// Directly update the array - svelte-dnd-action expects mutable updates
-	stageTasks = { ...stageTasks, [stageId]: items };
-
-	if (info) {
-		const activeIndex = info.activeIndex;
-		if (activeIndex !== undefined && activeIndex !== null) {
-			const draggedItem = items[activeIndex];
-			if (draggedItem) {
-				dispatch('statusChange', { id: draggedItem.id, status_id: stageId });
-			}
+		if (isDragging && trigger === 'draggedEntered' && collapsedColumns.has(stageId)) {
+			autoExpandedColumnId = stageId;
 		}
 	}
 
-	isDragging = false;
-	autoExpandedColumnId = null;
-	draggedSourceStage = null;
-	currentDragItemId = null;
-	lastHoveredStageId = null;
-	document.removeEventListener('mousemove', handleDragMove);
-	document.removeEventListener('touchmove', handleDragMove);
+	function handleFinalize(e: CustomEvent, stageId: string) {
+		const { items, info } = e.detail;
+		
+		// CRITICAL: Per svelte-dnd-action docs, each zone should independently update its items array
+		// The library handles cross-zone moves automatically - when an item is moved between zones,
+		// BOTH zones get finalize calls: source zone gets items without the moved item,
+		// target zone gets items with the moved item added
+		stageTasks = { ...stageTasks, [stageId]: items };
+		
+		// Track that this zone has finalized (create new Set for reactivity)
+		finalizedZones = new Set([...finalizedZones, stageId]);
+
+		// Dispatch status change event for parent to update backend
+		// Only dispatch if this is the target zone (where the item was dropped)
+		// Check if item was moved between columns by comparing draggedSourceStage
+		if (info && draggedSourceStage && draggedSourceStage !== stageId) {
+			const dragInfo = {
+				id: info.id,
+				activeIndex: info.activeIndex,
+				dragged: (info as any)?.dragged,
+				draggedContext: (info as any)?.draggedContext
+			};
+			const draggedItemId =
+				dragInfo.id ??
+				(dragInfo.dragged as any)?.id ??
+				(dragInfo.draggedContext as any)?.id ??
+				currentDragItemId ??
+				(dragInfo.activeIndex !== undefined && dragInfo.activeIndex !== null
+					? items[dragInfo.activeIndex]?.id
+					: null);
+			const draggedItem = draggedItemId
+				? items.find((task) => task.id === draggedItemId)
+				: undefined;
+			if (!draggedItem && dragInfo.activeIndex !== undefined && dragInfo.activeIndex !== null) {
+				// Fallback: use the item at the reported index if available
+				const fallbackItem = items[dragInfo.activeIndex];
+				if (fallbackItem) {
+					console.warn(`${LOG_PREFIX} Using fallback activeIndex to identify dragged item`, {
+						from: draggedSourceStage,
+						to: stageId,
+						dragInfo,
+						fallbackId: fallbackItem.id
+					});
+					currentDragItemId = fallbackItem.id;
+					dispatch('statusChange', { id: fallbackItem.id, status_id: stageId });
+				}
+			} else if (draggedItem) {
+				currentDragItemId = draggedItem.id;
+				console.debug(`${LOG_PREFIX} Cross-column move detected`, {
+					from: draggedSourceStage,
+					to: stageId,
+					taskId: draggedItem.id,
+					taskTitle: draggedItem.title,
+					dragInfo
+				});
+				dispatch('statusChange', { id: draggedItem.id, status_id: stageId });
+			} else {
+				console.warn(`${LOG_PREFIX} Unable to resolve dragged item during cross-column finalize`, {
+					from: draggedSourceStage,
+					to: stageId,
+					dragInfo,
+					items: items.map((task) => task.id)
+				});
+			}
+		}
+
+		// Clean up drag state AFTER both zones have finalized (for cross-column moves)
+		// or immediately (for same-column moves)
+		const isCrossColumnMove = info && draggedSourceStage && draggedSourceStage !== stageId;
+		const bothZonesFinalized = isCrossColumnMove && 
+			finalizedZones.has(draggedSourceStage) && 
+			finalizedZones.has(stageId);
+		
+		if (bothZonesFinalized || !isCrossColumnMove) {
+			// Both zones have finalized OR it's not a cross-column move - clean up
+			// Use tick() to wait for parent's synchronous optimistic update to complete
+			// This ensures the $effect doesn't overwrite our stageTasks updates
+			if (isCrossColumnMove) {
+				tick().then(() => {
+					isDragging = false;
+				});
+			} else {
+				isDragging = false;
+			}
+			
+			// Clean up drag state
+			autoExpandedColumnId = null;
+			draggedSourceStage = null;
+			currentDragItemId = null;
+			lastHoveredStageId = null;
+			finalizedZones = new Set();
+			document.removeEventListener('mousemove', handleDragMove);
+			document.removeEventListener('touchmove', handleDragMove);
+		}
 	}
 </script>
 
@@ -427,8 +563,19 @@ let currentDragItemId: string | null = $state(null);
 					<!-- Empty column when dragging - completely empty, container collapsed to zero height -->
 					<!-- This ensures ghost appears at the top of the column container -->
 				{:else}
-					{#each tasksForStage as task (task.id)}
-						<div class="task-card-wrapper" data-task-id={task.id}>
+					<!-- 
+						Custom shadow element support:
+						- SHADOW_ITEM_MARKER_PROPERTY_NAME identifies placeholder items added during drag
+						- Include it in the key to ensure proper reactivity (per svelte-dnd-action docs)
+						- data-is-dnd-shadow-item-hint helps prevent unnecessary work in nested zones
+						- shadow-placeholder class provides custom styling that ensures visibility
+					-->
+					{#each tasksForStage as task (`${task.id}${task[SHADOW_ITEM_MARKER_PROPERTY_NAME] ? "_" + task[SHADOW_ITEM_MARKER_PROPERTY_NAME] : ""}`)}
+						<div 
+							class="task-card-wrapper {task[SHADOW_ITEM_MARKER_PROPERTY_NAME] ? 'shadow-placeholder' : ''}" 
+							data-task-id={task.id}
+							data-is-dnd-shadow-item-hint={task[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+						>
 						<TaskCard
 							{...task}
 							{statusOptions}
@@ -496,6 +643,35 @@ let currentDragItemId: string | null = $state(null);
 		transition: none !important;
 		animation: none !important;
 		opacity: 0.5 !important;
+		visibility: visible !important;
+		display: block !important;
+		pointer-events: none !important;
+	}
+
+	/* Custom shadow placeholder styling - ensures it never disappears */
+	.shadow-placeholder,
+	.shadow-placeholder * {
+		opacity: 0.6 !important;
+		visibility: visible !important;
+		display: block !important;
+		pointer-events: none !important;
+		transition: none !important;
+		animation: none !important;
+		/* Add visual distinction for the placeholder */
+		border: 2px dashed var(--theme-primary, #8b5cf6) !important;
+		background-color: var(--theme-section-bg, rgba(255, 255, 255, 0.9)) !important;
+		position: relative !important;
+	}
+
+	/* Ensure shadow placeholder has proper height */
+	.shadow-placeholder .task-card {
+		min-height: 200px !important;
+		opacity: 0.6 !important;
+	}
+
+	/* Additional styling for shadow items identified by data attribute */
+	:global([data-is-dnd-shadow-item-hint]) {
+		opacity: 0.6 !important;
 		visibility: visible !important;
 		display: block !important;
 		pointer-events: none !important;
