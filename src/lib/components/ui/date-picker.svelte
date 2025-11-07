@@ -181,7 +181,7 @@
         disabled && 'opacity-50 cursor-not-allowed hover:no-underline'
       )}
       classes={{
-        polite: 'text-[var(--theme-primary)] bg-[var(--theme-card-bg)]',
+        polite: 'text-[var(--theme-primary)] bg-[var(--theme-background)] hover:bg-[var(--theme-hover)] hover:text-[var(--theme-background)]',
         columnHeader: 'text-[var(--theme-secondary)]',
         input: 'text-[var(--theme-text-muted)]',
         monthButton: 'text-[var(--theme-primary)] font-semibold bg-[var(--theme-card-bg)] hover:bg-[var(--theme-hover)]',
@@ -196,34 +196,14 @@
 </div>
 
 <style>
-  /* Flowbite Datepicker calendar dropdown - render outside card boundaries */
-  /* Use !important to override any parent styles */
-  :global(#datepicker-dropdown),
-  :global([id="datepicker-dropdown"]),
-  :global(.datepicker-dropdown),
-  :global([data-datepicker-calendar]),
-  :global(.datepicker-calendar),
-  :global([class*="datepicker"]) {
+  /* Flowbite Datepicker calendar dropdown - ONLY target the actual calendar popup */
+  /* Be very specific to avoid affecting document flow */
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day])) {
     z-index: 99999 !important;
     position: fixed !important;
     pointer-events: auto !important;
-    transform: translateZ(0) !important; /* Force GPU acceleration and new stacking context */
     margin: 0 !important;
-  }
-  
-  /* CRITICAL: Prevent calendar from affecting document flow */
-  :global(div[style*="position: fixed"]:has(table)) {
-    position: fixed !important;
-    z-index: 99999 !important;
-    margin: 0 !important;
-    isolation: isolate !important; /* Create new stacking context */
-  }
-  
-  /* Ensure parent containers don't clip or shift */
-  :global(.task-card),
-  :global(.task-card *),
-  :global([class*="overflow"]:has(#datepicker-dropdown)) {
-    overflow: visible !important;
+    /* Don't use transform as it can cause layout shifts */
   }
   
   /* Hide the date picker calendar icon button */
@@ -243,7 +223,7 @@
   
   /* ============================================
      CALENDAR DROPDOWN - MAIN CONTAINER
-     Target ALL possible Flowbite datepicker containers
+     Only target the actual calendar popup (fixed position div with table and datepicker buttons)
      ============================================ */
   :global(.datepicker-dropdown),
   :global([data-datepicker-calendar]),
@@ -262,37 +242,19 @@
     border-radius: 0.5rem !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
     color: var(--theme-foreground, #1c1917) !important;
-  }
-  
-  /* Target any white background divs that are likely the calendar */
-  :global(div[style*="background"][style*="white"]:has(table)),
-  :global(div[style*="background-color: white"]:has(button)),
-  :global(div[style*="background-color: rgb(255"]:has(table)),
-  :global(div[style*="background-color: rgb(255, 255, 255)"]),
-  :global(div[style*="background-color:#ffffff"]),
-  :global(div[style*="background-color: #ffffff"]) {
-    background-color: var(--theme-card-bg, var(--theme-section-bg, rgba(255, 255, 255, 0.9))) !important;
-    color: var(--theme-foreground, #1c1917) !important;
-  }
-  
-  /* NUCLEAR OPTION: Target ANY fixed position div with a table inside it */
-  :global(div[style*="position: fixed"]:has(table)) {
-    background-color: var(--theme-card-bg, var(--theme-section-bg, rgba(255, 255, 255, 0.9))) !important;
-    border: 1px solid var(--theme-border, rgba(120, 113, 108, 0.2)) !important;
-    border-radius: 0.5rem !important;
-    color: var(--theme-foreground, #1c1917) !important;
+    position: fixed !important;
   }
   
   /* Force all text in fixed calendar to use theme colors */
-  :global(div[style*="position: fixed"]:has(table) *),
-  :global(div[style*="position: fixed"]:has(table) span),
-  :global(div[style*="position: fixed"]:has(table) button:not([style*="background"][style*="blue"])) {
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) *),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) span),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:not([style*="background"][style*="blue"])) {
     color: var(--theme-foreground, #1c1917) !important;
   }
   
   /* Force all table elements to use theme */
-  :global(div[style*="position: fixed"]:has(table) table),
-  :global(div[style*="position: fixed"]:has(table) table *) {
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) table),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) table *) {
     background-color: transparent !important;
     color: var(--theme-foreground, #1c1917) !important;
   }
@@ -309,8 +271,8 @@
   :global(div:has(table[class*="datepicker"]) > div:first-child),
   :global(div:has(button[data-datepicker-day]) > div:first-child),
   :global(div:has(table) > div:first-child > *),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child *) {
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child *) {
     color: var(--theme-foreground, #1c1917) !important;
     background-color: transparent !important;
   }
@@ -326,7 +288,7 @@
   :global([data-datepicker-next]),
   :global(div:has(table[class*="datepicker"]) button:not([data-datepicker-day]):not([data-datepicker-month])),
   :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month])),
-  :global(div[style*="position: fixed"]:has(table) button:not([data-datepicker-day]):not([data-datepicker-month])) {
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month])) {
     color: var(--theme-primary, #8b5cf6) !important;
     background-color: var(--theme-card-bg, #fafaf9) !important;
     border: none !important;
@@ -354,10 +316,10 @@
   :global(div[class*="datepicker"][class*="header"] span),
   :global(div:has(table[class*="datepicker"]) > div:first-child span),
   :global(div:has(button[data-datepicker-day]) > div:first-child span),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child span),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child > span),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child > button + span),
-  :global(div[style*="position: fixed"]:has(table) > div:first-child > span + button) {
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child span),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > span),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > button + span),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > span + button) {
     color: var(--theme-primary, #8b5cf6) !important;
     font-weight: 600 !important;
   }
@@ -373,7 +335,7 @@
   :global(th[class*="weekday"]),
   :global(div:has(table[class*="datepicker"]) th),
   :global(div:has(button[data-datepicker-day]) th),
-  :global(div[style*="position: fixed"]:has(table) th),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) th),
   :global(table[class*="datepicker"] th),
   :global(table th:has(button)),
   :global(table:has(button[data-datepicker-day]) th) {
@@ -394,7 +356,7 @@
   :global(td[class*="datepicker"] button),
   :global(div:has(table[class*="datepicker"]) button),
   :global(div:has(button[data-datepicker-day]) button[data-datepicker-day]),
-  :global(div[style*="position: fixed"]:has(table) button),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button),
   :global(table[class*="datepicker"] button),
   :global(table:has(button[data-datepicker-day]) button),
   :global(table button:not([disabled])) {
@@ -408,7 +370,7 @@
   :global(button[data-datepicker-day]:hover:not([aria-selected="true"])),
   :global(button[class*="datepicker"][class*="day"]:hover:not([aria-selected="true"])),
   :global(div:has(table[class*="datepicker"]) button:hover:not([aria-selected="true"])),
-  :global(div[style*="position: fixed"]:has(table) button:hover:not([aria-selected="true"])),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:hover:not([aria-selected="true"])),
   :global(table button:not([disabled]):hover:not([aria-selected="true"])) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-foreground, #1c1917) !important;
@@ -455,8 +417,8 @@
   :global(button[style*="background"][style*="blue"]),
   :global(button[style*="background-color: rgb(59, 130, 246)"]),
   :global(button[style*="background-color: rgb(37, 99, 235)"]),
-  :global(div[style*="position: fixed"]:has(table) button[style*="background"][style*="blue"]),
-  :global(div[style*="position: fixed"]:has(table) button[style*="background-color: rgb(59"]),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button[style*="background"][style*="blue"]),
+  :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button[style*="background-color: rgb(59"]),
   :global(table button[style*="background"][style*="blue"]),
   :global(button[data-datepicker-day][aria-selected="true"]),
   :global(button[data-datepicker-day].selected) {
