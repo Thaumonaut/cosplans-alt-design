@@ -79,5 +79,5 @@
     "vite": "^7.1.7",
     "vite-bundle-analyzer": "^1.2.3",
     "vitest": "^4.0.3"
-  },
+  }
 }
