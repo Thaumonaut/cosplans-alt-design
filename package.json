@@ -33,6 +33,7 @@
     "@melloware/coloris": "^0.25.0",
     "@neodrag/svelte": "^2.3.3",
     "@number-flow/svelte": "^0.3.9",
+    "@shopify/draggable": "^1.2.1",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
     "@tanstack/svelte-virtual": "^3.13.12",
