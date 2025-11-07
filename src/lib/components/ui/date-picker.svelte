@@ -86,70 +86,47 @@
     calendar.style.margin = '0'
     calendar.style.padding = '1rem'
     
-    // Apply theme background and border
-    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-card-bg') || 
-                    getComputedStyle(document.documentElement).getPropertyValue('--theme-section-bg') ||
+    // Apply theme background and border (classes prop handles most styling)
+    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-background')?.trim() || 
+                    getComputedStyle(document.documentElement).getPropertyValue('--theme-section-bg')?.trim() ||
                     'rgba(255, 255, 255, 0.9)'
-    const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-border') || 'rgba(120, 113, 108, 0.2)'
-    const fgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-foreground') || '#1c1917'
-    const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted') || '#78716c'
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-primary') || '#8b5cf6'
+    const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-border')?.trim() || 'rgba(120, 113, 108, 0.2)'
     
     calendar.style.backgroundColor = bgColor
-    calendar.style.color = fgColor
     calendar.style.border = `1px solid ${borderColor}`
     calendar.style.borderRadius = '0.5rem'
     
-    // Apply theme to weekday headers (th elements)
-    const weekdayHeaders = calendar.querySelectorAll('th')
-    weekdayHeaders.forEach((th) => {
-      (th as HTMLElement).style.color = mutedColor
-      (th as HTMLElement).style.fontWeight = '600'
-    })
-    
-    // Apply theme to ALL buttons in the calendar
-    const allButtons = calendar.querySelectorAll('button')
-    allButtons.forEach((btn) => {
-      const button = btn as HTMLElement
+    // Apply theme to selected dates - use inline styles to override Flowbite's defaults
+    const allDayButtons = calendar.querySelectorAll('button[data-datepicker-day]')
+    allDayButtons.forEach((btn) => {
+      const button = btn as HTMLButtonElement
       const bgColor = button.style.backgroundColor || ''
-      
-      // Check if this is a selected date (has blue background from Flowbite)
-      const isSelected = bgColor.includes('rgb(59') || 
+      const isSelected = button.getAttribute('aria-selected') === 'true' || 
+                        bgColor.includes('rgb(59') || 
                         bgColor.includes('rgb(37') ||
-                        button.getAttribute('aria-selected') === 'true'
+                        button.classList.contains('selected') ||
+                        button.classList.contains('active')
       
       if (isSelected) {
-        // Selected date - use primary color with white text
-        button.style.backgroundColor = primaryColor
-        button.style.color = 'white'
-        button.style.fontWeight = '600'
-        // Force all children to white
-        button.querySelectorAll('*').forEach(child => {
-          (child as HTMLElement).style.color = 'white'
-        })
-      } else if (!button.disabled) {
-        // Regular date button - use theme foreground color
-        button.style.color = fgColor
-        button.style.backgroundColor = 'transparent'
-        // Apply to children too
-        button.querySelectorAll('*').forEach(child => {
-          (child as HTMLElement).style.color = fgColor
+        // Force apply theme colors using inline styles (highest priority)
+        button.style.setProperty('background-color', 'var(--theme-primary, #8b5cf6)', 'important')
+        button.style.setProperty('color', 'white', 'important')
+        button.style.setProperty('font-weight', '600', 'important')
+        button.style.setProperty('border-radius', '0.375rem', 'important')
+        // Also ensure any child elements have white text
+        const children = button.querySelectorAll('*')
+        children.forEach((child) => {
+          if (child instanceof HTMLElement) {
+            child.style.setProperty('color', 'white', 'important')
+          }
         })
       } else {
-        // Disabled date (different month) - use muted color
-        button.style.color = mutedColor
-        button.style.opacity = '0.5'
+        // Clear any blue backgrounds from Flowbite's default styling
+        if (bgColor.includes('rgb(59') || bgColor.includes('rgb(37')) {
+          button.style.removeProperty('background-color')
+          button.style.removeProperty('color')
+        }
       }
-    })
-    
-    // Apply theme to all span elements (month/year text)
-    const allSpans = calendar.querySelectorAll('span')
-    allSpans.forEach((span) => {
-      const element = span as HTMLElement
-      // Skip if inside a button (already handled)
-      if (element.closest('button')) return
-      element.style.color = fgColor
-      element.style.fontWeight = '600'
     })
   }
 
@@ -164,7 +141,7 @@
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['style', 'class']
+        attributeFilter: ['style', 'class', 'aria-selected']
       })
 
       // Also check periodically in case observer misses it
@@ -191,6 +168,7 @@
       {disabled}
       {required}
       {id}
+      color="primary"
       inputClass={cn(
         'w-full min-w-[80px] text-sm',
         'rounded-md outline-none',
@@ -199,9 +177,17 @@
         'px-0 py-0 border-0 bg-transparent',
         'hover:underline cursor-pointer',
         'transition-all',
+        'text-[var(--theme-text-muted)]',
         disabled && 'opacity-50 cursor-not-allowed hover:no-underline'
       )}
-      style="color: var(--theme-foreground, #1c1917);"
+      classes={{
+        polite: 'text-[var(--theme-primary)] bg-[var(--theme-card-bg)]',
+        columnHeader: 'text-[var(--theme-secondary)]',
+        input: 'text-[var(--theme-text-muted)]',
+        monthButton: 'text-[var(--theme-primary)] font-semibold bg-[var(--theme-card-bg)] hover:bg-[var(--theme-hover)]',
+        dayButton: 'text-[var(--theme-text-muted)] hover:bg-[var(--theme-hover)] hover:text-[var(--theme-background)]'
+      }}
+      monthBtnSelected="bg-[var(--theme-primary)]"
     />
   </div>
   {#if name}
@@ -271,7 +257,7 @@
   :global(div[style*="z-index"]:has([class*="datepicker"])),
   :global(div:has(table[class*="datepicker"])),
   :global(div:has(button[data-datepicker-day])) {
-    background-color: var(--theme-card-bg, var(--theme-section-bg, rgba(255, 255, 255, 0.9))) !important;
+    background-color: var(--theme-background, var(--theme-section-bg, rgba(255, 255, 255, 0.9))) !important;
     border: 1px solid var(--theme-border, rgba(120, 113, 108, 0.2)) !important;
     border-radius: 0.5rem !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
@@ -329,32 +315,34 @@
     background-color: transparent !important;
   }
   
-  :global(.datepicker-header button),
-  :global([data-datepicker-header] button),
+  /* Navigation buttons (prev/next arrows) */
+  :global(.datepicker-header button:not([data-datepicker-month])),
+  :global([data-datepicker-header] button:not([data-datepicker-month])),
   :global(button[class*="datepicker"][class*="prev"]),
   :global(button[class*="datepicker"][class*="next"]),
   :global(.datepicker-prev),
   :global(.datepicker-next),
   :global([data-datepicker-prev]),
   :global([data-datepicker-next]),
-  :global(div:has(table[class*="datepicker"]) button),
-  :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day])),
-  :global(div[style*="position: fixed"]:has(table) button:not([data-datepicker-day])) {
-    color: var(--theme-foreground, #1c1917) !important;
-    background-color: transparent !important;
+  :global(div:has(table[class*="datepicker"]) button:not([data-datepicker-day]):not([data-datepicker-month])),
+  :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month])),
+  :global(div[style*="position: fixed"]:has(table) button:not([data-datepicker-day]):not([data-datepicker-month])) {
+    color: var(--theme-primary, #8b5cf6) !important;
+    background-color: var(--theme-card-bg, #fafaf9) !important;
     border: none !important;
+    border-radius: 0.375rem !important;
   }
   
-  :global(.datepicker-header button:hover),
-  :global([data-datepicker-header] button:hover),
+  :global(.datepicker-header button:not([data-datepicker-month]):hover),
+  :global([data-datepicker-header] button:not([data-datepicker-month]):hover),
   :global(button[class*="datepicker"][class*="prev"]:hover),
   :global(button[class*="datepicker"][class*="next"]:hover),
   :global(.datepicker-prev:hover),
   :global(.datepicker-next:hover),
   :global([data-datepicker-prev]:hover),
   :global([data-datepicker-next]:hover),
-  :global(div:has(table[class*="datepicker"]) button:hover),
-  :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):hover) {
+  :global(div:has(table[class*="datepicker"]) button:not([data-datepicker-day]):not([data-datepicker-month]):hover),
+  :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month]):hover) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-primary, #8b5cf6) !important;
     border-radius: 0.375rem !important;
@@ -370,7 +358,7 @@
   :global(div[style*="position: fixed"]:has(table) > div:first-child > span),
   :global(div[style*="position: fixed"]:has(table) > div:first-child > button + span),
   :global(div[style*="position: fixed"]:has(table) > div:first-child > span + button) {
-    color: var(--theme-foreground, #1c1917) !important;
+    color: var(--theme-primary, #8b5cf6) !important;
     font-weight: 600 !important;
   }
   
@@ -410,21 +398,39 @@
   :global(table[class*="datepicker"] button),
   :global(table:has(button[data-datepicker-day]) button),
   :global(table button:not([disabled])) {
-    color: var(--theme-foreground, #1c1917) !important;
+    color: var(--theme-text-muted, #78716c) !important;
     background-color: transparent !important;
     border: none !important;
   }
   
-  :global(.datepicker-day:hover),
-  :global([data-datepicker-day]:hover),
-  :global(button[data-datepicker-day]:hover),
-  :global(button[class*="datepicker"][class*="day"]:hover),
-  :global(div:has(table[class*="datepicker"]) button:hover),
-  :global(div[style*="position: fixed"]:has(table) button:hover),
-  :global(table button:not([disabled]):hover) {
+  :global(.datepicker-day:hover:not([aria-selected="true"])),
+  :global([data-datepicker-day]:hover:not([aria-selected="true"])),
+  :global(button[data-datepicker-day]:hover:not([aria-selected="true"])),
+  :global(button[class*="datepicker"][class*="day"]:hover:not([aria-selected="true"])),
+  :global(div:has(table[class*="datepicker"]) button:hover:not([aria-selected="true"])),
+  :global(div[style*="position: fixed"]:has(table) button:hover:not([aria-selected="true"])),
+  :global(table button:not([disabled]):hover:not([aria-selected="true"])) {
     background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
     color: var(--theme-foreground, #1c1917) !important;
     border-radius: 0.375rem !important;
+  }
+  
+  /* ============================================
+     OVERRIDE FLOWBITE COLOR PROP CLASSES
+     Override Tailwind color classes applied by the color prop
+     ============================================ */
+  :global(button[class*="bg-primary"]),
+  :global(button[class*="bg-primary-"]),
+  :global(button.bg-primary-500),
+  :global(button.bg-primary-600),
+  :global(button.bg-primary-700),
+  :global([data-datepicker-day][class*="bg-primary"]),
+  :global([data-datepicker-day][class*="bg-primary-"]),
+  :global([data-datepicker-day].bg-primary-500),
+  :global([data-datepicker-day].bg-primary-600),
+  :global([data-datepicker-day].bg-primary-700) {
+    background-color: var(--theme-primary, #8b5cf6) !important;
+    color: var(--theme-background) !important;
   }
   
   /* ============================================
@@ -451,11 +457,18 @@
   :global(button[style*="background-color: rgb(37, 99, 235)"]),
   :global(div[style*="position: fixed"]:has(table) button[style*="background"][style*="blue"]),
   :global(div[style*="position: fixed"]:has(table) button[style*="background-color: rgb(59"]),
-  :global(table button[style*="background"][style*="blue"]) {
+  :global(table button[style*="background"][style*="blue"]),
+  :global(button[data-datepicker-day][aria-selected="true"]),
+  :global(button[data-datepicker-day].selected) {
     background-color: var(--theme-primary, #8b5cf6) !important;
     color: white !important;
     font-weight: 600 !important;
     border-radius: 0.375rem !important;
+  }
+  
+  /* Selected date using Tailwind classes via Flowbite classes prop */
+  :global(button[data-datepicker-day][aria-selected="true"] *) {
+    color: white !important;
   }
   
   /* Selected date text/span inside button - force white text */
