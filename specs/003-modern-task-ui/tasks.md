@@ -265,10 +265,16 @@
 - [x] T129 [US4] Update task stage optimistically on drop, revert on error
 - [x] T130 [US4] Handle lost drag control with error recovery (timeout detection, restore position)
 - [x] T131 [US4] Auto-expand collapsed columns when dragging tasks over them
-- [ ] T132 [US4] Implement inline stage selector on status badge click in TaskCard
-- [ ] T133 [US4] Implement inline date picker on due date click in TaskCard (Note: DatePicker already exists, needs inline integration)
-- [ ] T134 [US4] Implement inline priority selector on priority indicator click in TaskCard (Note: PrioritySelector already exists, needs inline integration)
-- [ ] T135 [US4] Implement inline assignee selector on avatar click in TaskCard
+- [ ] T132 [US4] Create TaskBulkActions component in `src/lib/components/tasks/TaskBulkActions.svelte` (bulk stage, priority, assignee operations)
+- [ ] T133 [US4] Add checkbox selection UI to TaskCard (wire up existing selectable prop)
+- [ ] T134 [US4] Implement bulk stage change operation using bulkUpdate service
+- [ ] T135 [US4] Implement bulk priority change operation using bulkUpdate service
+- [ ] T136 [US4] Implement bulk assignee change operation using bulkUpdate service
+- [ ] T137 [US4] Wire up TaskBulkActions to TasksPage when tasks are selected
+- [ ] T138 [US4] Implement inline stage selector on status badge click in TaskCard
+- [ ] T139 [US4] Implement inline date picker on due date click in TaskCard (Note: DatePicker already exists, needs inline integration)
+- [ ] T140 [US4] Implement inline priority selector on priority indicator click in TaskCard (Note: PrioritySelector already exists, needs inline integration)
+- [ ] T141 [US4] Implement inline assignee selector on avatar click in TaskCard
 
 **Checkpoint**: At this point, User Stories 1-4, 9, 11 should all work independently - task manipulation is fluid and intuitive
 
@@ -282,14 +288,14 @@
 
 ### Implementation for User Story 5
 
-- [ ] T136 [US5] Update TaskCreateInput to allow null projectId (standalone tasks)
-- [ ] T137 [US5] Update TaskService.createTask to handle standalone tasks (require teamId if projectId null)
-- [ ] T138 [US5] Add "Standalone Tasks" filter option to TaskFilterPanel
-- [ ] T139 [US5] Add "Only Project Tasks" filter option to TaskFilterPanel
-- [ ] T140 [US5] Implement filter logic for standalone vs project tasks
-- [ ] T141 [US5] Add "Type" grouping option (Standalone vs Project) in grouping utilities
-- [ ] T142 [US5] Allow converting standalone task to project task by assigning project (update projectId)
-- [ ] T143 [US5] Ensure standalone tasks display correctly in all view modes
+- [ ] T142 [US5] Update TaskCreateInput to allow null projectId (standalone tasks)
+- [ ] T143 [US5] Update TaskService.createTask to handle standalone tasks (require teamId if projectId null)
+- [ ] T144 [US5] Add "Standalone Tasks" filter option to TaskFilterPanel
+- [ ] T145 [US5] Add "Only Project Tasks" filter option to TaskFilterPanel
+- [ ] T146 [US5] Implement filter logic for standalone vs project tasks
+- [ ] T147 [US5] Add "Type" grouping option (Standalone vs Project) in grouping utilities
+- [ ] T148 [US5] Allow converting standalone task to project task by assigning project (update projectId)
+- [ ] T149 [US5] Ensure standalone tasks display correctly in all view modes
 
 **Checkpoint**: At this point, User Stories 1-5, 9, 11 should all work independently - standalone tasks enable flexible tracking
 
@@ -303,19 +309,19 @@
 
 ### Implementation for User Story 6
 
-- [ ] T144 [US6] Expand TaskFilterPanel with all filter options (Stage, Priority, Assignee, Project, Date Range, Labels, Completion Status, Include Archived)
-- [ ] T145 [US6] Implement multi-filter AND logic in filter utilities
-- [ ] T146 [US6] Add grouping selector to TasksPage (Stage, Priority, Project, Assignee, Due Date)
-- [ ] T147 [US6] Implement grouping logic in `src/lib/utils/task-grouping.ts` for all grouping options
-- [ ] T148 [US6] Display grouped tasks in collapsible sections with group headers showing count
-- [ ] T149 [US6] Make group sections collapsible/expandable
-- [ ] T150 [US6] Implement saved views CRUD using SavedViewService
-- [ ] T151 [US6] Add "Save as View" button to TaskFilterPanel
-- [ ] T152 [US6] Add saved views dropdown to TasksPage
-- [ ] T153 [US6] Restore filters and grouping from saved view on selection
-- [ ] T154 [US6] Persist grouping preference per view mode in views store
-- [ ] T155 [US6] Implement "Include Archived" filter toggle (hide archived project tasks by default)
-- [ ] T156 [US6] Display "Archived Project" badge on tasks from archived projects when filter enabled
+- [ ] T150 [US6] Expand TaskFilterPanel with all filter options (Stage, Priority, Assignee, Project, Date Range, Labels, Completion Status, Include Archived)
+- [ ] T151 [US6] Implement multi-filter AND logic in filter utilities
+- [ ] T152 [US6] Add grouping selector to TasksPage (Stage, Priority, Project, Assignee, Due Date)
+- [ ] T153 [US6] Implement grouping logic in `src/lib/utils/task-grouping.ts` for all grouping options
+- [ ] T154 [US6] Display grouped tasks in collapsible sections with group headers showing count
+- [ ] T155 [US6] Make group sections collapsible/expandable
+- [ ] T156 [US6] Implement saved views CRUD using SavedViewService
+- [ ] T157 [US6] Add "Save as View" button to TaskFilterPanel
+- [ ] T158 [US6] Add saved views dropdown to TasksPage
+- [ ] T159 [US6] Restore filters and grouping from saved view on selection
+- [ ] T160 [US6] Persist grouping preference per view mode in views store
+- [ ] T161 [US6] Implement "Include Archived" filter toggle (hide archived project tasks by default)
+- [ ] T162 [US6] Display "Archived Project" badge on tasks from archived projects when filter enabled
 
 **Checkpoint**: At this point, User Stories 1-6, 9, 11 should all work independently - advanced filtering enables power user workflows
 
@@ -329,18 +335,18 @@
 
 ### Implementation for User Story 8
 
-- [ ] T157 [US8] Create label management UI in `src/lib/components/tasks/LabelManager.svelte` (list, create, edit, delete labels)
-- [ ] T158 [US8] Add "Manage Labels" button to TasksPage
-- [ ] T159 [US8] Implement label color picker using @melloware/coloris with preset colors
-- [ ] T160 [US8] Enforce maximum 50 labels per team
-- [ ] T161 [US8] Create label assignment UI in TaskDetailPanel (tag-style picker)
-- [ ] T162 [US8] Implement label assignment CRUD using LabelService
-- [ ] T163 [US8] Display labels as colored badges on TaskCard (up to 3 visible, "+N more" indicator)
-- [ ] T164 [US8] Add label filter option to TaskFilterPanel (multi-select with OR logic)
-- [ ] T165 [US8] Implement label filter logic (tasks matching ANY selected label)
-- [ ] T166 [US8] Include label filter state in saved views
-- [ ] T167 [US8] Show confirmation warning when deleting label (removes from all tasks)
-- [ ] T168 [US8] Implement label reordering in LabelManager
+- [ ] T163 [US8] Create label management UI in `src/lib/components/tasks/LabelManager.svelte` (list, create, edit, delete labels)
+- [ ] T164 [US8] Add "Manage Labels" button to TasksPage
+- [ ] T165 [US8] Implement label color picker using @melloware/coloris with preset colors
+- [ ] T166 [US8] Enforce maximum 50 labels per team
+- [ ] T167 [US8] Create label assignment UI in TaskDetailPanel (tag-style picker)
+- [ ] T168 [US8] Implement label assignment CRUD using LabelService
+- [ ] T169 [US8] Display labels as colored badges on TaskCard (up to 3 visible, "+N more" indicator)
+- [ ] T170 [US8] Add label filter option to TaskFilterPanel (multi-select with OR logic)
+- [ ] T171 [US8] Implement label filter logic (tasks matching ANY selected label)
+- [ ] T172 [US8] Include label filter state in saved views
+- [ ] T173 [US8] Show confirmation warning when deleting label (removes from all tasks)
+- [ ] T174 [US8] Implement label reordering in LabelManager
 
 **Checkpoint**: At this point, User Stories 1-6, 8, 9, 11 should all work independently - labels enable flexible organization
 
@@ -354,20 +360,20 @@
 
 ### Implementation for User Story 10
 
-- [ ] T169 [US10] Create task breakdown pattern matching algorithm in `src/lib/utils/task-breakdown.ts` (keyword detection, pattern matching)
-- [ ] T170 [US10] Implement keyword extraction and normalization (lowercase, stemming)
-- [ ] T171 [US10] Query task_breakdown_patterns table for fuzzy matches
-- [ ] T172 [US10] Rank patterns by success rate (times_accepted / times_offered)
-- [ ] T173 [US10] Create breakdown suggestion UI in TaskDetailPanel ("Suggest Subtasks" button)
-- [ ] T174 [US10] Display suggested subtasks with edit/delete/reorder capabilities
-- [ ] T175 [US10] Prompt for breakdown when creating task with no subtasks
-- [ ] T176 [US10] Show gentle prompt for tasks with no subtasks and due date >7 days away
-- [ ] T177 [US10] Offer "Use previous breakdown structure?" if similar task exists
-- [ ] T178 [US10] Match task titles to templates and offer template application
-- [ ] T179 [US10] Increment pattern usage counters when user accepts breakdown
-- [ ] T180 [US10] Track user-specific dismissals to avoid repeated unwanted prompts
-- [ ] T181 [US10] Create TaskBreakdownPatternService in `src/lib/api/services/taskBreakdownPatternService.ts` (CRUD for patterns)
-- [ ] T182 [US10] Mark low-quality patterns (<20% acceptance after 10+ offers) for deprioritization
+- [ ] T175 [US10] Create task breakdown pattern matching algorithm in `src/lib/utils/task-breakdown.ts` (keyword detection, pattern matching)
+- [ ] T176 [US10] Implement keyword extraction and normalization (lowercase, stemming)
+- [ ] T177 [US10] Query task_breakdown_patterns table for fuzzy matches
+- [ ] T178 [US10] Rank patterns by success rate (times_accepted / times_offered)
+- [ ] T179 [US10] Create breakdown suggestion UI in TaskDetailPanel ("Suggest Subtasks" button)
+- [ ] T180 [US10] Display suggested subtasks with edit/delete/reorder capabilities
+- [ ] T181 [US10] Prompt for breakdown when creating task with no subtasks
+- [ ] T182 [US10] Show gentle prompt for tasks with no subtasks and due date >7 days away
+- [ ] T183 [US10] Offer "Use previous breakdown structure?" if similar task exists
+- [ ] T184 [US10] Match task titles to templates and offer template application
+- [ ] T185 [US10] Increment pattern usage counters when user accepts breakdown
+- [ ] T186 [US10] Track user-specific dismissals to avoid repeated unwanted prompts
+- [ ] T187 [US10] Create TaskBreakdownPatternService in `src/lib/api/services/taskBreakdownPatternService.ts` (CRUD for patterns)
+- [ ] T188 [US10] Mark low-quality patterns (<20% acceptance after 10+ offers) for deprioritization
 
 **Checkpoint**: At this point, User Stories 1-6, 8-11 should all work independently - breakdown assistance helps users get started
 
@@ -381,17 +387,17 @@
 
 ### Implementation for User Story 7
 
-- [ ] T183 [US7] Create QuickCreateOverlay component in `src/lib/components/tasks/QuickCreateOverlay.svelte`
-- [ ] T184 [US7] Implement keyboard shortcut 'N' to open QuickCreateOverlay globally
-- [ ] T185 [US7] Create minimal quick-create form (title input, Enter to submit)
-- [ ] T186 [US7] Implement natural language parsing for project mentions, dates, priorities
-- [ ] T187 [US7] Auto-link task to mentioned project in quick create
-- [ ] T188 [US7] Create template selection UI in TaskDetailPanel ("Add from Template" button)
-- [ ] T189 [US7] Apply template to create task with predefined subtasks and properties
-- [ ] T190 [US7] Create "Save as Template" functionality in TaskDetailPanel
-- [ ] T191 [US7] Implement template CRUD using TemplateService
-- [ ] T192 [US7] Create "Duplicate Task" functionality in TaskDetailPanel (copy all properties except dates/completion)
-- [ ] T193 [US7] Suggest matching templates when creating new tasks based on title keywords
+- [ ] T189 [US7] Create QuickCreateOverlay component in `src/lib/components/tasks/QuickCreateOverlay.svelte`
+- [ ] T190 [US7] Implement keyboard shortcut 'N' to open QuickCreateOverlay globally
+- [ ] T191 [US7] Create minimal quick-create form (title input, Enter to submit)
+- [ ] T192 [US7] Implement natural language parsing for project mentions, dates, priorities
+- [ ] T193 [US7] Auto-link task to mentioned project in quick create
+- [ ] T194 [US7] Create template selection UI in TaskDetailPanel ("Add from Template" button)
+- [ ] T195 [US7] Apply template to create task with predefined subtasks and properties
+- [ ] T196 [US7] Create "Save as Template" functionality in TaskDetailPanel
+- [ ] T197 [US7] Implement template CRUD using TemplateService
+- [ ] T198 [US7] Create "Duplicate Task" functionality in TaskDetailPanel (copy all properties except dates/completion)
+- [ ] T199 [US7] Suggest matching templates when creating new tasks based on title keywords
 
 **Checkpoint**: At this point, all user stories should work independently - quick creation and templates reduce friction
 
@@ -401,27 +407,27 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T194 [P] Implement error handling and retry logic for all API operations
-- [ ] T195 [P] Add loading states and skeletons for all async operations
-- [ ] T196 [P] Implement optimistic UI updates with error recovery for all mutations
-- [ ] T197 [P] Add keyboard navigation support (arrow keys, Enter, Escape)
-- [ ] T198 [P] Implement responsive design for mobile devices (stacked layout, full-screen detail panel)
-- [ ] T199 [P] Add swipe gestures for mobile (swipe to mark complete, swipe to delete)
-- [ ] T200 [P] Implement accessibility features (ARIA labels, keyboard navigation, screen reader support)
-- [ ] T201 [P] Add performance optimizations (memoization, lazy loading, code splitting)
-- [ ] T202 [P] Implement notification center UI in app header (unread count badge, dropdown)
-- [ ] T203 [P] Create email notification templates for task events
-- [ ] T204 [P] Implement notification preferences in user settings
-- [ ] T205 [P] Add activity log generation from task changes (status, assignee, field updates)
-- [ ] T206 [P] Implement real-time updates using Supabase Realtime subscriptions
-- [ ] T207 [P] Add error boundaries and fallback UI for component errors
-- [ ] T208 [P] Implement URL state sync for filters and view mode (shareable links)
-- [ ] T209 [P] Add analytics tracking for task operations (optional, if analytics system exists)
-- [ ] T210 [P] Run quickstart.md validation checklist
-- [ ] T211 [P] Code cleanup and refactoring
-- [ ] T212 [P] Performance testing with 200+ tasks
-- [ ] T213 [P] Mobile testing on real devices
-- [ ] T214 [P] Accessibility audit and fixes
+- [ ] T200 [P] Implement error handling and retry logic for all API operations
+- [ ] T201 [P] Add loading states and skeletons for all async operations
+- [ ] T202 [P] Implement optimistic UI updates with error recovery for all mutations
+- [ ] T203 [P] Add keyboard navigation support (arrow keys, Enter, Escape)
+- [ ] T204 [P] Implement responsive design for mobile devices (stacked layout, full-screen detail panel)
+- [ ] T205 [P] Add swipe gestures for mobile (swipe to mark complete, swipe to delete)
+- [ ] T206 [P] Implement accessibility features (ARIA labels, keyboard navigation, screen reader support)
+- [ ] T207 [P] Add performance optimizations (memoization, lazy loading, code splitting)
+- [ ] T208 [P] Implement notification center UI in app header (unread count badge, dropdown)
+- [ ] T209 [P] Create email notification templates for task events
+- [ ] T210 [P] Implement notification preferences in user settings
+- [ ] T211 [P] Add activity log generation from task changes (status, assignee, field updates)
+- [ ] T212 [P] Implement real-time updates using Supabase Realtime subscriptions
+- [ ] T213 [P] Add error boundaries and fallback UI for component errors
+- [ ] T214 [P] Implement URL state sync for filters and view mode (shareable links)
+- [ ] T215 [P] Add analytics tracking for task operations (optional, if analytics system exists)
+- [ ] T216 [P] Run quickstart.md validation checklist
+- [ ] T217 [P] Code cleanup and refactoring
+- [ ] T218 [P] Performance testing with 200+ tasks
+- [ ] T219 [P] Mobile testing on real devices
+- [ ] T220 [P] Accessibility audit and fixes
 
 ---
 
@@ -543,7 +549,7 @@ With multiple developers:
 
 ## Summary
 
-**Total Tasks**: 214 tasks across 14 phases
+**Total Tasks**: 220 tasks across 14 phases
 
 **Task Count by Phase**:
 - Phase 1 (Setup): 11 tasks
