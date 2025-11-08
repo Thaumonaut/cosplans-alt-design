@@ -286,8 +286,6 @@
 	});
 
 	function handleValueChange(newValue: string) {
-		console.log('[VariableEditor] Value changed:', varName, '=', newValue);
-		
 		// Validate the new value before proceeding
 		if (newValue && (newValue.includes('NaN') || newValue.includes('undefined') || newValue.includes('null'))) {
 			console.warn(`[VariableEditor] Invalid value detected for ${varName}:`, newValue);

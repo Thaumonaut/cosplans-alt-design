@@ -5,7 +5,8 @@
 	import { page } from '$app/stores';
 	import { 
 		Palette, Save, RotateCcw, Eye, Code2, Check, ArrowLeft, Search, 
-		ChevronRight, ChevronDown, Plus, Trash2, Download, Upload, Copy
+		ChevronRight, ChevronDown, Plus, Trash2, Download, Upload, Copy,
+		Undo2, Redo2
 	} from 'lucide-svelte';
 	import { Button, Input, Label, Switch, Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui';
 	import VariableEditor from '$lib/components/theme-builder/VariableEditor.svelte';
@@ -34,6 +35,11 @@
 	
 	// Track changes with a version counter for reliable reactivity
 	let cssVarsVersion = $state(0);
+	
+	// Undo/Redo history
+	let history = $state<Array<Record<string, string>>>([]);
+	let historyIndex = $state(-1);
+	let isUndoRedoInProgress = $state(false); // Prevent adding to history during undo/redo
 	
 	// Derived value to track changes - forces reactivity
 	// Access all keys and values to ensure proper tracking
@@ -112,24 +118,71 @@
 		themeName = baseVariant.label;
 		themeDescription = baseVariant.description || '';
 		
-		console.log('[ThemeBuilder] Initialized theme:', {
-			themeName,
-			mode,
-			variableCount: Object.keys(cssVars).length,
-			allVariablesCount: allVariableNames.length,
-			groupsCount: VARIABLE_GROUPS.length,
-			firstGroup: VARIABLE_GROUPS[0]?.label,
-			firstGroupVars: VARIABLE_GROUPS[0]?.variables.length,
-			sampleVars: Object.keys(cssVars).slice(0, 10)
-		});
-		
 		applyPreview();
+		
+		// Initialize history with the initial state
+		initializeHistory();
 	}
+	
+	// Initialize history with current state
+	function initializeHistory() {
+		history = [{ ...cssVars }];
+		historyIndex = 0;
+		isUndoRedoInProgress = false;
+	}
+	
+	// Add current state to history
+	function addToHistory() {
+		if (isUndoRedoInProgress) return; // Don't add to history during undo/redo
+		
+		// Remove any history after current index (when undoing then making a new change)
+		if (historyIndex < history.length - 1) {
+			history = history.slice(0, historyIndex + 1);
+		}
+		
+		// Add current state to history (deep copy)
+		const snapshot = { ...cssVars };
+		history = [...history, snapshot];
+		historyIndex = history.length - 1;
+		
+		// Limit history size to 50 entries to prevent memory issues
+		if (history.length > 50) {
+			history = history.slice(-50);
+			historyIndex = history.length - 1;
+		}
+	}
+	
+	// Undo last change
+	function undo() {
+		if (historyIndex <= 0) return; // Can't undo if at the beginning
+		
+		isUndoRedoInProgress = true;
+		historyIndex--;
+		cssVars = { ...history[historyIndex] };
+		cssVarsVersion++;
+		isUndoRedoInProgress = false;
+	}
+	
+	// Redo last undone change
+	function redo() {
+		if (historyIndex >= history.length - 1) return; // Can't redo if at the end
+		
+		isUndoRedoInProgress = true;
+		historyIndex++;
+		cssVars = { ...history[historyIndex] };
+		cssVarsVersion++;
+		isUndoRedoInProgress = false;
+	}
+	
+	// Check if undo is available
+	const canUndo = $derived(historyIndex > 0);
+	
+	// Check if redo is available
+	const canRedo = $derived(historyIndex < history.length - 1);
 
 	// Apply preview theme temporarily - now reactive
 	function applyPreview() {
 		if (!browser || !showPreview) {
-			console.log('[ThemeBuilder] applyPreview skipped - browser:', browser, 'showPreview:', showPreview);
 			return;
 		}
 		const root = document.documentElement;
@@ -144,7 +197,6 @@
 				root.style.removeProperty(key);
 			}
 		});
-		console.log('[ThemeBuilder] Preview updated with', appliedCount, 'variables');
 		
 		// Verify a few key variables were actually set
 		const testVars = ['--theme-background', '--theme-card-bg', '--theme-section-bg'];
@@ -160,12 +212,14 @@
 	// Handle variable change - update reactive state immediately
 	function handleVariableChange(event: CustomEvent<{ varName: string; value: string }>) {
 		const { varName, value } = event.detail;
-		console.log('[ThemeBuilder] handleVariableChange called:', varName, '=', value);
+		
+		// Add to history before making the change
+		addToHistory();
+		
 		// Update the reactive state - create new object to trigger reactivity
 		cssVars = { ...cssVars, [varName]: value };
 		// Increment version AFTER updating cssVars to ensure effect sees the new value
 		cssVarsVersion++;
-		console.log('[ThemeBuilder] Updated cssVarsVersion to:', cssVarsVersion);
 	}
 
 	// Handle variations generated - update reactive state immediately
@@ -178,7 +232,6 @@
 		for (const [key, value] of Object.entries(variations)) {
 			// Skip if this variation has been manually overridden
 			if (brokenVariations.has(key)) {
-				console.log(`[ThemeBuilder] Skipping broken variation ${key} - manually overridden`);
 				continue;
 			}
 			
@@ -191,6 +244,9 @@
 		
 		// Only update if we have valid variations
 		if (Object.keys(validVariations).length > 0) {
+			// Add to history before making the change
+			addToHistory();
+			
 			// Update the reactive state - create new object to trigger reactivity
 			cssVars = { ...cssVars, ...validVariations };
 			cssVarsVersion++; // Increment version to trigger reactivity
@@ -202,7 +258,6 @@
 		const { varName } = event.detail;
 		brokenVariations.add(varName);
 		brokenVariations = new Set(brokenVariations); // Trigger reactivity
-		console.log(`[ThemeBuilder] Variation ${varName} marked as broken (manually overridden)`);
 	}
 	
 	// Handle variation relinked (restore auto-generation)
@@ -249,7 +304,6 @@
 			if (regenerated && !regenerated.includes('NaN')) {
 				cssVars = { ...cssVars, [varName]: regenerated };
 				cssVarsVersion++;
-				console.log(`[ThemeBuilder] Relinked ${varName} to ${baseVar}`);
 			}
 		} catch (error) {
 			console.error(`[ThemeBuilder] Failed to relink ${varName}:`, error);
@@ -424,9 +478,6 @@
 			return;
 		}
 		
-		const entries = Object.entries(vars);
-		console.log('[ThemeBuilder] Effect triggered, version:', version, 'vars count:', entries.length);
-		
 		// Use requestAnimationFrame to ensure DOM is ready
 		requestAnimationFrame(() => {
 			applyPreview();
@@ -453,8 +504,25 @@
 			initializeTheme(DEFAULT_THEME_ID);
 		}
 		
-		// Test that effect is working
-		console.log('[ThemeBuilder] onMount complete, cssVarsVersion:', cssVarsVersion, 'showPreview:', showPreview);
+		// Add keyboard shortcuts for undo/redo
+		function handleKeyDown(e: KeyboardEvent) {
+			// Ctrl+Z or Cmd+Z for undo
+			if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+				e.preventDefault();
+				if (canUndo) undo();
+			}
+			// Ctrl+Shift+Z or Ctrl+Y or Cmd+Shift+Z or Cmd+Y for redo
+			if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+				e.preventDefault();
+				if (canRedo) redo();
+			}
+		}
+		
+		window.addEventListener('keydown', handleKeyDown);
+		
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
 	});
 
 	onDestroy(() => {
@@ -502,6 +570,26 @@
 						</Button>
 						<input type="file" accept=".json" onchange={importTheme} class="hidden" />
 					</label>
+					<div class="flex items-center gap-2">
+						<Button 
+							variant="outline" 
+							size="sm" 
+							onclick={undo} 
+							disabled={!canUndo}
+							title="Undo (Ctrl+Z)"
+						>
+							<Undo2 class="size-4" />
+						</Button>
+						<Button 
+							variant="outline" 
+							size="sm" 
+							onclick={redo} 
+							disabled={!canRedo}
+							title="Redo (Ctrl+Shift+Z)"
+						>
+							<Redo2 class="size-4" />
+						</Button>
+					</div>
 					<Button size="sm" onclick={saveTheme} style="background-color: var(--theme-primary); color: var(--theme-card-bg);">
 						<Save class="size-4 mr-2" />
 						Save Theme
@@ -688,6 +776,26 @@
 						</Button>
 						<input type="file" accept=".json" onchange={importTheme} class="hidden" />
 					</label>
+					<div class="flex items-center gap-2">
+						<Button 
+							variant="outline" 
+							size="sm" 
+							onclick={undo} 
+							disabled={!canUndo}
+							title="Undo (Ctrl+Z)"
+						>
+							<Undo2 class="size-4" />
+						</Button>
+						<Button 
+							variant="outline" 
+							size="sm" 
+							onclick={redo} 
+							disabled={!canRedo}
+							title="Redo (Ctrl+Shift+Z)"
+						>
+							<Redo2 class="size-4" />
+						</Button>
+					</div>
 					<Button size="sm" onclick={saveTheme} style="background-color: var(--theme-primary); color: var(--theme-card-bg);">
 						<Save class="size-4 mr-2" />
 						Save Theme
