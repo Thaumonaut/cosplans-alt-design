@@ -191,18 +191,6 @@ let originalColumnStages: Stage[] | null = $state(null);
 // Counter to force dndzone re-initialization after column drag
 let taskZoneRefreshKey = $state(0);
 
-// Debug: Track isDraggingColumn changes
-$effect(() => {
-	if (typeof window !== 'undefined' && import.meta.env.DEV) {
-		console.log('[TaskBoardView] isDraggingColumn changed:', isDraggingColumn, {
-			canEdit: canEdit(),
-			isDragging,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			isHoveringColumnHandle
-		});
-	}
-});
-
 // Reactive stages array for column reordering
 // Initialize from prop and sync when prop changes (including colors)
 const initialStageState = applyStageColors(stagesProp);
@@ -510,28 +498,10 @@ async function handleColumnFinalize(e: CustomEvent) {
 		const stageIds = uniqueStageIds;
 
 		// Column drag is complete at this point; re-enable task dragging immediately
-		console.log('[TaskBoardView] Column drag finalizing - BEFORE reset:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
-
 		isDraggingColumn = false;
 		isHoveringColumnHandle = false;
 		columnDragStartElement = null;
 		originalColumnStages = null;
-
-		console.log('[TaskBoardView] Column drag finalizing - AFTER reset:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
 
 		// Wait for DOM to update so dndzone can properly re-enable
 		await tick();
@@ -547,26 +517,8 @@ async function handleColumnFinalize(e: CustomEvent) {
 		}
 		stageTasks = refreshedStageTasks;
 
-		console.log('[TaskBoardView] Column drag finalizing - AFTER tick and items refresh:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
-
 		// Save new order to backend
 		await taskStageService.reorder(team.id, stageIds);
-		
-		console.log('[TaskBoardView] Column drag finalizing - AFTER API call:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
 
 		dispatch('stageReorder', { stageIds });
 		toast.success('Columns reordered', 'Stage order has been updated');
@@ -583,28 +535,10 @@ async function handleColumnFinalize(e: CustomEvent) {
 			stages = applied.map((stage) => ({ ...stage }));
 		}
 	} finally {
-		console.log('[TaskBoardView] Column drag finalize - FINALLY block:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
-
 		isDraggingColumn = false;
 		isHoveringColumnHandle = false;
 		columnDragStartElement = null;
 		originalColumnStages = null;
-
-		console.log('[TaskBoardView] Column drag finalize - FINALLY block AFTER reset:', {
-			isDraggingColumn,
-			isHoveringColumnHandle,
-			hasColumnDragStartElement: !!columnDragStartElement,
-			hasOriginalColumnStages: !!originalColumnStages,
-			canEdit: canEdit(),
-			isDragging
-		});
 	}
 }
 
@@ -820,23 +754,7 @@ function handleConsider(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		const { trigger, id } = info;
 		currentDragItemId = id ?? currentDragItemId;
 
-		if (typeof window !== 'undefined' && import.meta.env.DEV) {
-			console.log(`[TaskBoardView] Task consider event on stage ${stageId}:`, {
-				trigger,
-				taskId: id,
-				isDragging,
-				isDraggingColumn,
-				canEdit: canEdit()
-			});
-		}
-
 		if (!isDragging && trigger === 'dragStarted') {
-			console.log(`[TaskBoardView] Task drag started on stage ${stageId}:`, {
-				isDraggingColumn,
-				canEdit: canEdit(),
-				hasColumnDragStartElement: !!columnDragStartElement
-			});
-
 			// Clear column drag state when task drag starts
 			columnDragStartElement = null;
 			isHoveringColumnHandle = false;
@@ -1146,19 +1064,6 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 
 			<!-- Tasks in Column - Always render, hide with CSS when collapsed -->
 			<!-- CRITICAL: Keep pointer-events enabled even when collapsed so drag can trigger auto-expand -->
-			{#if tasksForStage.length > 0 && typeof window !== 'undefined' && import.meta.env.DEV}
-				{@const taskDragDisabled = isDraggingColumn}
-				{@const _debug = (() => {
-					console.log(`[TaskBoardView] Task zone dragDisabled for stage ${stage.id}:`, {
-						isDraggingColumn,
-						canEdit: canEdit(),
-						isDragging,
-						dragDisabled: taskDragDisabled,
-						taskCount: tasksForStage.length
-					});
-					return null;
-				})()}
-			{/if}
 			{#key `${stage.id}-${taskZoneRefreshKey}`}
 			<div 
 				class="{tasksForStage.length === 0 && isDragging ? 'task-column' : 'space-y-3 overflow-y-auto task-column flex-1 min-h-0'}" 
