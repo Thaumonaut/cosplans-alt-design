@@ -65,18 +65,32 @@
 	});
 
 	// Access the virtualizer store value reactively
+	// @tanstack/svelte-virtual returns a Svelte store that contains the virtualizer instance
+	// We need to subscribe to it to get the actual virtualizer
+	let virtualizerInstance = $state<any>(null);
+	
+	$effect(() => {
+		if (!virtualizer) {
+			virtualizerInstance = null;
+			return;
+		}
+		
+		// Subscribe to the store to get the virtualizer instance
+		const unsubscribe = virtualizer.subscribe((instance) => {
+			virtualizerInstance = instance;
+		});
+		
+		return unsubscribe;
+	});
+	
 	const virtualItems = $derived.by(() => {
-		if (!virtualizer) return [];
-		// In Svelte 5, we can use $ prefix for auto-subscription, but since virtualizer is nullable,
-		// we use get() to safely access the store value
-		const v = get(virtualizer);
-		return v?.getVirtualItems() || [];
+		if (!virtualizerInstance) return [];
+		return virtualizerInstance.getVirtualItems() || [];
 	});
 	
 	const totalSize = $derived.by(() => {
-		if (!virtualizer) return 0;
-		const v = get(virtualizer);
-		return v?.getTotalSize() || 0;
+		if (!virtualizerInstance) return 0;
+		return virtualizerInstance.getTotalSize() || 0;
 	});
 
 	function handleTaskClick(event: CustomEvent<{ id: string }>) {
