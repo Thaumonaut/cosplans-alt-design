@@ -7,6 +7,7 @@
 	 */
 	import { createEventDispatcher } from 'svelte';
 	import { createVirtualizer } from '@tanstack/svelte-virtual';
+	import { get } from 'svelte/store';
 	import TaskCard from './TaskCard.svelte';
 	import type { DragData } from '$lib/utils/drag-drop';
 
@@ -47,24 +48,36 @@
 		dueDateChange: { id: string; due_date: string | null };
 	}>();
 
-	let scrollElement: HTMLDivElement;
+	let scrollElement = $state<HTMLDivElement | null>(null);
 
 	// Virtual scrolling setup
-	const virtualizer = $derived(
-		scrollElement
-			? createVirtualizer({
-					get count() {
-						return tasks.length;
-					},
-					getScrollElement: () => scrollElement,
-					estimateSize: () => 120, // Estimated height of each task card
-					overscan: 5, // Render 5 extra items above/below viewport
-			  })
-			: null
-	);
+	const virtualizer = $derived.by(() => {
+		if (!scrollElement) return null;
+		
+		return createVirtualizer({
+			get count() {
+				return tasks.length;
+			},
+			getScrollElement: () => scrollElement!,
+			estimateSize: () => 120, // Estimated height of each task card
+			overscan: 5, // Render 5 extra items above/below viewport
+		});
+	});
 
-	const virtualItems = $derived(virtualizer?.getVirtualItems() || []);
-	const totalSize = $derived(virtualizer?.getTotalSize() || 0);
+	// Access the virtualizer store value reactively
+	const virtualItems = $derived.by(() => {
+		if (!virtualizer) return [];
+		// In Svelte 5, we can use $ prefix for auto-subscription, but since virtualizer is nullable,
+		// we use get() to safely access the store value
+		const v = get(virtualizer);
+		return v?.getVirtualItems() || [];
+	});
+	
+	const totalSize = $derived.by(() => {
+		if (!virtualizer) return 0;
+		const v = get(virtualizer);
+		return v?.getTotalSize() || 0;
+	});
 
 	function handleTaskClick(event: CustomEvent<{ id: string }>) {
 		dispatch('taskClick', event.detail);
