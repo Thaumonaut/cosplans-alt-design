@@ -39,6 +39,12 @@
       >
         Task Stages
       </button>
+      <button
+        onclick={() => goto('/settings/theme-builder')}
+        class="w-full text-left block px-3 py-2 rounded-md hover:bg-muted transition-colors {currentPath === '/settings/theme-builder' ? 'bg-muted font-medium' : ''}"
+      >
+        Theme Builder
+      </button>
     </nav>
     
     <div class="lg:col-span-3">

@@ -7,6 +7,7 @@
 
 import { TaskService } from '$lib/services/task-service';
 import { taskStageService } from '$lib/api/services/taskStageService';
+import { customFieldService } from '$lib/api/services/customFieldService';
 import { createSupabaseLoadClient } from '$lib/auth/supabase-client';
 import type { PageLoad } from './$types';
 
@@ -52,7 +53,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 					statusOptions = sortedStages.map(stage => ({
 						value: stage.id,
 						label: stage.name,
-						// Color can be computed in UI based on stage properties
+						color: stage.color || undefined
 					}));
 				}
 			} catch (stageError) {
@@ -72,6 +73,28 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		// Fetch label options
 		// TODO: Replace with actual label fetching when labels are implemented
 		const labelOptions: Array<{ value: string; label: string; color: string }> = [];
+
+		// Fetch custom field definitions for table view
+		let customFields: any[] = [];
+		if (user) {
+			try {
+				const { data: teamMembers } = await supabase
+					.from('team_members')
+					.select('team_id')
+					.eq('user_id', user.id)
+					.eq('status', 'active')
+					.limit(1);
+
+				const teamId = teamMembers && teamMembers.length > 0 ? teamMembers[0].team_id : null;
+				
+				if (teamId) {
+					customFields = await customFieldService.listDefinitions(teamId);
+				}
+			} catch (customFieldError) {
+				console.error('Failed to load custom fields:', customFieldError);
+				// Fallback to empty array
+			}
+		}
 
 		// Get completion stage IDs for progress calculation
 		let completionStageIds: string[] = [];
@@ -98,6 +121,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		return {
 			tasks: tasksResult.data || [],
 			statusOptions,
+			customFields,
 			projectOptions,
 			assigneeOptions,
 			labelOptions,

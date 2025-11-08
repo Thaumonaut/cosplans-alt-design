@@ -2,7 +2,10 @@ import { supabase } from '$lib/supabase'
 import { get } from 'svelte/store'
 import { currentTeam } from '$lib/stores/teams'
 import { taskStageService } from './taskStageService'
-import type { Task, TaskCreate, TaskUpdate } from '$lib/types/domain/task'
+import { subtaskService } from './subtaskService'
+import { taskCommentService } from './taskCommentService'
+import { taskAttachmentService } from './taskAttachmentService'
+import type { Task, TaskCreate, TaskUpdate, TaskDetail } from '$lib/types/domain/task'
 
 export const taskService = {
   /**
@@ -129,6 +132,40 @@ export const taskService = {
     }
 
     return mapTaskFromDbWithStage(data)
+  },
+
+  /**
+   * Get task detail with all relations loaded (subtasks, comments, attachments)
+   * Calculates subtask completion percentage
+   */
+  async getDetail(id: string): Promise<TaskDetail | null> {
+    // Get base task
+    const task = await this.get(id)
+    if (!task) return null
+
+    // Load relations in parallel
+    const [subtasks, comments, attachments] = await Promise.all([
+      subtaskService.list(id).catch(() => []),
+      taskCommentService.list(id).catch(() => []),
+      taskAttachmentService.list(id).catch(() => [])
+    ])
+
+    // Calculate subtask completion
+    const total = subtasks.length
+    const completed = subtasks.filter(s => s.completed).length
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+
+    return {
+      ...task,
+      subtasks,
+      comments,
+      attachments,
+      subtaskCompletion: {
+        completed,
+        total,
+        percentage
+      }
+    }
   },
 
   /**

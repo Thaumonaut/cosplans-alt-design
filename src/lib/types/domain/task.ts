@@ -221,7 +221,7 @@ export interface TaskTemplateUpdate {
 }
 
 // Saved Task View entity
-export type ViewMode = 'list' | 'board' | 'calendar' | 'timeline'
+export type ViewMode = 'list' | 'board' | 'table' | 'calendar' | 'timeline'
 export type GroupingOption = 'stage' | 'priority' | 'project' | 'assignee' | 'dueDate'
 
 export interface SavedTaskViewFilters {
@@ -272,3 +272,208 @@ export interface TaskDetail extends Task {
     percentage: number
   }
 }
+
+// Task Label entity
+export interface TaskLabel {
+  id: string
+  teamId: string
+  name: string
+  color: string // Hex color code (e.g., #FF6B6B)
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskLabelCreate {
+  teamId: string
+  name: string
+  color: string
+}
+
+export interface TaskLabelUpdate {
+  name?: string
+  color?: string
+}
+
+// Task Label Assignment entity
+export interface TaskLabelAssignment {
+  id: string
+  taskId: string
+  labelId: string
+  assignedBy: string
+  assignedAt: string
+}
+
+export interface TaskLabelAssignmentCreate {
+  taskId: string
+  labelId: string
+}
+
+// Task Stage Deadline entity (ADHD features)
+export interface TaskStageDeadline {
+  id: string
+  taskId: string
+  stageId: string
+  deadline: string // ISO timestamp
+  completedAt?: string | null // ISO timestamp, null if not yet reached
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskStageDeadlineCreate {
+  taskId: string
+  stageId: string
+  deadline: string
+}
+
+export interface TaskStageDeadlineUpdate {
+  deadline?: string
+  completedAt?: string | null
+}
+
+// User Task Stats entity (ADHD features)
+export interface UserTaskStats {
+  id: string
+  userId: string
+  teamId: string
+  currentStreak: number
+  bestStreak: number
+  lastTaskCompletedAt?: string | null
+  streakPausedAt?: string | null
+  tasksCompletedToday: number
+  tasksCompletedTotal: number
+  celebrationAnimationsEnabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserTaskStatsCreate {
+  teamId: string
+}
+
+export interface UserTaskStatsUpdate {
+  currentStreak?: number
+  bestStreak?: number
+  lastTaskCompletedAt?: string | null
+  streakPausedAt?: string | null
+  tasksCompletedToday?: number
+  tasksCompletedTotal?: number
+  celebrationAnimationsEnabled?: boolean
+}
+
+// Task Breakdown Pattern entity (ADHD features)
+export interface TaskBreakdownPatternSubtask {
+  title: string
+  order: number
+}
+
+export interface TaskBreakdownPattern {
+  id: string
+  teamId: string
+  keywords: string[] // Normalized keywords for matching
+  taskType?: string | null // Optional: Costume Creation, Prop Building, etc.
+  suggestedSubtasks: TaskBreakdownPatternSubtask[]
+  timesOffered: number
+  timesAccepted: number
+  acceptanceRate: number // Computed: (timesAccepted / timesOffered * 100)
+  isLowQuality: boolean // Computed: timesOffered >= 10 AND acceptanceRate < 20%
+  createdBy?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskBreakdownPatternCreate {
+  teamId: string
+  keywords: string[]
+  taskType?: string
+  suggestedSubtasks: TaskBreakdownPatternSubtask[]
+}
+
+export interface TaskBreakdownPatternUpdate {
+  keywords?: string[]
+  taskType?: string
+  suggestedSubtasks?: TaskBreakdownPatternSubtask[]
+  timesOffered?: number
+  timesAccepted?: number
+}
+
+// Custom Field Definition entity
+export type CustomFieldType = 
+  | 'text' 
+  | 'textarea' 
+  | 'number' 
+  | 'currency' 
+  | 'dropdown' 
+  | 'multi-select' 
+  | 'checkbox' 
+  | 'date' 
+  | 'url' 
+  | 'email'
+
+export interface CustomFieldOptions {
+  // For dropdown/multi-select: Array of choice strings
+  choices?: string[]
+  // For currency: Default currency code (ISO 4217)
+  currencyCode?: string
+  // For number: Optional min/max values
+  min?: number
+  max?: number
+}
+
+export interface CustomFieldDefinition {
+  id: string
+  teamId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  required: boolean
+  defaultValue?: string | null
+  options: CustomFieldOptions
+  displayOrder: number
+  showOnCard: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomFieldDefinitionCreate {
+  teamId: string
+  fieldName: string
+  fieldType: CustomFieldType
+  required?: boolean
+  defaultValue?: string
+  options?: CustomFieldOptions
+  displayOrder?: number
+  showOnCard?: boolean
+}
+
+export interface CustomFieldDefinitionUpdate {
+  fieldName?: string
+  fieldType?: CustomFieldType
+  required?: boolean
+  defaultValue?: string | null
+  options?: CustomFieldOptions
+  displayOrder?: number
+  showOnCard?: boolean
+}
+
+// Task Custom Field Value entity
+export interface TaskCustomFieldValue {
+  id: string
+  taskId: string
+  fieldDefinitionId: string
+  value?: string | null // Stored as TEXT, formatted based on field type
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskCustomFieldValueCreate {
+  taskId: string
+  fieldDefinitionId: string
+  value?: string | null
+}
+
+export interface TaskCustomFieldValueUpdate {
+  value?: string | null
+}
+
+// Task Filters (alias for SavedTaskViewFilters, used for active filters)
+export type TaskFilters = SavedTaskViewFilters

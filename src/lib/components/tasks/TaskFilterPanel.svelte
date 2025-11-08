@@ -251,7 +251,7 @@
 							{#if assignee.avatar}
 								<img src={assignee.avatar} alt={assignee.label} class="w-6 h-6 rounded-full" />
 							{:else}
-								<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs" style="background-color: var(--theme-primary, #8b5cf6);">
+								<div class="w-6 h-6 rounded-full flex items-center justify-center text-xs" style="background-color: var(--theme-primary); color: var(--theme-card-bg);">
 									{assignee.label[0].toUpperCase()}
 								</div>
 							{/if}
@@ -342,10 +342,10 @@
 			<button
 				type="button"
 				onclick={applyFilters}
-				class="px-4 py-2 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-colors"
-				style="background-color: var(--theme-primary, #8b5cf6); --tw-ring-color: var(--theme-primary, #8b5cf6);"
-				onmouseenter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-primary-hover, #7c3aed)'}
-				onmouseleave={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-primary, #8b5cf6)'}
+				class="px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-colors"
+				style="background-color: var(--theme-primary); color: var(--theme-card-bg); --tw-ring-color: var(--theme-focus);"
+				onmouseenter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-primary-hover)'}
+				onmouseleave={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-primary)'}
 			>
 				Apply Filters
 			</button>

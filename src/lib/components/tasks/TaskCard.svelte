@@ -204,7 +204,7 @@ import { createEventDispatcher } from 'svelte';
 							class="w-6 h-6 rounded-full"
 						/>
 					{:else}
-						<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium" style="background-color: var(--theme-primary, #8b5cf6);">
+						<div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--theme-primary); color: var(--theme-card-bg);">
 							{(assignee.first_name?.[0] || assignee.email[0]).toUpperCase()}
 						</div>
 					{/if}

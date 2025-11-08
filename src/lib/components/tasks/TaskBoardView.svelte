@@ -152,7 +152,7 @@ function applyStageColorsInPlace(stages: Stage[]): Stage[] {
 
 	recordStageColors(stages);
 	return stages;
-}
+	}
 
 	interface Props {
 		tasks: Task[];
@@ -308,8 +308,8 @@ let stageTasks: Record<string, Task[]> = $state(
 	}, {} as Record<string, Task[]>)
 );
 
-// Use stageTasks state for reactive task arrays
-const tasksByStage = $derived(stageTasks);
+	// Use stageTasks state for reactive task arrays
+	const tasksByStage = $derived(stageTasks);
 
 	// Calculate subtask counts per stage
 	const stageSubtaskCounts = $derived(
@@ -577,7 +577,7 @@ function checkHandleHover(e: MouseEvent) {
 	const target = e.target as HTMLElement;
 	const isOverHandle = target.closest('.column-drag-handle') !== null;
 	isHoveringColumnHandle = isOverHandle;
-}
+	}
 
 	function handleTaskClick(event: CustomEvent<{ id: string }>) {
 		dispatch('taskClick', event.detail);
@@ -728,23 +728,23 @@ function checkHandleHover(e: MouseEvent) {
 		if (hoveredStageId !== lastHoveredStageId) {
 			lastHoveredStageId = hoveredStageId ?? null;
 		}
-		if (hoveredStageId && collapsedColumns.has(hoveredStageId)) {
+			if (hoveredStageId && collapsedColumns.has(hoveredStageId)) {
 			if (autoExpandedColumnId !== hoveredStageId) {
 				autoExpandedColumnId = hoveredStageId;
 			}
-		} else if (autoExpandedColumnId !== null) {
-			autoExpandedColumnId = null;
-		}
+			} else if (autoExpandedColumnId !== null) {
+				autoExpandedColumnId = null;
+			}
 		}
 	}
 
 function handleConsider(e: CustomEvent<DndEvent<Task>>, stageId: string) {
-	const { items, info } = e.detail;
+		const { items, info } = e.detail;
 	const typedItems = items as Task[];
-	
-	// CRITICAL: Always update items - this includes the insertion placeholder when dragging
-	// The library manages the items array and includes placeholders during drag
-	// Per svelte-dnd-action docs: each zone should independently update its items array
+		
+		// CRITICAL: Always update items - this includes the insertion placeholder when dragging
+		// The library manages the items array and includes placeholders during drag
+		// Per svelte-dnd-action docs: each zone should independently update its items array
 	stageTasks = { ...stageTasks, [stageId]: typedItems };
 
 		if (!info) {
@@ -787,7 +787,7 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		// Dispatch status change event for parent to update backend
 		// Only dispatch if this is the target zone (where the item was dropped)
 		// Check if item was moved between columns by comparing draggedSourceStage
-	if (info && draggedSourceStage && draggedSourceStage !== stageId) {
+		if (info && draggedSourceStage && draggedSourceStage !== stageId) {
 			const detail = info as any;
 			const dragInfo = {
 				id: (detail as any)?.id as string | undefined,
@@ -879,8 +879,8 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		{@const subtaskCounts = stageSubtaskCounts[stageId] || { total: 0, completed: 0 }}
 		{@const effectiveWidth = (isCollapsed && !isVisuallyExpanded) ? '80px' : '320px'}
 		{@const effectivePadding = (isCollapsed && !isVisuallyExpanded) ? '0.75rem' : '1rem'}
-		{@const columnBgColor = stageColor ? `color-mix(in srgb, ${stageColor} 10%, var(--theme-section-bg, rgba(255, 255, 255, 0.9)))` : 'var(--theme-section-bg, rgba(255, 255, 255, 0.9))'}
-		{@const columnBorderColor = stageColor ? `color-mix(in srgb, ${stageColor} 30%, transparent)` : 'var(--theme-border, rgba(120, 113, 108, 0.2))'}
+		{@const columnBgColor = stageColor ? `color-mix(in srgb, ${stageColor} 10%, var(--theme-section-bg))` : 'var(--theme-section-bg)'}
+		{@const columnBorderColor = stageColor ? `color-mix(in srgb, ${stageColor} 30%, transparent)` : 'var(--theme-border)'}
 		<div
 			class="board-column flex-shrink-0 rounded-lg flex flex-col transition-all duration-300"
 			style="background-color: {columnBgColor}; border: 1px solid {columnBorderColor}; width: {effectiveWidth}; padding: {effectivePadding};"
@@ -901,19 +901,19 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 							class="column-drag-handle w-4 h-4 cursor-grab active:cursor-grabbing flex items-center justify-center"
 							title="Drag to reorder columns"
 							aria-label={`Drag ${stage.name} column`}
-							style="color: var(--theme-text-muted, #78716c); background: none; border: none; padding: 0;"
+							style="color: var(--theme-text-muted); background: none; border: none; padding: 0;"
 							onpointerdown={handleColumnHandlePointerDown}
 							onpointerup={handleColumnHandlePointerUp}
 							onpointercancel={handleColumnHandlePointerCancel}
 							onmouseenter={(e) => {
 								if (e.currentTarget instanceof HTMLElement) {
-									e.currentTarget.style.color = 'var(--theme-foreground, #1c1917)';
+									e.currentTarget.style.color = 'var(--theme-foreground)';
 									isHoveringColumnHandle = true;
 								}
 							}}
 							onmouseleave={(e) => {
 								if (e.currentTarget instanceof HTMLElement) {
-									e.currentTarget.style.color = 'var(--theme-text-muted, #78716c)';
+									e.currentTarget.style.color = 'var(--theme-text-muted)';
 									// Only clear if not dragging
 									if (!isDraggingColumn) {
 										isHoveringColumnHandle = false;
@@ -928,7 +928,7 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 						type="button"
 						class="inline-flex items-center justify-center rounded-md p-1 text-sm transition-colors hover:bg-muted"
 						aria-label="Collapse {stage.name} column"
-						style="color: var(--theme-text-muted, #78716c);"
+						style="color: var(--theme-text-muted);"
 						onclick={() => toggleColumnCollapse(stage.id)}
 						onmouseenter={(e: MouseEvent) => {
 							if (e.currentTarget instanceof HTMLElement) {
@@ -956,10 +956,10 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 					{:else if stageColor}
 						<div class="w-3 h-3 rounded-full" style="background-color: {stageColor}"></div>
 					{/if}
-					<h3 class="text-sm font-semibold" style="color: var(--theme-foreground, #1c1917);">
+					<h3 class="text-sm font-semibold" style="color: var(--theme-foreground);">
 						{stage.name}
 					</h3>
-					<span class="text-xs" style="color: var(--theme-text-muted, #78716c);">
+					<span class="text-xs" style="color: var(--theme-text-muted);">
 						{tasksForStage.length}
 					</span>
 				</div>
@@ -1023,11 +1023,11 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 				<div class="flex flex-col items-center gap-1">
 					<h3 
 						class="text-xs font-semibold text-center" 
-						style="color: var(--theme-foreground, #1c1917); writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);"
+						style="color: var(--theme-foreground); writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);"
 					>
 						{stage.name}
 					</h3>
-					<div class="text-xs text-center" style="color: var(--theme-text-muted, #78716c);">
+					<div class="text-xs text-center" style="color: var(--theme-text-muted);">
 						<div>{tasksForStage.length}</div>
 						{#if subtaskCounts.total > 0}
 							<div class="text-[10px] mt-0.5">{subtaskCounts.completed}/{subtaskCounts.total}</div>
@@ -1082,9 +1082,9 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 				{#if tasksForStage.length === 0 && !isDragging}
 					<div
 						class="border-2 border-dashed rounded-lg p-8 text-center flex-1 flex items-center justify-center"
-						style="border-color: var(--theme-border, rgba(120, 113, 108, 0.2)); min-height: 400px;"
+						style="border-color: var(--theme-border); min-height: 400px;"
 					>
-						<p class="text-sm" style="color: var(--theme-text-muted, #78716c);">
+						<p class="text-sm" style="color: var(--theme-text-muted);">
 							Drop tasks here or click + to add
 						</p>
 					</div>
@@ -1206,8 +1206,8 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		transition: none !important;
 		animation: none !important;
 		/* Add visual distinction for the placeholder */
-		border: 2px dashed var(--theme-primary, #8b5cf6) !important;
-		background-color: var(--theme-section-bg, rgba(255, 255, 255, 0.9)) !important;
+		border: 2px dashed var(--theme-primary) !important;
+		background-color: var(--theme-section-bg) !important;
 		position: relative !important;
 	}
 

@@ -45,6 +45,7 @@
   import { user, authActions } from '$lib/stores/auth-store';
   import { toast } from '$lib/stores/toast';
   import { get } from 'svelte/store';
+  import CustomFieldsManagement from '$lib/components/settings/CustomFieldsManagement.svelte';
 
   let loading = $state(false);
   let loadingMembers = $state(false);
@@ -757,6 +758,11 @@
             {/each}
           </div>
         {/if}
+      </div>
+
+      <!-- Custom Fields Section -->
+      <div class="border-t pt-6 mt-6">
+        <CustomFieldsManagement teamId={currentTeamData.id} />
       </div>
         </CardContent>
       </Card>

@@ -209,11 +209,11 @@
       }
       
       if (inputElement) {
-        inputElement.addEventListener('input', handleInputChange)
-        inputElement.addEventListener('change', handleInputChange)
-        
-        // Store cleanup function
-        ;(inputElement as any).__colorPickerCleanup = () => {
+      inputElement.addEventListener('input', handleInputChange)
+      inputElement.addEventListener('change', handleInputChange)
+      
+      // Store cleanup function
+      ;(inputElement as any).__colorPickerCleanup = () => {
           inputElement?.removeEventListener('input', handleInputChange)
           inputElement?.removeEventListener('change', handleInputChange)
         }

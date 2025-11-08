@@ -69,49 +69,49 @@
 
 ### TypeScript Type Definitions
 
-- [ ] T026 [P] Define core task types in `src/lib/types/domain/task.ts` (Task, TaskDetail, TaskCreateInput, TaskUpdateInput)
-- [ ] T027 [P] Define subtask types in `src/lib/types/domain/task.ts` (Subtask, SubtaskCreateInput, SubtaskUpdateInput)
-- [ ] T028 [P] Define comment types in `src/lib/types/domain/task.ts` (TaskComment, TaskCommentCreateInput)
-- [ ] T029 [P] Define attachment types in `src/lib/types/domain/task.ts` (TaskAttachment)
-- [ ] T030 [P] Define notification types in `src/lib/types/domain/task.ts` (TaskNotification, NotificationEventType)
-- [ ] T031 [P] Define template types in `src/lib/types/domain/task.ts` (TaskTemplate, SavedTaskView)
-- [ ] T032 [P] Define label types in `src/lib/types/domain/task.ts` (TaskLabel, TaskLabelAssignment)
-- [ ] T033 [P] Define ADHD feature types in `src/lib/types/domain/task.ts` (TaskStageDeadline, UserTaskStats, TaskBreakdownPattern)
-- [ ] T034 [P] Define custom field types in `src/lib/types/domain/task.ts` (CustomFieldDefinition, TaskCustomFieldValue, CustomFieldType)
-- [ ] T035 [P] Define view mode types in `src/lib/types/domain/task.ts` (ViewMode, GroupingOption, TaskFilters)
-- [ ] T036 Create Zod validation schemas in `src/lib/schemas/tasks.ts` for runtime validation
+- [x] T026 [P] Define core task types in `src/lib/types/domain/task.ts` (Task, TaskDetail, TaskCreateInput, TaskUpdateInput)
+- [x] T027 [P] Define subtask types in `src/lib/types/domain/task.ts` (Subtask, SubtaskCreateInput, SubtaskUpdateInput)
+- [x] T028 [P] Define comment types in `src/lib/types/domain/task.ts` (TaskComment, TaskCommentCreateInput)
+- [x] T029 [P] Define attachment types in `src/lib/types/domain/task.ts` (TaskAttachment)
+- [x] T030 [P] Define notification types in `src/lib/types/domain/task.ts` (TaskNotification, NotificationEventType)
+- [x] T031 [P] Define template types in `src/lib/types/domain/task.ts` (TaskTemplate, SavedTaskView)
+- [x] T032 [P] Define label types in `src/lib/types/domain/task.ts` (TaskLabel, TaskLabelAssignment)
+- [x] T033 [P] Define ADHD feature types in `src/lib/types/domain/task.ts` (TaskStageDeadline, UserTaskStats, TaskBreakdownPattern)
+- [x] T034 [P] Define custom field types in `src/lib/types/domain/task.ts` (CustomFieldDefinition, TaskCustomFieldValue, CustomFieldType)
+- [x] T035 [P] Define view mode types in `src/lib/types/domain/task.ts` (ViewMode, GroupingOption, TaskFilters)
+- [x] T036 Create Zod validation schemas in `src/lib/schemas/tasks.ts` for runtime validation
 
 ### Service Layer Foundation
 
-- [ ] T037 [P] Implement SubtaskService in `src/lib/api/services/subtaskService.ts` (CRUD operations, RLS)
-- [ ] T038 [P] Implement CommentService in `src/lib/api/services/commentService.ts` (CRUD, @mentions parsing)
-- [ ] T039 [P] Implement AttachmentService in `src/lib/api/services/attachmentService.ts` (upload to Supabase Storage, signed URLs)
-- [ ] T040 [P] Implement NotificationService in `src/lib/api/services/notificationService.ts` (create, mark read, subscribe)
-- [ ] T041 [P] Implement LabelService in `src/lib/api/services/labelService.ts` (CRUD for labels and assignments)
-- [ ] T042 [P] Implement CustomFieldService in `src/lib/api/services/customFieldService.ts` (CRUD for definitions and values)
-- [ ] T043 [P] Implement TemplateService in `src/lib/api/services/templateService.ts` (CRUD for templates)
-- [ ] T044 [P] Implement SavedViewService in `src/lib/api/services/savedViewService.ts` (CRUD for saved views)
-- [ ] T045 Extend TaskService in `src/lib/api/services/taskService.ts` (add relations loading, detail fetching)
+- [x] T037 [P] Implement SubtaskService in `src/lib/api/services/subtaskService.ts` (CRUD operations, RLS)
+- [x] T038 [P] Implement CommentService in `src/lib/api/services/commentService.ts` (CRUD, @mentions parsing)
+- [x] T039 [P] Implement AttachmentService in `src/lib/api/services/attachmentService.ts` (upload to Supabase Storage, signed URLs)
+- [x] T040 [P] Implement NotificationService in `src/lib/api/services/notificationService.ts` (create, mark read, subscribe)
+- [x] T041 [P] Implement LabelService in `src/lib/api/services/labelService.ts` (CRUD for labels and assignments)
+- [x] T042 [P] Implement CustomFieldService in `src/lib/api/services/customFieldService.ts` (CRUD for definitions and values)
+- [x] T043 [P] Implement TemplateService in `src/lib/api/services/templateService.ts` (CRUD for templates)
+- [x] T044 [P] Implement SavedViewService in `src/lib/api/services/savedViewService.ts` (CRUD for saved views)
+- [x] T045 Extend TaskService in `src/lib/api/services/taskService.ts` (add relations loading, detail fetching)
 
 ### Base Components
 
-- [ ] T046 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` (for living document editing)
-- [ ] T047 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte`
-- [ ] T048 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte`
-- [ ] T049 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte`
-- [ ] T050 [P] Create StageSelector component in `src/lib/components/base/StageSelector.svelte` (for stage selection)
+- [x] T046 [P] Create InlineTextEditor component in `src/lib/components/base/InlineTextEditor.svelte` (for living document editing)
+- [x] T047 [P] Create InlineSelect component in `src/lib/components/base/InlineSelect.svelte`
+- [x] T048 [P] Create InlineDatePicker component in `src/lib/components/base/InlineDatePicker.svelte`
+- [x] T049 [P] Create InlineCheckbox component in `src/lib/components/base/InlineCheckbox.svelte`
+- [x] T050 [P] Create StageSelector component in `src/lib/components/base/StageSelector.svelte` (for stage selection)
 
 ### Store Foundation
 
-- [ ] T051 Create tasks store in `src/lib/stores/tasks.ts` (writable store for task list)
-- [ ] T052 Create filters store in `src/lib/stores/filters.ts` (writable store for active filters)
-- [ ] T053 Create views store in `src/lib/stores/views.ts` (writable store for view preferences)
+- [x] T051 Create tasks store in `src/lib/stores/tasks.ts` (writable store for task list)
+- [x] T052 Create filters store in `src/lib/stores/filters.ts` (writable store for active filters)
+- [x] T053 Create views store in `src/lib/stores/views.ts` (writable store for view preferences)
 
 ### Utility Functions
 
-- [ ] T054 [P] Create task filter utilities in `src/lib/utils/task-filters.ts` (filter matching logic)
-- [ ] T055 [P] Create task grouping utilities in `src/lib/utils/task-grouping.ts` (grouping logic)
-- [ ] T056 [P] Create drag-and-drop utilities in `src/lib/utils/draggable.ts` (svelte-dnd-action helpers)
+- [x] T054 [P] Create task filter utilities in `src/lib/utils/task-filters.ts` (filter matching logic)
+- [x] T055 [P] Create task grouping utilities in `src/lib/utils/task-grouping.ts` (grouping logic)
+- [x] T056 [P] Create drag-and-drop utilities in `src/lib/utils/draggable.ts` (svelte-dnd-action helpers)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -131,7 +131,7 @@
 - [x] T060 [US1] Create TaskCard component in `src/lib/components/tasks/TaskCard.svelte` (reusable task card for all views)
 - [x] T061 [US1] Create TaskBoardView component in `src/lib/components/tasks/TaskBoardView.svelte` (kanban board with columns by stage)
 - [x] T062 [US1] Create TaskCalendarView component in `src/lib/components/tasks/TaskCalendarView.svelte` (calendar grid with tasks on due dates)
-- [ ] T063 [US1] Create TaskTimelineView component in `src/lib/components/tasks/TaskTimelineView.svelte` (horizontal timeline with task bars)
+- [x] T063 [US1] Create TaskTimelineView component in `src/lib/components/tasks/TaskTimelineView.svelte` (horizontal timeline with task bars)
 - [x] T064 [US1] Create TaskFilterPanel component in `src/lib/components/tasks/TaskFilterPanel.svelte` (filter UI with Stage, Priority, Assignee, Project options)
 - [x] T065 [US1] Implement filter logic in `src/lib/utils/task-filters.ts` (apply filters to task list)
 - [x] T066 [US1] Implement virtual scrolling in TaskListView using @tanstack/svelte-virtual for lists >100 tasks
@@ -212,7 +212,7 @@
 - [x] T102 [US9] Implement forgiving streak logic (1 grace day pause, breaks after 2 consecutive days)
 - [x] T103 [US9] Display today's completion progress in TasksPage header ("X/Y tasks complete today")
 - [x] T104 [US9] Create progress bar component for completion progress
-- [ ] T105 [US9] Implement stage-level deadline CRUD using TaskStageDeadlineService
+- [x] T105 [US9] Implement stage-level deadline CRUD using TaskStageDeadlineService
 - [ ] T106 [US9] Prompt for stage deadlines when creating task with due date >7 days away
 - [ ] T107 [US9] Display upcoming stage deadline on task cards with color-coded urgency
 - [ ] T108 [US9] Show encouragement message when stage completed before deadline
@@ -231,18 +231,18 @@
 
 ### Implementation for User Story 11
 
-- [ ] T111 [US11] Create custom field management UI in team settings (list existing fields, add/edit/delete)
-- [ ] T112 [US11] Create custom field definition form with field type selector (13 types)
-- [ ] T113 [US11] Implement field type-specific options (select choices, currency code, tag library, etc.)
-- [ ] T114 [US11] Create custom field value input widgets for all 13 types in `src/lib/components/tasks/custom-fields/`
-- [ ] T115 [US11] Create CustomFieldsSection component in `src/lib/components/tasks/detail/CustomFieldsSection.svelte`
-- [ ] T116 [US11] Integrate CustomFieldsSection into DetailsTab
-- [ ] T117 [US11] Implement custom field value CRUD using CustomFieldService
+- [x] T111 [US11] Create custom field management UI in team settings (list existing fields, add/edit/delete)
+- [x] T112 [US11] Create custom field definition form with field type selector (13 types)
+- [x] T113 [US11] Implement field type-specific options (select choices, currency code, tag library, etc.)
+- [x] T114 [US11] Create custom field value input widgets for all 13 types in `src/lib/components/tasks/custom-fields/`
+- [x] T115 [US11] Create CustomFieldsSection component in `src/lib/components/tasks/detail/CustomFieldsSection.svelte`
+- [x] T116 [US11] Integrate CustomFieldsSection into DetailsTab
+- [x] T117 [US11] Implement custom field value CRUD using CustomFieldService
 - [ ] T118 [US11] Implement field visibility configuration (show on cards, show in table, show in list, hidden)
 - [ ] T119 [US11] Display custom fields on task cards when visibility configured
 - [ ] T120 [US11] Format custom field values appropriately (currency symbols, date formats, tag badges, file icons)
 - [ ] T121 [US11] Implement basic filtering by custom field values in TaskFilterPanel
-- [ ] T122 [US11] Enforce maximum 20 custom fields per team
+- [x] T122 [US11] Enforce maximum 20 custom fields per team
 - [ ] T123 [US11] Implement field ordering/reordering in team settings
 - [ ] T124 [US11] Handle required field validation (enforce on save, not on existing tasks)
 - [ ] T125 [US11] Preserve existing values when select/tag options are removed (show warning badge)

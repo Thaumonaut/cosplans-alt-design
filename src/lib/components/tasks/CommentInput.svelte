@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
 	import { teamService } from '$lib/api/services/teamService';
+	import { currentTeam } from '$lib/stores/teams';
+	import { get } from 'svelte/store';
 	import { Button } from '$lib/components/ui';
 	import { Send, Loader2 } from 'lucide-svelte';
 
@@ -31,13 +33,13 @@
 
 	async function loadTeamMembers() {
 		try {
-			const currentTeam = await teamService.getCurrentTeam();
-			if (currentTeam) {
-				const members = await teamService.getTeamMembers(currentTeam.id);
+			const team = get(currentTeam);
+			if (team) {
+				const members = await teamService.getMembers(team.id);
 				teamMembers = members.map(m => ({
 					id: m.userId,
 					name: m.user?.name || m.user?.email || 'Unknown',
-					avatar: m.user?.avatar
+					avatar: m.user?.avatarUrl
 				}));
 			}
 		} catch (err) {
@@ -174,7 +176,8 @@
 	<!-- Error Message -->
 	{#if error}
 		<div
-			class="mb-2 rounded-md bg-red-50 p-3 text-sm text-red-800"
+			class="mb-2 rounded-md p-3 text-sm"
+			style="background-color: var(--theme-error-bg); color: var(--theme-error);"
 			transition:fade={{ duration: 200 }}
 		>
 			{error}
@@ -187,7 +190,9 @@
 			bind:this={textareaRef}
 			bind:value={content}
 			placeholder="Add a comment... Use @ to mention someone"
-			class="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+			class="w-full resize-none rounded-md border bg-[var(--theme-card-bg)] px-3 py-2 text-sm focus:outline-none focus:ring-1"
+			style="border-color: var(--theme-border); color: var(--theme-foreground); --tw-ring-color: var(--theme-focus);"
+			style:disabled="background-color: var(--theme-section-bg); color: var(--theme-text-disabled);"
 			rows="3"
 			disabled={isSending}
 			on:input={handleInput}
@@ -197,14 +202,27 @@
 		<!-- Mention Dropdown -->
 		{#if showMentionDropdown && filteredMembers().length > 0}
 			<div
-				class="absolute bottom-full left-0 mb-2 w-64 rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+				class="absolute bottom-full left-0 mb-2 w-64 rounded-md border py-1 shadow-lg"
+				style="border-color: var(--theme-border); background-color: var(--theme-card-bg); box-shadow: var(--theme-shadow-lg);"
 				transition:slide={{ duration: 200 }}
 			>
 				{#each filteredMembers() as member, index}
 					<button
-						class="flex w-full items-center space-x-2 px-3 py-2 text-left text-sm transition-colors {index === selectedMentionIndex ? 'bg-blue-50' : 'hover:bg-gray-50'}"
+						class="flex w-full items-center space-x-2 px-3 py-2 text-left text-sm transition-colors"
+						style={index === selectedMentionIndex 
+							? 'background-color: var(--theme-hover); color: var(--theme-foreground);'
+							: 'color: var(--theme-foreground);'}
 						on:click={() => insertMention(member)}
-						on:mouseenter={() => (selectedMentionIndex = index)}
+						on:mouseenter={(e) => {
+							if (index !== selectedMentionIndex) {
+								e.currentTarget.style.backgroundColor = 'var(--theme-hover)';
+							}
+						}}
+						on:mouseleave={(e) => {
+							if (index !== selectedMentionIndex) {
+								e.currentTarget.style.backgroundColor = 'transparent';
+							}
+						}}
 					>
 						<!-- Avatar -->
 						{#if member.avatar}
@@ -214,13 +232,13 @@
 								class="h-6 w-6 rounded-full"
 							/>
 						{:else}
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+							<div class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium" style="background-color: var(--theme-section-bg); color: var(--theme-text-muted);">
 								{member.name[0]?.toUpperCase() || '?'}
 							</div>
 						{/if}
 
 						<!-- Name -->
-						<span class="flex-1 truncate text-gray-900">{member.name}</span>
+						<span class="flex-1 truncate" style="color: var(--theme-foreground);">{member.name}</span>
 					</button>
 				{/each}
 			</div>
@@ -229,7 +247,7 @@
 
 	<!-- Actions -->
 	<div class="mt-2 flex items-center justify-between">
-		<div class="text-xs text-gray-500">
+		<div class="text-xs" style="color: var(--theme-text-muted);">
 			{#if showMentionDropdown}
 				<span>↑↓ to navigate, Enter to select</span>
 			{:else}

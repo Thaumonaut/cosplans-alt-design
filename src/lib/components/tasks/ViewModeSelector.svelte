@@ -41,6 +41,12 @@
 			tooltip: 'Board view - Kanban board grouped by status',
 		},
 		{
+			value: 'table',
+			label: 'Table',
+			icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+			tooltip: 'Table view - Spreadsheet-style table with inline editing',
+		},
+		{
 			value: 'calendar',
 			label: 'Calendar',
 			icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',

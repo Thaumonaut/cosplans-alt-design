@@ -41,8 +41,9 @@ const config = {
 				'img-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
 				'media-src': ['self', 'data:', 'blob:', 'https:', 'http:', 'http://localhost:5173'],
 				'connect-src': ['self', 'https:', 'wss:', 'ws:'],
-				'style-src': ['self', 'unsafe-inline'],
-				'font-src': ['self', 'data:']
+				'style-src': ['self', 'unsafe-inline', 'https://cdn.svar.dev'],
+				'style-src-elem': ['self', 'unsafe-inline', 'https://cdn.svar.dev'],
+				'font-src': ['self', 'data:', 'https://cdn.svar.dev']
 			}
 		}
 	}
