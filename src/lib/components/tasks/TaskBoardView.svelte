@@ -188,6 +188,20 @@ let isHoveringColumnHandle = $state(false);
 let columnDragStartElement: HTMLElement | null = $state(null);
 let isDraggingColumn = $state(false);
 let originalColumnStages: Stage[] | null = $state(null);
+// Counter to force dndzone re-initialization after column drag
+let taskZoneRefreshKey = $state(0);
+
+// Debug: Track isDraggingColumn changes
+$effect(() => {
+	if (typeof window !== 'undefined' && import.meta.env.DEV) {
+		console.log('[TaskBoardView] isDraggingColumn changed:', isDraggingColumn, {
+			canEdit: canEdit(),
+			isDragging,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			isHoveringColumnHandle
+		});
+	}
+});
 
 // Reactive stages array for column reordering
 // Initialize from prop and sync when prop changes (including colors)
@@ -483,6 +497,9 @@ async function handleColumnFinalize(e: CustomEvent) {
 				if ('displayOrder' in target) {
 					target.displayOrder = index;
 				}
+				if ((target as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME]) {
+					delete (target as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME];
+				}
 				return target;
 			});
 
@@ -492,9 +509,65 @@ async function handleColumnFinalize(e: CustomEvent) {
 		stages = reorderedStages.map((stage) => ({ ...stage }));
 		const stageIds = uniqueStageIds;
 
+		// Column drag is complete at this point; re-enable task dragging immediately
+		console.log('[TaskBoardView] Column drag finalizing - BEFORE reset:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
+
+		isDraggingColumn = false;
+		isHoveringColumnHandle = false;
+		columnDragStartElement = null;
+		originalColumnStages = null;
+
+		console.log('[TaskBoardView] Column drag finalizing - AFTER reset:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
+
+		// Wait for DOM to update so dndzone can properly re-enable
+		await tick();
+
+		// Force task zones to re-initialize by incrementing refresh key
+		// This ensures the {#key} block changes and recreates the dndzone action
+		taskZoneRefreshKey += 1;
+
+		// Also refresh task arrays to ensure reactivity
+		const refreshedStageTasks: Record<string, Task[]> = {};
+		for (const stageId of Object.keys(stageTasks)) {
+			refreshedStageTasks[stageId] = [...stageTasks[stageId]];
+		}
+		stageTasks = refreshedStageTasks;
+
+		console.log('[TaskBoardView] Column drag finalizing - AFTER tick and items refresh:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
+
 		// Save new order to backend
 		await taskStageService.reorder(team.id, stageIds);
 		
+		console.log('[TaskBoardView] Column drag finalizing - AFTER API call:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
+
 		dispatch('stageReorder', { stageIds });
 		toast.success('Columns reordered', 'Stage order has been updated');
 	} catch (err: any) {
@@ -510,10 +583,28 @@ async function handleColumnFinalize(e: CustomEvent) {
 			stages = applied.map((stage) => ({ ...stage }));
 		}
 	} finally {
+		console.log('[TaskBoardView] Column drag finalize - FINALLY block:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
+
 		isDraggingColumn = false;
 		isHoveringColumnHandle = false;
 		columnDragStartElement = null;
 		originalColumnStages = null;
+
+		console.log('[TaskBoardView] Column drag finalize - FINALLY block AFTER reset:', {
+			isDraggingColumn,
+			isHoveringColumnHandle,
+			hasColumnDragStartElement: !!columnDragStartElement,
+			hasOriginalColumnStages: !!originalColumnStages,
+			canEdit: canEdit(),
+			isDragging
+		});
 	}
 }
 
@@ -729,7 +820,23 @@ function handleConsider(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		const { trigger, id } = info;
 		currentDragItemId = id ?? currentDragItemId;
 
+		if (typeof window !== 'undefined' && import.meta.env.DEV) {
+			console.log(`[TaskBoardView] Task consider event on stage ${stageId}:`, {
+				trigger,
+				taskId: id,
+				isDragging,
+				isDraggingColumn,
+				canEdit: canEdit()
+			});
+		}
+
 		if (!isDragging && trigger === 'dragStarted') {
+			console.log(`[TaskBoardView] Task drag started on stage ${stageId}:`, {
+				isDraggingColumn,
+				canEdit: canEdit(),
+				hasColumnDragStartElement: !!columnDragStartElement
+			});
+
 			// Clear column drag state when task drag starts
 			columnDragStartElement = null;
 			isHoveringColumnHandle = false;
@@ -1039,10 +1146,25 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 
 			<!-- Tasks in Column - Always render, hide with CSS when collapsed -->
 			<!-- CRITICAL: Keep pointer-events enabled even when collapsed so drag can trigger auto-expand -->
+			{#if tasksForStage.length > 0 && typeof window !== 'undefined' && import.meta.env.DEV}
+				{@const taskDragDisabled = isDraggingColumn}
+				{@const _debug = (() => {
+					console.log(`[TaskBoardView] Task zone dragDisabled for stage ${stage.id}:`, {
+						isDraggingColumn,
+						canEdit: canEdit(),
+						isDragging,
+						dragDisabled: taskDragDisabled,
+						taskCount: tasksForStage.length
+					});
+					return null;
+				})()}
+			{/if}
+			{#key `${stage.id}-${taskZoneRefreshKey}`}
 			<div 
 				class="{tasksForStage.length === 0 && isDragging ? 'task-column' : 'space-y-3 overflow-y-auto task-column flex-1 min-h-0'}" 
 				style="max-height: calc(100vh - 250px); {tasksForStage.length === 0 && isDragging ? 'min-height: 0 !important; height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: visible;' : 'min-height: 400px;'} opacity: {(isCollapsed && !isVisuallyExpanded) ? '0' : '1'}; pointer-events: auto; position: relative;"
 				data-stage-id={stage.id}
+				data-dnd-enabled={!isDraggingColumn}
 				use:dndzone={{
 					items: tasksForStage,
 					type: 'task',
@@ -1092,6 +1214,7 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 					{/each}
 				{/if}
 			</div>
+			{/key}
 		</div>
 	{/each}
 </div>
@@ -1113,6 +1236,24 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		flex: 1 1 auto;
 		/* Add padding to bottom to ensure drops work at the bottom of the column */
 		padding-bottom: 1rem;
+	}
+
+	/* Prevent text selection during drag attempts - allows drag to initiate properly */
+	.task-card-wrapper {
+		user-select: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+	}
+
+	/* Re-enable text selection for interactive elements inside cards */
+	.task-card-wrapper input,
+	.task-card-wrapper textarea,
+	.task-card-wrapper [contenteditable] {
+		user-select: text;
+		-webkit-user-select: text;
+		-moz-user-select: text;
+		-ms-user-select: text;
 	}
 
 	/* Prevent transitions from affecting drag preview - fixes disappearing elements */
