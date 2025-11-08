@@ -1,21 +1,136 @@
 <script lang="ts">
-  import { Moon, Sun } from 'lucide-svelte';
-  import { Button } from '$lib/components/ui';
+  import { Palette, Check, Sun, Moon, Sparkles } from 'lucide-svelte';
+  import { Button, DropdownMenu, DropdownMenuItem } from '$lib/components/ui';
+  import { theme } from '$lib/stores/theme';
+  import { THEME_VARIANTS, DEFAULT_THEME_ID } from '$lib/utils/theme-variants';
 
-  function toggleTheme() {
-    const html = document.documentElement;
-    if (html.classList.contains("dark")) {
-      html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    } else {
-      html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    }
+  let themeState = $state({ resolvedMode: 'light' as 'light' | 'dark', activeId: DEFAULT_THEME_ID });
+
+  // Subscribe to theme changes reactively
+  $effect(() => {
+    const unsubscribe = theme.subscribe((state) => {
+      themeState = state;
+    });
+    return unsubscribe;
+  });
+
+  // Get default themes (exclude them from grouped lists)
+  const defaultLight = $derived(THEME_VARIANTS.find(v => v.id === 'light-default'));
+  const defaultDark = $derived(THEME_VARIANTS.find(v => v.id === 'dark-default'));
+  
+  // Group non-default themes by mode
+  const lightThemes = $derived(THEME_VARIANTS.filter(v => v.mode === 'light' && v.id !== 'light-default'));
+  const darkThemes = $derived(THEME_VARIANTS.filter(v => v.mode === 'dark' && v.id !== 'dark-default'));
+
+  // Get current theme label
+  const currentTheme = $derived(THEME_VARIANTS.find(v => v.id === themeState.activeId) || THEME_VARIANTS[0]);
+
+  function selectTheme(themeId: string) {
+    theme.setTheme(themeId);
+  }
+  
+  function createCustomTheme() {
+    // TODO: Open custom theme builder modal/component
+    console.log('Create custom theme clicked');
   }
 </script>
 
-<Button variant="ghost" size="icon" onclick={toggleTheme}>
-  <Sun class="size-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-  <Moon class="absolute size-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-  <span class="sr-only">Toggle theme</span>
-</Button>
+<DropdownMenu placement="bottom-end">
+  {#snippet trigger()}
+    <Button variant="ghost" size="sm" class="gap-2">
+      <Palette class="size-4" />
+      <span class="hidden sm:inline">{currentTheme.label}</span>
+    </Button>
+  {/snippet}
+
+  {#snippet children()}
+    <div class="py-1.5">
+      <!-- Default Light and Default Dark at top -->
+      {#if defaultLight}
+        <DropdownMenuItem onclick={() => selectTheme(defaultLight.id)}>
+          <div class="flex w-full items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <Sun class="size-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{defaultLight.label}</div>
+              </div>
+            </div>
+            {#if themeState.activeId === defaultLight.id}
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+            {/if}
+          </div>
+        </DropdownMenuItem>
+      {/if}
+      
+      {#if defaultDark}
+        <DropdownMenuItem onclick={() => selectTheme(defaultDark.id)}>
+          <div class="flex w-full items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <Moon class="size-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{defaultDark.label}</div>
+              </div>
+            </div>
+            {#if themeState.activeId === defaultDark.id}
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+            {/if}
+          </div>
+        </DropdownMenuItem>
+      {/if}
+      
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
+
+      <!-- Light Themes Section -->
+      <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Light Themes
+      </div>
+      {#each lightThemes as variant}
+        <DropdownMenuItem onclick={() => selectTheme(variant.id)}>
+          <div class="flex w-full items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <Sun class="size-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{variant.label}</div>
+              </div>
+            </div>
+            {#if themeState.activeId === variant.id}
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+            {/if}
+          </div>
+        </DropdownMenuItem>
+      {/each}
+
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
+
+      <!-- Dark Themes Section -->
+      <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Dark Themes
+      </div>
+      {#each darkThemes as variant}
+        <DropdownMenuItem onclick={() => selectTheme(variant.id)}>
+          <div class="flex w-full items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <Moon class="size-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{variant.label}</div>
+              </div>
+            </div>
+            {#if themeState.activeId === variant.id}
+              <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+            {/if}
+          </div>
+        </DropdownMenuItem>
+      {/each}
+
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
+
+      <!-- Create Custom Theme -->
+      <DropdownMenuItem onclick={createCustomTheme}>
+        <div class="flex w-full items-center gap-3 px-2">
+          <Sparkles class="size-4 shrink-0 text-[var(--theme-primary)]" />
+          <div class="text-sm font-medium text-[var(--theme-primary)]">Create Custom Theme</div>
+        </div>
+      </DropdownMenuItem>
+    </div>
+  {/snippet}
+</DropdownMenu>

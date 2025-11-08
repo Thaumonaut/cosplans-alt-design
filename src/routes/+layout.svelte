@@ -58,6 +58,9 @@
     content="Track your cosplay projects from inspiration to completion"
   />
   <meta name="generator" content="SvelteKit" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
 </svelte:head>
 
 <!-- Root layout - just renders the slot for public and protected routes -->

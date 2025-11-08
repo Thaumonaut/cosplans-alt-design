@@ -6,7 +6,27 @@ export interface ProcessedImage {
   original: Blob
 }
 
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
+
+export class ImageSizeError extends Error {
+  constructor(fileSize: number) {
+    const sizeMB = (fileSize / (1024 * 1024)).toFixed(2)
+    super(`Image size (${sizeMB}MB) exceeds the maximum allowed size of 10MB. Please choose a smaller image.`)
+    this.name = 'ImageSizeError'
+  }
+}
+
 export async function processImage(file: File): Promise<ProcessedImage> {
+  // Validate file size before processing
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new ImageSizeError(file.size)
+  }
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please select a valid image file (JPG, PNG, GIF, etc.)')
+  }
+
   const img = await loadImage(file)
   const thumbnail = await resize(img, 200, 0.7)
   const display = await compress(img, 2 * 1024 * 1024)

@@ -23,10 +23,10 @@
     {href}
     class={cn(
       'flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none',
-      'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+      'hover:bg-interactive-hover hover:text-foreground focus:bg-interactive-hover focus:text-foreground',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-1',
       '[&_svg:not([class*="text-"])]:text-muted-foreground [&_svg:not([class*="size-"])]:size-4',
-      active && 'bg-accent/50 text-accent-foreground',
+      active && 'bg-interactive-active text-foreground',
       className
     )}
     {onclick}
@@ -37,10 +37,10 @@
   <button
     class={cn(
       'flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none',
-      'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+      'hover:bg-interactive-hover hover:text-foreground focus:bg-interactive-hover focus:text-foreground',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-1',
       '[&_svg:not([class*="text-"])]:text-muted-foreground [&_svg:not([class*="size-"])]:size-4',
-      active && 'bg-accent/50 text-accent-foreground',
+      active && 'bg-interactive-active text-foreground',
       className
     )}
     {onclick}

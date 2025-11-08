@@ -10,7 +10,7 @@
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineCheckbox from '$lib/components/base/InlineCheckbox.svelte'
-  import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
@@ -484,14 +484,15 @@
 
                   <div class="space-y-2">
                     <label for="purchaseDate" class="text-sm font-medium">Purchase Date</label>
-                    <InlineDatePicker
-                      value={craftingMetadata()?.purchaseDate || ''}
-                      editable={!isReadOnly()}
-                      onSave={async (v: string) => {
+                    <DatePicker
+                      value={craftingMetadata()?.purchaseDate || null}
+                      disabled={isReadOnly()}
+                      onchange={async (v: string | null) => {
+                        const dateStr = v || '';
                         if (currentMode() === 'create') {
-                          newTool.metadata = { ...newTool.metadata, purchaseDate: v || undefined } as any
+                          newTool.metadata = { ...newTool.metadata, purchaseDate: dateStr || undefined } as any
                         } else {
-                          await handleSaveField('metadata.purchaseDate', v || undefined)
+                          await handleSaveField('metadata.purchaseDate', dateStr || undefined)
                         }
                       }}
                       placeholder="Purchase date"
@@ -565,14 +566,15 @@
 
                   <div class="space-y-2">
                     <label for="warrantyExpires" class="text-sm font-medium">Warranty Expires</label>
-                    <InlineDatePicker
-                      value={craftingMetadata()?.warrantyExpires || ''}
-                      editable={!isReadOnly()}
-                      onSave={async (v: string) => {
+                    <DatePicker
+                      value={craftingMetadata()?.warrantyExpires || null}
+                      disabled={isReadOnly()}
+                      onchange={async (v: string | null) => {
+                        const dateStr = v || '';
                         if (currentMode() === 'create') {
-                          newTool.metadata = { ...newTool.metadata, warrantyExpires: v || undefined } as any
+                          newTool.metadata = { ...newTool.metadata, warrantyExpires: dateStr || undefined } as any
                         } else {
-                          await handleSaveField('metadata.warrantyExpires', v || undefined)
+                          await handleSaveField('metadata.warrantyExpires', dateStr || undefined)
                         }
                       }}
                       placeholder="Warranty expiration date"

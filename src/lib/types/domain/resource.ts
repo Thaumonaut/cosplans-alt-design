@@ -38,7 +38,7 @@ export interface PropMetadata {
   category: 'prop'
   dimensions?: string
   weight?: string
-  material?: string
+  material?: string | string[] // Support multiple materials
   fragile?: boolean
   requiresAssembly?: boolean
   storageLocation?: string
@@ -79,7 +79,7 @@ export interface CostumePieceMetadata {
   category: 'costume-piece'
   pieceType?: string
   size?: string
-  material?: string
+  material?: string | string[] // Support multiple materials
   color?: string
   needsAlterations?: boolean
 }
@@ -87,14 +87,14 @@ export interface CostumePieceMetadata {
 export interface AccessoryMetadata {
   category: 'accessory'
   accessoryType?: string
-  material?: string
+  material?: string | string[] // Support multiple materials
   color?: string
   quantity?: number
 }
 
 export interface MaterialMetadata {
   category: 'material'
-  materialType?: string
+  materialType?: string | string[] // Support multiple material types
   brand?: string
   colorVariant?: string
   quantity?: number

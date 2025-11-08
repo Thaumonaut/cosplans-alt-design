@@ -13,22 +13,29 @@
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
+  import StatusSelector from '$lib/components/base/StatusSelector.svelte'
   import ResourcesTab from './tabs/ResourcesTab.svelte'
   import TasksTab from './tabs/TasksTab.svelte'
   import GalleryTab from './tabs/GalleryTab.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
+  import ResourceDetail from '$lib/components/resources/ResourceDetail.svelte'
+  import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import NotFound from '$lib/components/base/NotFound.svelte'
   import type { Project, ProjectCreate } from '$lib/types/domain/project'
   import { get } from 'svelte/store'
+
 
   interface Props {
     projectId?: string
     mode?: 'create' | 'edit' | 'view'
     isFlyout?: boolean
     onSuccess?: (projectId: string) => void
+    onOpenResourceDetail?: (resourceId: string) => void
   }
 
-  let { projectId, mode, isFlyout = false, onSuccess }: Props = $props()
+  let { projectId, mode, isFlyout = false, onSuccess, onOpenResourceDetail }: Props = $props()
 
   let project: Project | null = $state(null)
   let newProject: ProjectCreate = $state({
@@ -53,6 +60,8 @@
   let progressValue = $state(0)
   let spentBudgetValue = $state(0)
   let linkedResourcesData = $state<any[]>([])
+  let showResourceDetailFlyout = $state(false)
+  let selectedResourceId = $state<string | null>(null)
 
   $effect(() => {
     if (mode === 'create') {
@@ -133,9 +142,7 @@
     return project ? 'edit' : 'view'
   })
 
-  const isReadOnly = $derived(() => {
-    return currentMode() === 'view'
-  })
+  const isReadOnly = $derived(currentMode() === 'view')
 
   const currentTags = $derived(() => {
     return currentMode() === 'create' ? (newProject.tags ?? []) : (project?.tags ?? [])
@@ -250,7 +257,7 @@
       return
     }
 
-    if (!project || isReadOnly()) return
+    if (!project || isReadOnly) return
     
     try {
       await projects.update(project.id, { [field]: value })
@@ -363,6 +370,26 @@
   let deadlineValue = $state('')
   let imagesValue = $state<string[]>([])
 
+  function handleResourceClick(resourceId: string) {
+    // If parent wants to handle resource detail opening (for flyout switching), let them
+    if (onOpenResourceDetail) {
+      onOpenResourceDetail(resourceId)
+    } else {
+      // Otherwise, open inline
+      selectedResourceId = resourceId
+      showResourceDetailFlyout = true
+    }
+  }
+  
+  function handleResourceDetailClose() {
+    showResourceDetailFlyout = false
+    selectedResourceId = null
+    // Reload linked resources to get updated data
+    if (project?.id) {
+      loadLinkedResources()
+    }
+  }
+
   $effect(() => {
     if (currentMode() === 'create') {
       characterValue = newProject.character
@@ -387,122 +414,176 @@
     <div class="text-sm text-muted-foreground">Loading project...</div>
   </div>
 {:else if error && currentMode() !== 'create' && !project}
-  <div class="space-y-4 p-8">
-    <p class="text-sm text-destructive">{error}</p>
-    <Button variant="outline" onclick={() => goto('/projects')}>Back to Projects</Button>
-  </div>
+  <NotFound entityType="project" backUrl="/projects" searchUrl="/projects" />
 {:else}
   <div class="flex h-full flex-col">
-    <!-- Header with Title and Quick Info -->
+    <!-- Header with Image, Title and Metadata -->
     <div class="border-b bg-background px-8 py-6">
-      <div class="space-y-4">
-        <!-- Title and Actions Row -->
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 space-y-2">
-            <InlineTextEditor
-              bind:value={characterValue}
-              editable={!isReadOnly}
-              onSave={async (v: string) => {
-                if (currentMode() === 'create') {
-                  newProject.character = v
-                  characterValue = v
-                } else {
-                  await handleSaveField('character', v)
-                }
-              }}
-              onValidate={validateRequired}
-              placeholder="Character name"
-              variant="title"
-              className="text-3xl font-semibold"
-            />
-            <InlineTextEditor
-              bind:value={seriesValue}
-              editable={!isReadOnly}
-              onSave={async (v: string) => {
-                if (currentMode() === 'create') {
-                  newProject.series = v.trim() || undefined
-                  seriesValue = v
-                } else {
-                  await handleSaveField('series', v.trim() || null)
-                }
-              }}
-              placeholder="Series or source material (optional)"
-              variant="body"
-              className="text-lg text-muted-foreground"
-            />
-          </div>
-
-          <!-- Action Buttons (only in edit mode) -->
-          {#if currentMode() === 'edit' && project}
-            <div class="flex gap-2">
-              <!-- Convert to Idea Button -->
-              <Button
-                variant="ghost"
-                size="icon"
-                onclick={() => showConvertToIdeaDialog = true}
-                class="text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft class="size-4" />
-                <span class="sr-only">Convert to idea</span>
-              </Button>
-              <!-- Delete Button -->
-              <Button
-                variant="ghost"
-                size="icon"
-                onclick={() => showDeleteDialog = true}
-                class="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 class="size-4" />
-                <span class="sr-only">Delete project</span>
-              </Button>
+      <div class="flex gap-6">
+        <!-- Header Image -->
+        <div class="shrink-0">
+          {#if primaryImage()}
+            <div class="size-32 overflow-hidden rounded-lg bg-muted shadow-sm">
+              <img src={primaryImage()} alt={characterValue || 'Character'} class="size-full object-cover" />
+            </div>
+          {:else}
+            <div class="flex size-32 items-center justify-center rounded-lg bg-muted shadow-sm">
+              <div class="text-center">
+                <ImageIcon class="mx-auto size-8 text-muted-foreground" />
+                {#if !isReadOnly}
+                  <div class="mt-2">
+                    <InlineImageUpload
+                      images={imagesValue}
+                      editable={true}
+                      folder="projects"
+                      onSave={async (v: string[]) => {
+                        if (currentMode() === 'create') {
+                          newProject.referenceImages = v
+                          imagesValue = v
+                        } else if (project) {
+                          project.referenceImages = v
+                          imagesValue = v
+                          await handleSaveField('referenceImages', v)
+                        }
+                      }}
+                      multiple={true}
+                    />
+                  </div>
+                {/if}
+              </div>
             </div>
           {/if}
         </div>
 
-        <!-- Metadata Bar -->
-        <div class="flex flex-wrap items-center gap-6 text-sm">
-          <!-- Created Date -->
-          {#if createdDate()}
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <Calendar class="size-4" />
-              <span>Created {createdDate()!.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-            </div>
-          {/if}
-
-          <!-- Status Badge -->
-          <div class="flex items-center gap-2">
-            {#if !isReadOnly}
-              <InlineSelect
-                bind:value={statusValue}
-                editable={true}
+        <!-- Title and Metadata -->
+        <div class="flex-1 space-y-3">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 space-y-1">
+              <InlineTextEditor
+                bind:value={characterValue}
+                editable={!isReadOnly}
                 onSave={async (v: string) => {
                   if (currentMode() === 'create') {
-                    newProject.status = v as any
-                    statusValue = v as any
+                    newProject.character = v
+                    characterValue = v
+                  } else {
+                    await handleSaveField('character', v)
+                  }
+                }}
+                onValidate={validateRequired}
+                placeholder="Character name"
+                variant="title"
+                className="text-2xl font-semibold"
+              />
+              <InlineTextEditor
+                bind:value={seriesValue}
+                editable={!isReadOnly}
+                onSave={async (v: string) => {
+                  if (currentMode() === 'create') {
+                    newProject.series = v.trim() || undefined
+                    seriesValue = v
+                  } else {
+                    await handleSaveField('series', v.trim() || null)
+                  }
+                }}
+                placeholder="Series or source material (optional)"
+                variant="body"
+                className="text-base text-muted-foreground"
+              />
+            </div>
+
+            <!-- Action Buttons (only in edit mode) -->
+            {#if currentMode() === 'edit' && project}
+              <div class="flex gap-2">
+                <!-- Convert to Idea Button -->
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onclick={() => showConvertToIdeaDialog = true}
+                  class="text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft class="size-4" />
+                  <span class="sr-only">Convert to idea</span>
+                </Button>
+                <!-- Delete Button -->
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onclick={() => showDeleteDialog = true}
+                  class="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 class="size-4" />
+                  <span class="sr-only">Delete project</span>
+                </Button>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Metadata Grid -->
+          <div class="space-y-3 text-sm">
+            <!-- Row 1: Created Date and Status -->
+            <div class="flex items-center gap-4">
+              <!-- Created Date -->
+              {#if createdDate()}
+                <div class="flex items-center gap-2 text-muted-foreground">
+                  <Calendar class="size-4 shrink-0" />
+                  <span>Created {createdDate()!.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+              {/if}
+
+              <!-- Status -->
+              <StatusSelector
+                bind:value={statusValue}
+                editable={!isReadOnly}
+                onSave={async (v) => {
+                  if (currentMode() === 'create') {
+                    newProject.status = v
+                    statusValue = v
                   } else {
                     await handleSaveField('status', v)
                   }
                 }}
-                options={statusOptions}
-                placeholder="Status"
               />
-            {:else}
-              <Badge>{statusValue.replace('-', ' ')}</Badge>
-            {/if}
-          </div>
-
-          <!-- Progress (only in edit mode) -->
-          {#if project}
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <Clock class="size-4" />
-              <span>{project.progress}% complete</span>
             </div>
-          {/if}
 
-          <!-- Tags -->
-          <div class="flex items-center gap-2">
-            <TagIcon class="size-4 text-muted-foreground" />
-            <div class="flex flex-wrap gap-1.5">
+            <!-- Row 2: Due Date -->
+            <div class="flex items-center gap-2">
+              {#if !isReadOnly}
+                <DatePicker
+                  value={deadlineValue}
+                  placeholder="Set due date"
+                  onchange={async (v: string | null) => {
+                    const dateStr = v || '';
+                    if (currentMode() === 'create') {
+                      newProject.deadline = dateStr || undefined
+                      deadlineValue = dateStr
+                    } else if (project) {
+                      await handleSaveField('deadline', dateStr || undefined)
+                    }
+                  }}
+                />
+              {:else if deadlineValue}
+                {@const daysUntil = Math.ceil((new Date(deadlineValue).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                <div class="flex items-center gap-2">
+                  <Calendar class="size-4 shrink-0 text-muted-foreground" />
+                  <span>{new Date(deadlineValue).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  {#if daysUntil > 0}
+                    <span class="text-xs text-muted-foreground">({daysUntil}d left)</span>
+                  {:else if daysUntil === 0}
+                    <span class="text-xs text-warning">(Due today)</span>
+                  {:else}
+                    <span class="text-xs text-destructive">({Math.abs(daysUntil)}d overdue)</span>
+                  {/if}
+                </div>
+              {:else}
+                <Calendar class="size-4 shrink-0 text-muted-foreground" />
+                <span class="text-muted-foreground">No due date</span>
+              {/if}
+            </div>
+
+            <!-- Row 3: Tags -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <TagIcon class="size-4 text-muted-foreground shrink-0" />
               {#each currentTags() as tag}
                 <Badge class="border bg-muted px-2 py-0.5 text-xs">
                   {tag}
@@ -557,43 +638,84 @@
     <div class="flex-1 overflow-y-auto bg-muted/30">
       <div class="p-8">
         {#if activeTab === 'overview'}
-          <!-- Overview: Hero Image + Description + Quick Details -->
-          <div class="mx-auto max-w-4xl space-y-8">
-            <!-- Primary Hero Image -->
-            <div class="overflow-hidden rounded-lg bg-background shadow-sm">
-              {#if primaryImage()}
-                <img src={primaryImage()} alt={characterValue || 'Character'} class="w-full object-cover" style="max-height: 500px;" />
-              {:else}
-                <div class="flex aspect-video items-center justify-center bg-muted">
-                  <div class="text-center space-y-3">
-                    <ImageIcon class="mx-auto size-12 text-muted-foreground" />
-                    <p class="text-sm text-muted-foreground">No image uploaded</p>
-                    {#if !isReadOnly}
-                      <InlineImageUpload
-                        images={imagesValue}
-                        editable={true}
-                        folder="projects"
-                        onSave={async (v: string[]) => {
-                          if (currentMode() === 'create') {
-                            newProject.referenceImages = v
-                            imagesValue = v
-                          } else if (project) {
-                            project.referenceImages = v
-                            imagesValue = v
-                            await handleSaveField('referenceImages', v)
-                          }
-                        }}
-                        multiple={true}
-                      />
+          <!-- Overview: Progress & Budget, Description, Previews -->
+          <div class="mx-auto max-w-6xl space-y-6">
+            <!-- Progress and Budget Side by Side -->
+            {#if project}
+              <div class="grid gap-6 md:grid-cols-2">
+                <!-- Progress Card -->
+                <div class="space-y-4 rounded-lg bg-background p-6 shadow-sm">
+                  <div class="flex items-center gap-2">
+                    <Clock class="size-5 text-muted-foreground" />
+                    <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Progress</h3>
+                  </div>
+                  <div class="space-y-3">
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-4xl font-bold">{progressValue}%</span>
+                      <span class="text-sm text-muted-foreground">complete</span>
+                    </div>
+                    <Progressbar progress={progressValue} class="h-3" />
+                  </div>
+                </div>
+
+                <!-- Budget Card -->
+                <div class="space-y-4 rounded-lg bg-background p-6 shadow-sm {project && spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0 ? 'ring-2 ring-destructive/50' : ''}">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <DollarSign class="size-5 text-muted-foreground" />
+                      <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Budget</h3>
+                    </div>
+                    {#if project && spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0}
+                      <span class="text-xs font-medium text-destructive">⚠ Exceeded</span>
+                    {/if}
+                  </div>
+                  <div class="space-y-3">
+                    <!-- Estimated Budget -->
+                    <div>
+                      <div class="text-xs text-muted-foreground mb-1">Estimated</div>
+                      {#if !isReadOnly}
+                        <InlineNumberEditor
+                          bind:value={estimatedBudgetValue}
+                          editable={true}
+                          onSave={async (v: number) => {
+                            estimatedBudgetSetter(v)
+                            await handleSaveField('estimatedBudget', v)
+                          }}
+                          placeholder="Set budget"
+                          min={0}
+                        />
+                      {:else}
+                        <div class="text-2xl font-bold">${(estimatedBudgetValue / 100).toFixed(2)}</div>
+                      {/if}
+                    </div>
+                    
+                    <!-- Spent -->
+                    <div>
+                      <div class="text-xs text-muted-foreground mb-1">Spent</div>
+                      <div class="text-2xl font-bold">${(spentBudgetValue / 100).toFixed(2)}</div>
+                    </div>
+                    
+                    <!-- Remaining/Exceeded -->
+                    {#if estimatedBudgetValue > 0}
+                      <div class="pt-2 border-t">
+                        <div class="flex items-center justify-between text-sm">
+                          <span class="text-muted-foreground">
+                            {spentBudgetValue >= estimatedBudgetValue ? 'Exceeded' : 'Remaining'}
+                          </span>
+                          <span class="font-semibold {spentBudgetValue >= estimatedBudgetValue ? 'text-destructive' : 'text-success'}">
+                            ${Math.abs((estimatedBudgetValue - spentBudgetValue) / 100).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
                     {/if}
                   </div>
                 </div>
-              {/if}
-            </div>
+              </div>
+            {/if}
 
-            <!-- Description Section -->
+            <!-- Description -->
             <div class="space-y-3 rounded-lg bg-background p-6 shadow-sm">
-              <h3 class="text-sm font-medium text-muted-foreground">Description</h3>
+              <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Description</h3>
               <InlineTextEditor
                 bind:value={descriptionValue}
                 editable={!isReadOnly}
@@ -610,92 +732,121 @@
                 placeholder="Describe your project goals and vision..."
                 variant="body"
                 multiline={true}
-                className="text-base leading-relaxed min-h-[120px]"
+                className="text-base leading-relaxed min-h-[100px]"
               />
             </div>
 
-            <!-- Estimated Budget - Full Width -->
-            {#if estimatedBudgetValue > 0 || !isReadOnly()}
-              <div class="group relative overflow-hidden rounded-lg bg-gradient-to-br from-background {project && spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0 ? 'to-destructive/10' : 'to-muted/20'} p-6 shadow-sm ring-1 {project && spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0 ? 'ring-destructive/50' : 'ring-black/5'} transition-all hover:shadow-md">
-                <div class="mb-4 flex items-center gap-2">
-                  <DollarSign class="size-4 text-muted-foreground" />
-                  <span class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Estimated Budget</span>
-                  {#if project && spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0}
-                    <span class="ml-auto text-xs font-medium text-destructive">⚠ Budget Exceeded</span>
+            <!-- Gallery Preview -->
+            {#if imagesValue.length > 0 || !isReadOnly}
+              <div class="space-y-4 rounded-lg bg-background p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Gallery</h3>
+                  {#if imagesValue.length > 0}
+                    <button
+                      onclick={() => activeTab = 'gallery'}
+                      class="text-xs text-primary hover:underline"
+                    >
+                      View all ({imagesValue.length})
+                    </button>
                   {/if}
                 </div>
-                <InlineNumberEditor
-                  bind:value={estimatedBudgetValue}
-                  editable={!isReadOnly()}
-                  onSave={async (v: number) => {
-                    estimatedBudgetSetter(v)
-                    await handleSaveField('estimatedBudget', v)
-                  }}
-                  placeholder="$0.00"
-                  min={0}
-                />
-                {#if project && estimatedBudgetValue > 0}
-                  <div class="mt-3 flex items-center justify-between text-sm">
-                    <span class="text-muted-foreground">Spent: ${(spentBudgetValue / 100).toFixed(2)}</span>
-                    <span class={spentBudgetValue >= estimatedBudgetValue ? 'font-medium text-destructive' : 'text-muted-foreground'}>
-                      {spentBudgetValue >= estimatedBudgetValue 
-                        ? `Exceeded by $${((spentBudgetValue - estimatedBudgetValue) / 100).toFixed(2)}`
-                        : `Remaining: $${((estimatedBudgetValue - spentBudgetValue) / 100).toFixed(2)}`
-                      }
-                    </span>
+                {#if imagesValue.length > 0}
+                  <div class="grid gap-3 grid-cols-4">
+                    {#each imagesValue.slice(0, 4) as imageUrl}
+                      <div class="aspect-square overflow-hidden rounded-md bg-muted">
+                        <img src={imageUrl} alt="Gallery" class="size-full object-cover" />
+                      </div>
+                    {/each}
                   </div>
-                {/if}
-              </div>
-            {/if}
-
-            <!-- Deadline -->
-            {#if deadlineValue || !isReadOnly}
-              <div class="space-y-3 rounded-lg bg-background p-6 shadow-sm">
-                <div class="flex items-center gap-2">
-                  <Calendar class="size-4 text-muted-foreground" />
-                  <h3 class="text-sm font-medium text-muted-foreground">Deadline</h3>
-                </div>
-                {#if !isReadOnly}
-                  <input
-                    type="date"
-                    bind:value={deadlineValue}
-                    onchange={() => {
-                      if (currentMode() === 'create') {
-                        newProject.deadline = deadlineValue || undefined
-                      } else if (project) {
-                        handleSaveField('deadline', deadlineValue || undefined)
-                      }
-                    }}
-                    class="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
-                  />
-                {:else if deadlineValue}
-                  <p class="text-base">{new Date(deadlineValue).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                 {:else}
-                  <p class="text-base text-muted-foreground">No deadline set</p>
+                  <div class="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center">
+                    <div class="space-y-2">
+                      <ImageIcon class="mx-auto size-8 text-muted-foreground" />
+                      <p class="text-sm text-muted-foreground">No images yet</p>
+                      {#if !isReadOnly}
+                        <button
+                          onclick={() => activeTab = 'gallery'}
+                          class="text-xs text-primary hover:underline"
+                        >
+                          Add images
+                        </button>
+                      {/if}
+                    </div>
+                  </div>
                 {/if}
               </div>
             {/if}
 
-            <!-- Progress (only in edit mode) -->
+            <!-- Resources Preview -->
             {#if project}
-              <div class="space-y-3 rounded-lg bg-background p-6 shadow-sm">
-                <h3 class="text-sm font-medium text-muted-foreground">Progress</h3>
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-2xl font-bold">{progressValue}%</span>
+              <div class="space-y-4 rounded-lg bg-background p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Resources</h3>
+                  <button
+                    onclick={() => activeTab = 'resources'}
+                    class="text-xs text-primary hover:underline"
+                  >
+                    {linkedResourcesData.length > 0 ? `View all (${linkedResourcesData.length})` : 'Manage'}
+                  </button>
+                </div>
+                {#if linkedResourcesData.length > 0}
+                  <div class="space-y-2">
+                    {#each linkedResourcesData.slice(0, 5) as link}
+                      {@const resource = link.resource || link}
+                      <button
+                        onclick={() => handleResourceClick(resource.id)}
+                        class="flex w-full items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50 transition-colors text-left cursor-pointer"
+                      >
+                        <div class="flex items-center gap-3">
+                          <div class="font-medium">{resource.name}</div>
+                          <div class="text-xs text-muted-foreground">{resource.category}</div>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                          {#if link.quantity && link.quantity > 1}
+                            <span>Qty: {link.quantity}</span>
+                          {/if}
+                          {#if resource.cost}
+                            <span>${(resource.cost / 100).toFixed(2)}</span>
+                          {/if}
+                        </div>
+                      </button>
+                    {/each}
                   </div>
-                  <Progressbar progress={progressValue} class="h-2" />
-                  <div class="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Budget: ${(spentBudgetValue / 100).toFixed(2)}</span>
-                    {#if estimatedBudgetValue > 0}
-                      <span class={spentBudgetValue >= estimatedBudgetValue ? 'text-destructive font-medium' : ''}>
-                        of ${(estimatedBudgetValue / 100).toFixed(2)}
-                      </span>
-                    {/if}
-                    {#if spentBudgetValue >= estimatedBudgetValue && estimatedBudgetValue > 0}
-                      <span class="text-xs text-destructive">(Budget exceeded)</span>
-                    {/if}
+                {:else}
+                  <div class="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center">
+                    <div class="space-y-2">
+                      <p class="text-sm text-muted-foreground">No resources linked yet</p>
+                      <button
+                        onclick={() => activeTab = 'resources'}
+                        class="text-xs text-primary hover:underline"
+                      >
+                        Link resources
+                      </button>
+                    </div>
                   </div>
+                {/if}
+              </div>
+            {/if}
+
+            <!-- Tasks Preview -->
+            {#if project}
+              <div class="space-y-4 rounded-lg bg-background p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-medium uppercase tracking-wider text-muted-foreground">Upcoming Tasks</h3>
+                  <button
+                    onclick={() => activeTab = 'tasks'}
+                    class="text-xs text-primary hover:underline"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div class="text-sm text-muted-foreground">
+                  <button
+                    onclick={() => activeTab = 'tasks'}
+                    class="w-full rounded-lg border-2 border-dashed p-8 text-center hover:bg-muted/50"
+                  >
+                    Click to view and manage tasks
+                  </button>
                 </div>
               </div>
             {/if}
@@ -755,7 +906,7 @@
                   </div>
                 {/each}
               </div>
-            {:else if isReadOnly()}
+            {:else if isReadOnly}
               <div class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-background p-12 text-center">
                 <ImageIcon class="mx-auto mb-4 size-12 text-muted-foreground" />
                 <p class="text-sm text-muted-foreground">No reference images</p>
@@ -772,6 +923,7 @@
                 // Recalculate progress and budget when resources change
                 await recalculateMetrics()
               }}
+              onResourceClick={handleResourceClick}
             />
           </div>
 
@@ -787,27 +939,6 @@
             />
           </div>
 
-        {/if}
-        
-        {#if activeTab === 'gallery'}
-          <!-- Gallery Tab -->
-          <div class="p-8">
-            <GalleryTab 
-              project={project}
-              images={imagesValue}
-              editable={!isReadOnly()}
-              onUpdate={async (images: string[]) => {
-                if (currentMode() === 'create') {
-                  newProject.referenceImages = images
-                  imagesValue = images
-                } else if (project) {
-                  project.referenceImages = images
-                  imagesValue = images
-                  await handleSaveField('referenceImages', images)
-                }
-              }}
-            />
-          </div>
         {/if}
       </div>
     </div>
@@ -899,3 +1030,22 @@
     </Button>
   </DialogFooter>
 </Dialog>
+
+<!-- Resource Detail Flyout - Only render if not using parent handler -->
+{#if !onOpenResourceDetail && showResourceDetailFlyout && selectedResourceId}
+  <CreationFlyout
+    bind:open={showResourceDetailFlyout}
+    title="Resource"
+    onFullScreen={() => {
+      goto(`/resources/${selectedResourceId}`)
+      showResourceDetailFlyout = false
+    }}
+  >
+    <ResourceDetail
+      resourceId={selectedResourceId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={handleResourceDetailClose}
+    />
+  </CreationFlyout>
+{/if}

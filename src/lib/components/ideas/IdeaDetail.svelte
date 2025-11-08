@@ -18,6 +18,7 @@
   import DifficultySelector from '$lib/components/base/DifficultySelector.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
+  import NotFound from '$lib/components/base/NotFound.svelte'
   import { processImage } from '$lib/utils/image'
   import { uploadImageToStorage } from '$lib/utils/storage'
   import type { Idea, IdeaCreate } from '$lib/types/domain/idea'
@@ -622,14 +623,11 @@
     <div class="text-sm text-muted-foreground">Loading idea...</div>
   </div>
 {:else if error && currentMode() !== 'create' && !idea}
-  <div class="space-y-4 p-8">
-    <p class="text-sm text-destructive">{error}</p>
-    <Button variant="outline" onclick={() => goto('/ideas')}>Back to Ideas</Button>
-  </div>
+  <NotFound entityType="idea" backUrl="/ideas" searchUrl="/ideas" />
 {:else}
   <div class="flex h-full flex-col">
     <!-- Header with Title and Quick Info -->
-    <div class="border-b bg-background px-8 py-6">
+    <div class="border-b bg-[var(--theme-card-bg)] px-8 py-6">
       <div class="space-y-4">
         <!-- Title and Actions Row -->
         <div class="flex items-start justify-between gap-4">
@@ -737,7 +735,7 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="border-b bg-background">
+    <div class="border-b bg-[var(--theme-card-bg)]">
       <div class="flex gap-8 px-8">
         <button
           onclick={() => activeTab = 'overview'}
@@ -761,7 +759,7 @@
     </div>
 
     <!-- Tab Content - Moodboard Style -->
-    <div class="flex-1 overflow-y-auto bg-muted/30">
+    <div class="flex-1 overflow-y-auto bg-[var(--theme-card-bg)]">
       <div class="p-8">
         {#if activeTab === 'overview'}
           <!-- Overview: Hero Image + Description + Quick Details -->
@@ -773,7 +771,7 @@
                   src={primaryImage} 
                   alt={characterValue || 'Character'} 
                   class="w-full object-cover" 
-                  style="max-height: 500px;"
+                  style="max-height: 200px;"
                   onerror={() => {
                     // Mark primary image as error
                     const currentIndex = effectivePrimaryIndex
@@ -842,10 +840,10 @@
                   </div>
                 </div>
               {:else}
-                <div class="flex aspect-video items-center justify-center bg-muted">
+                <div class="flex aspect-video items-center justify-center bg-[var(--theme-input-bg)]">
                   <div class="text-center space-y-3">
-                    <ImageIcon class="mx-auto size-12 text-muted-foreground" />
-                    <p class="text-sm text-muted-foreground">No image uploaded</p>
+                    <ImageIcon class="mx-auto size-12 text-[var(--theme-muted-foreground)]" />
+                    <p class="text-sm text-[var(--theme-muted-foreground)]">No image uploaded</p>
                     {#if !isReadOnly}
                       <InlineImageUpload
                         images={imagesValue}
@@ -929,6 +927,9 @@
                   {@const isDragOver = dragOverIndex === index}
                   
                   <div 
+                    role="button"
+                    tabindex="0"
+                    aria-label={isPrimary ? `Primary image ${index + 1}, drag to reorder` : `Image ${index + 1}, drag to reorder`}
                     class="group relative aspect-square overflow-hidden rounded-lg bg-background shadow-sm transition-all hover:shadow-md cursor-pointer {isPrimary ? 'ring-2 ring-primary' : ''} {isDragging ? 'opacity-50 scale-95' : ''} {isDragOver ? 'ring-2 ring-primary scale-105' : ''}"
                     draggable={!isReadOnly && !hasError}
                     ondragstart={(e) => {
@@ -1148,7 +1149,7 @@
 
     <!-- Actions Footer -->
     {#if currentMode() === 'create'}
-      <div class="border-t bg-background px-8 py-4">
+      <div class="border-t bg-[var(--theme-card-bg)] px-8 py-4">
         <div class="flex gap-3">
           <Button
             onclick={(e) => {
@@ -1178,7 +1179,7 @@
         </div>
       </div>
     {:else if !isReadOnly}
-      <div class="border-t bg-background px-8 py-4">
+      <div class="border-t bg-[var(--theme-card-bg)] px-8 py-4">
         <Button
           onclick={handleConvertToProject}
           disabled={isConverting || !idea?.character || !idea?.series}

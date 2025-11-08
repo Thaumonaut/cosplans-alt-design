@@ -1,6 +1,24 @@
 <script lang="ts">
   import { cn } from "$lib/utils";
 
+  // Svelte action to append element to portal container
+  function portal(node: HTMLElement, container: HTMLElement) {
+    container.appendChild(node);
+    return {
+      update(newContainer: HTMLElement) {
+        if (newContainer !== container) {
+          container.removeChild(node);
+          newContainer.appendChild(node);
+        }
+      },
+      destroy() {
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      }
+    };
+  }
+
   interface Props {
     open?: boolean;
     placement?:
@@ -31,6 +49,109 @@
 
   let isOpen = $state(false);
   let dropdownElement: HTMLDivElement;
+  let triggerElement = $state<HTMLDivElement | undefined>(undefined);
+  let dropdownPosition = $state<{ top: number | null, left: number | null, right: number | null, bottom: number | null, width: number }>({ top: null, left: null, right: null, bottom: null, width: 0 });
+  let portalContainer = $state<HTMLDivElement | undefined>(undefined);
+  
+  // Calculate dropdown width from trigger element
+  const dropdownWidth = $derived(triggerElement?.offsetWidth ?? null);
+
+  // Calculate position for fixed dropdown
+  function updateDropdownPosition() {
+    if (!triggerElement || !isOpen) return;
+    
+    const rect = triggerElement.getBoundingClientRect();
+    const spacing = 6; // 1.5rem = 6px
+    
+    let top: number | null = null;
+    let left: number | null = null;
+    let right: number | null = null;
+    let bottom: number | null = null;
+    
+    // Vertical placement
+    if (placement.includes('bottom')) {
+      top = rect.bottom + spacing;
+      bottom = null;
+    } else if (placement.includes('top')) {
+      bottom = window.innerHeight - rect.top + spacing;
+      top = null;
+    } else {
+      // Default to bottom
+      top = rect.bottom + spacing;
+      bottom = null;
+    }
+    
+    // Horizontal placement
+    if (placement.includes('end') || placement === 'bottom-end' || placement === 'top-end') {
+      right = window.innerWidth - rect.right;
+      left = null;
+    } else if (placement.includes('start') || placement === 'bottom-start' || placement === 'top-start') {
+      left = rect.left;
+      right = null;
+    } else if (placement.includes('left')) {
+      right = window.innerWidth - rect.left + spacing;
+      left = null;
+      top = rect.top;
+      bottom = null;
+    } else if (placement.includes('right')) {
+      left = rect.right + spacing;
+      right = null;
+      top = rect.top;
+      bottom = null;
+    } else {
+      // Default: bottom-start
+      left = rect.left;
+      right = null;
+    }
+    
+    dropdownPosition = { top, left, right, bottom, width: dropdownWidth ?? 280 };
+  }
+
+  // Create portal container and manage it
+  $effect(() => {
+    if (isOpen) {
+      // Create portal container if it doesn't exist
+      if (!portalContainer) {
+        portalContainer = document.createElement('div');
+        portalContainer.id = 'dropdown-portal-' + Date.now();
+        portalContainer.style.position = 'fixed';
+        portalContainer.style.top = '0';
+        portalContainer.style.left = '0';
+        portalContainer.style.width = '100%';
+        portalContainer.style.height = '100%';
+        portalContainer.style.pointerEvents = 'none';
+        portalContainer.style.zIndex = '99999';
+        portalContainer.style.isolation = 'isolate';
+        document.body.appendChild(portalContainer);
+      }
+      
+      if (triggerElement) {
+        updateDropdownPosition();
+        // Recalculate on scroll/resize
+        const handleUpdate = () => updateDropdownPosition();
+        window.addEventListener('scroll', handleUpdate, true);
+        window.addEventListener('resize', handleUpdate);
+        return () => {
+          window.removeEventListener('scroll', handleUpdate, true);
+          window.removeEventListener('resize', handleUpdate);
+        };
+      }
+    } else {
+      // Clean up portal container when dropdown closes
+      if (portalContainer?.parentNode) {
+        portalContainer.parentNode.removeChild(portalContainer);
+        portalContainer = undefined;
+      }
+    }
+    
+    return () => {
+      // Cleanup on component destroy
+      if (portalContainer?.parentNode) {
+        portalContainer.parentNode.removeChild(portalContainer);
+        portalContainer = undefined;
+      }
+    };
+  });
 
   function toggleDropdown() {
     isOpen = !isOpen;
@@ -46,9 +167,16 @@
     }
   }
 
+  let dropdownMenuElement = $state<HTMLElement | undefined>(undefined);
+
   function handleClickOutside(event: MouseEvent) {
-    if (isOpen && dropdownElement && !dropdownElement.contains(event.target as Node)) {
-      closeDropdown();
+    if (isOpen) {
+      const target = event.target as Node;
+      const clickedInsideDropdown = dropdownMenuElement?.contains(target);
+      const clickedOnTrigger = triggerElement?.contains(target);
+      if (!clickedInsideDropdown && !clickedOnTrigger) {
+        closeDropdown();
+      }
     }
   }
 
@@ -61,8 +189,13 @@
   function handleBlur(event: FocusEvent) {
     // Use setTimeout to allow for focus to move to child elements
     setTimeout(() => {
-      if (isOpen && dropdownElement && !dropdownElement.contains(document.activeElement)) {
-        closeDropdown();
+      if (isOpen) {
+        const activeElement = document.activeElement;
+        const focusedInsideDropdown = dropdownMenuElement?.contains(activeElement);
+        const focusedOnTrigger = triggerElement?.contains(activeElement);
+        if (!focusedInsideDropdown && !focusedOnTrigger) {
+          closeDropdown();
+        }
       }
     }, 0);
   }
@@ -92,9 +225,10 @@
   });
 </script>
 
-<div class="relative" bind:this={dropdownElement}>
+<div class="relative w-full" bind:this={dropdownElement}>
   <!-- Trigger - can be button or other element from snippet -->
   <div
+    bind:this={triggerElement}
     onclick={toggleDropdown}
     onkeydown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -102,29 +236,38 @@
         toggleDropdown()
       }
     }}
-    class="inline-flex items-center justify-center cursor-pointer"
+    class="flex items-center justify-center cursor-pointer w-full"
     role="button"
     tabindex="0"
   >
     {@render trigger?.()}
   </div>
 
-  <!-- Dropdown menu positioned correctly -->
-  {#if isOpen}
+</div>
+
+<!-- Render dropdown in portal to escape all stacking contexts -->
+{#if isOpen && portalContainer}
+  {#key portalContainer}
     <div
+      bind:this={dropdownMenuElement}
       class={cn(
-        "absolute bg-popover text-popover-foreground border shadow-lg rounded-md p-1 min-w-[8rem] z-[9999]",
-        // Position based on placement prop
-        placement === "top-start" && "bottom-full left-0 mb-1",
-        placement === "top-end" && "bottom-full right-0 mb-1", 
-        placement === "bottom-start" && "top-full left-0 mt-1",
-        placement === "bottom-end" && "top-full right-0 mt-1",
-        placement === "left-start" && "right-full top-0 mr-1",
-        placement === "right-start" && "left-full top-0 ml-1",
+        "fixed backdrop-blur-md border shadow-xl py-5 px-2 list-none pointer-events-auto",
+        "bg-[var(--theme-input-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)] rounded-lg",
         className,
       )}
+      style={`
+        ${dropdownPosition.top !== null ? `top: ${dropdownPosition.top}px;` : ''}
+        ${dropdownPosition.left !== null ? `left: ${dropdownPosition.left}px;` : ''}
+        ${dropdownPosition.right !== null ? `right: ${dropdownPosition.right}px;` : ''}
+        ${dropdownPosition.bottom !== null ? `bottom: ${dropdownPosition.bottom}px;` : ''}
+        min-width: 280px;
+        z-index: 99999;
+        ${dropdownWidth && dropdownWidth > 280 ? `width: ${dropdownWidth}px;` : ''}
+      `}
+      role="list"
+      use:portal={portalContainer}
     >
       {@render children?.()}
     </div>
-  {/if}
-</div>
+  {/key}
+{/if}

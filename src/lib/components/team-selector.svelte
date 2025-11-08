@@ -81,38 +81,53 @@
   {/snippet}
 
   {#snippet children()}
-    <DropdownMenuLabel>Switch Team</DropdownMenuLabel>
-    <DropdownMenuSeparator />
-    
-    {#if $teams.items.length === 0}
-      <DropdownMenuItem disabled>No teams available</DropdownMenuItem>
-    {:else}
-      {#each Object.entries(groupedTeams) as [type, teamList]}
-        {@const TypeIcon = typeIcons[type as keyof typeof typeIcons] || Users}
-        {@const Icon = TypeIcon}
-        <DropdownMenuLabel class="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon class="size-3" />
-          {typeLabels[type as keyof typeof typeLabels] || type}
-        </DropdownMenuLabel>
-        
-        {#each teamList as team}
-          <DropdownMenuItem
-            onclick={() => handleTeamSwitch(team)}
-            class="flex items-center justify-between"
-          >
-            <span class="truncate">{team.name}</span>
-            {#if $currentTeam?.id === team.id}
-              <Check class="size-4 shrink-0" />
-            {/if}
-          </DropdownMenuItem>
+    <div class="py-1.5">
+      {#if $teams.items.length === 0}
+        <DropdownMenuItem disabled>
+          <span class="px-2 text-sm text-muted-foreground">No teams available</span>
+        </DropdownMenuItem>
+      {:else}
+        {#each Object.entries(groupedTeams) as [type, teamList]}
+          <!-- Section Header -->
+          <div class="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {typeLabels[type as keyof typeof typeLabels] || type.toUpperCase()}
+          </div>
+          
+          <!-- Team Items with Icons -->
+          {#each teamList as team}
+            {@const TeamIcon = getIcon(team.type)}
+            <DropdownMenuItem
+              onclick={() => handleTeamSwitch(team)}
+            >
+              <div class="flex w-full items-center justify-between gap-3 px-2">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <TeamIcon class="size-4 shrink-0 text-muted-foreground" />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">{team.name}</div>
+                  </div>
+                </div>
+                {#if $currentTeam?.id === team.id}
+                  <Check class="size-4 shrink-0 text-[var(--theme-primary)]" />
+                {/if}
+              </div>
+            </DropdownMenuItem>
+          {/each}
+          
+          {#if teamList !== Object.values(groupedTeams)[Object.values(groupedTeams).length - 1]}
+            <div class="border-t border-[var(--theme-border)] my-1"></div>
+          {/if}
         {/each}
-      {/each}
-    {/if}
-    
-    <DropdownMenuSeparator />
-    <DropdownMenuItem onclick={() => goto('/teams')}>
-      <Users class="mr-2 size-4" />
-      Manage Teams
-    </DropdownMenuItem>
+      {/if}
+      
+      <div class="border-t border-[var(--theme-border)] my-1"></div>
+      
+      <!-- Manage Teams -->
+      <DropdownMenuItem onclick={() => goto('/teams')}>
+        <div class="flex w-full items-center gap-3 px-2">
+          <Users class="size-4 shrink-0 text-muted-foreground" />
+          <div class="text-sm font-medium">Manage Teams</div>
+        </div>
+      </DropdownMenuItem>
+    </div>
   {/snippet}
 </DropdownMenu>

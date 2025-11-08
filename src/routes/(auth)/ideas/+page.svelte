@@ -9,6 +9,7 @@
   import NewIdeaDrawer from '$lib/components/ideas/NewIdeaDrawer.svelte'
   import IdeaDetail from '$lib/components/ideas/IdeaDetail.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import type { Idea } from '$lib/types/domain/idea'
   import { get } from 'svelte/store'
@@ -54,6 +55,14 @@
     if (team && (!data?.ideas || data.ideas.length === 0)) {
       ideas.load(team.id)
     }
+  })
+
+  // Computed empty message for LoadingState
+  const emptyMessageText = $derived.by(() => {
+    if (searchQuery.trim() || difficultyFilter !== 'all') {
+      return "Try adjusting your search or filters to find what you're looking for."
+    }
+    return "Get started by creating your first idea. Capture inspiration and convert to projects when ready."
   })
 
   // Reactive filtered ideas with fuzzy search
@@ -192,38 +201,28 @@
 
   <!-- Ideas Grid/List -->
   {#if $ideas.loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-        <p class="text-sm text-muted-foreground">Loading ideas...</p>
-      </div>
-    </div>
+    <LoadingState loading={true} />
   {:else if $ideas.error}
-    <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
-      <p class="text-sm text-destructive">{$ideas.error}</p>
-    </div>
+    <LoadingState error={$ideas.error} onRetry={() => {
+      const team = get(currentTeam)
+      if (team) ideas.load(team.id)
+    }} />
   {:else if filtered.length === 0}
-    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
-      <Sparkles class="mb-4 size-12 text-muted-foreground opacity-50" />
-      <h3 class="mb-2 text-lg font-semibold">No ideas found</h3>
-      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
-        {#if searchQuery.trim() || difficultyFilter !== 'all'}
-          Try adjusting your search or filters to find what you're looking for.
-        {:else}
-          Get started by creating your first idea. Capture inspiration and convert to projects when ready.
-        {/if}
-      </p>
-      <Button onclick={() => (showNewIdeaDrawer = true)}>
-        <Plus class="mr-2 size-4" />
-        Create First Idea
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyIcon={Sparkles}
+      emptyMessage={emptyMessageText}
+      emptyAction={{
+        label: 'Create First Idea',
+        onclick: () => (showNewIdeaDrawer = true)
+      }}
+    />
   {:else}
     {#if activeTab === 'grid'}
       <div class="space-y-6">
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {#each filtered as idea (idea.id)}
-            <IdeaCard idea={idea} onclick={() => {
+            <IdeaCard idea={idea} searchQuery={searchQuery.trim()} onclick={() => {
               selectedIdeaId = idea.id
               showIdeaDetailFlyout = true
             }} />
@@ -233,7 +232,7 @@
     {:else}
       <div class="space-y-4">
         {#each filtered as idea (idea.id)}
-          <IdeaCard idea={idea} variant="list" onclick={() => {
+          <IdeaCard idea={idea} variant="list" searchQuery={searchQuery.trim()} onclick={() => {
             selectedIdeaId = idea.id
             showIdeaDetailFlyout = true
           }} />

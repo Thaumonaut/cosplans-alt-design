@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { setSidebarContext } from './sidebar-context.svelte.ts';
+  import { setSidebarContext } from './sidebar-context.svelte';
   import Sheet from './sheet.svelte';
   import { cn } from '$lib/utils';
 
@@ -143,9 +143,9 @@
         side === 'left'
           ? (state === 'collapsed' && collapsible === 'offcanvas' ? '-left-64' : 'left-0')
           : (state === 'collapsed' && collapsible === 'offcanvas' ? '-right-64' : 'right-0'),
-        variant === 'floating' || variant === 'inset'
+          variant === 'floating' || variant === 'inset'
           ? 'p-2'
-          : (side === 'left' ? 'border-r' : 'border-l'),
+          : (side === 'left' ? 'border-r border-[var(--theme-sidebar-border)]' : 'border-l border-[var(--theme-sidebar-border)]'),
         className
       )}
       style="width: {state === 'collapsed' ? SIDEBAR_WIDTH_ICON : SIDEBAR_WIDTH};"
@@ -153,7 +153,7 @@
       <div
         class={cn(
           'bg-sidebar flex h-full w-full flex-col',
-          variant === 'floating' && 'rounded-lg border shadow-sm'
+          variant === 'floating' && 'rounded-lg border border-[var(--theme-sidebar-border)] shadow-sm'
         )}
       >
         {@render children?.()}

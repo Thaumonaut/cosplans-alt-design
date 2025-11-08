@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Select } from "$lib/components/ui";
+  import { Button, Select, DatePicker } from "$lib/components/ui";
   import InlineTextEditor from "./inline-text-editor.svelte";
   import { Upload } from "lucide-svelte";
 
@@ -130,12 +130,11 @@
 
   <!-- Deadline -->
   <div class="space-y-2">
-    <label for="deadline-input" class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deadline</label>
-    <input
+    <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deadline</span>
+    <DatePicker
       id="deadline-input"
-      type="date"
       bind:value={deadline}
-      class="w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
+      placeholder="Select deadline"
     />
   </div>
 

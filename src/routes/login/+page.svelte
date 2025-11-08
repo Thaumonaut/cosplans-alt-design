@@ -4,6 +4,7 @@
   import { authService } from '$lib/auth/auth-service';
   import OAuthButtons from '$lib/components/auth/OAuthButtons.svelte';
   import { Eye, EyeOff } from 'lucide-svelte';
+  import Logo from '$lib/components/Logo.svelte';
 
   let isLoading = $state(false);
   let showPassword = $state(false);
@@ -72,7 +73,10 @@
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full space-y-8">
-    <div>
+    <div class="text-center">
+      <a href="/" class="inline-flex items-center gap-2 justify-center mb-6 hover:opacity-80 transition-opacity">
+        <Logo size="xl" />
+      </a>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
         Sign in to your account
       </h2>

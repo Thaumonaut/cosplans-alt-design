@@ -5,7 +5,7 @@
   import { resourceService } from '$lib/api/services/resourceService'
   import { projectService } from '$lib/api/services/projectService'
   import Select from '$lib/components/ui/select.svelte'
-  import type { Resource } from '$lib/types/domain/resource'
+  import type { Resource, ResourceCategory } from '$lib/types/domain/resource'
 
   interface Props {
     open?: boolean
@@ -30,6 +30,33 @@
     { value: 'in-progress', label: 'In Progress' },
     { value: 'completed', label: 'Completed' },
   ]
+
+  // Determine if quantity should be shown for a resource category
+  function shouldShowQuantity(category: ResourceCategory | string | undefined): boolean {
+    if (!category) return false
+    // Unique items that don't need quantity (always 1)
+    const uniqueCategories: ResourceCategory[] = ['prop', 'wig', 'pattern', 'costume-piece']
+    return !uniqueCategories.includes(category as ResourceCategory)
+  }
+
+  // Get selected resource's category
+  const selectedResourceCategory = $derived.by(() => {
+    if (!selectedResourceId) return undefined
+    const resource = availableResources.find(r => r.id === selectedResourceId)
+    return resource?.metadata?.category
+  })
+
+  // Show quantity field only for multi-quantity resources
+  const showQuantityField = $derived.by(() => {
+    return shouldShowQuantity(selectedResourceCategory)
+  })
+
+  // Update quantity to 1 when selecting a unique resource
+  $effect(() => {
+    if (selectedResourceId && !showQuantityField) {
+      quantity = 1
+    }
+  })
 
   $effect(() => {
     if (open) {
@@ -63,7 +90,11 @@
     error = null
 
     try {
-      await projectService.linkResource(projectId, selectedResourceId, quantity, status)
+      // For unique resources, always use quantity 1
+      const resource = availableResources.find(r => r.id === selectedResourceId)
+      const finalQuantity = resource && !shouldShowQuantity(resource.metadata?.category) ? 1 : quantity
+      
+      await projectService.linkResource(projectId, selectedResourceId, finalQuantity, status)
       onSuccess?.()
       handleClose()
     } catch (err: any) {
@@ -119,16 +150,17 @@
         {/if}
       </div>
 
-      <!-- Quantity -->
-      <div class="space-y-2">
-        <div class="text-sm font-medium">Quantity</div>
-        <Input
-          type="number"
-          bind:value={quantity}
-          min={1}
-          placeholder="1"
-        />
-      </div>
+      <!-- Quantity (only show for multi-quantity resources) -->
+      {#if showQuantityField}
+        <div class="space-y-2">
+          <div class="text-sm font-medium">Quantity</div>
+          <Input
+            type="number"
+            bind:value={quantity}
+            placeholder="1"
+          />
+        </div>
+      {/if}
 
       <!-- Status -->
       <div class="space-y-2">

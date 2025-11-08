@@ -8,11 +8,12 @@
   import { Badge } from 'flowbite-svelte'
   import { Calendar, MapPin, Camera, Users, ImageIcon, X } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
-  import InlineDatePicker from '$lib/components/base/InlineDatePicker.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
   import ShotListEditor from '$lib/components/domain/ShotListEditor.svelte'
+  import EmbeddedTaskList from '$lib/components/tasks/EmbeddedTaskList.svelte'
   import type {
     Photoshoot,
     PhotoshootCreate,
@@ -48,7 +49,7 @@
   let loading = $state(true)
   let error = $state<string | null>(null)
   let saving = $state(false)
-  let activeTab = $state<'overview' | 'shots' | 'crew' | 'gallery'>('overview')
+  let activeTab = $state<'overview' | 'shots' | 'crew' | 'tasks' | 'gallery'>('overview')
 
   // Crew state
   let crewMembers = $state<CrewMember[]>([])
@@ -287,20 +288,20 @@
 
 {#if loading}
   <div class="flex items-center justify-center py-20">
-    <div class="text-sm text-muted-foreground">Loading photoshoot...</div>
+    <div class="text-sm text-[var(--theme-muted-foreground)]">Loading photoshoot...</div>
   </div>
 {:else if error && currentMode() !== 'create' && !photoshoot}
   <div class="space-y-4 p-8">
-    <p class="text-sm text-destructive">{error}</p>
+    <p class="text-sm text-[var(--theme-error)]">{error}</p>
     <Button variant="outline" onclick={() => goto('/photoshoots')}>Back to Photoshoots</Button>
   </div>
 {:else}
   <div class="flex h-full flex-col">
     <!-- Header -->
-    <div class="border-b bg-background px-8 py-6">
+    <div class="border-b bg-[var(--theme-card-bg)] px-8 py-6">
       <div class="space-y-4">
         {#if error && currentMode() === 'create'}
-          <div class="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+          <div class="rounded-md bg-[color-mix(in_srgb,var(--theme-error)_10%,transparent)] p-3 text-sm text-[var(--theme-error)]">{error}</div>
         {/if}
 
         <!-- Title -->
@@ -326,22 +327,19 @@
         <!-- Metadata Bar -->
         <div class="flex flex-wrap items-center gap-6 text-sm">
           {#if photoshoot?.date || currentMode() === 'create'}
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <Calendar class="size-4" />
-              <InlineDatePicker
-                bind:value={dateValue}
-                editable={!isReadOnly()}
-                onSave={async (v: string) => {
-                  if (currentMode() === 'create') {
-                    newPhotoshoot.date = v
-                    dateValue = v
-                  } else {
-                    await handleSaveField('date', v || null)
-                  }
-                }}
-                placeholder="Select date"
-              />
-            </div>
+            <DatePicker
+              bind:value={dateValue}
+              placeholder="Select date"
+              disabled={isReadOnly()}
+              onchange={async (v: string | null) => {
+                const dateStr = v || '';
+                if (currentMode() === 'create') {
+                  newPhotoshoot.date = dateStr
+                } else {
+                  await handleSaveField('date', dateStr || null)
+                }
+              }}
+            />
           {/if}
 
           {#if photoshoot?.status || currentMode() === 'create'}
@@ -366,29 +364,35 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="border-b bg-background">
+    <div class="border-b bg-[var(--theme-card-bg)]">
       <div class="flex gap-8 px-8">
         <button
           onclick={() => activeTab = 'overview'}
-          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'overview' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'overview' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
         >
           Overview
         </button>
         <button
           onclick={() => activeTab = 'shots'}
-          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'shots' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'shots' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
         >
           Shot List
         </button>
         <button
           onclick={() => activeTab = 'crew'}
-          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'crew' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'crew' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
         >
           Crew
         </button>
         <button
+          onclick={() => activeTab = 'tasks'}
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'tasks' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
+        >
+          Tasks
+        </button>
+        <button
           onclick={() => activeTab = 'gallery'}
-          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'gallery' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'gallery' ? 'border-[var(--theme-primary)] text-[var(--theme-foreground)]' : 'border-transparent text-[var(--theme-muted-foreground)] hover:text-[var(--theme-foreground)]'}"
         >
           Gallery
         </button>
@@ -396,14 +400,14 @@
     </div>
 
     <!-- Tab Content -->
-    <div class="flex-1 overflow-y-auto bg-muted/30">
+    <div class="flex-1 overflow-y-auto bg-[var(--theme-card-bg)]">
       <div class="p-8">
         {#if activeTab === 'overview'}
           <!-- Overview Tab -->
           <div class="mx-auto max-w-4xl space-y-6">
             <!-- Location -->
-            <div class="space-y-2">
-              <div class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <div class="space-y-3 rounded-lg bg-[var(--theme-section-bg)] p-6">
+              <div class="flex items-center gap-2 text-sm font-medium text-[var(--theme-muted-foreground)]">
                 <MapPin class="size-4" />
                 <span>Location</span>
               </div>
@@ -419,12 +423,13 @@
                   }
                 }}
                 placeholder="Shoot location..."
+                className="text-[var(--theme-foreground)]"
               />
             </div>
 
             <!-- Description -->
-            <div class="space-y-2">
-              <h3 class="text-sm font-medium text-muted-foreground">Description</h3>
+            <div class="space-y-3 rounded-lg bg-[var(--theme-section-bg)] p-6">
+              <h3 class="text-sm font-medium text-[var(--theme-muted-foreground)]">Description</h3>
               <InlineTextEditor
                 bind:value={descriptionValue}
                 editable={!isReadOnly()}
@@ -438,14 +443,14 @@
                 }}
                 placeholder="Add a description..."
                 multiline={true}
-                className="min-h-[100px]"
+                className="min-h-[100px] text-[var(--theme-foreground)]"
               />
             </div>
 
             <!-- Notes -->
             {#if photoshoot || currentMode() === 'create'}
-              <div class="space-y-2">
-                <h3 class="text-sm font-medium text-muted-foreground">Notes</h3>
+              <div class="space-y-3 rounded-lg bg-[var(--theme-section-bg)] p-6">
+                <h3 class="text-sm font-medium text-[var(--theme-muted-foreground)]">Notes</h3>
                 <InlineTextEditor
                   bind:value={notesValue}
                   editable={!isReadOnly()}
@@ -456,7 +461,7 @@
                   }}
                   placeholder="Add notes..."
                   multiline={true}
-                  className="min-h-[100px]"
+                  className="min-h-[100px] text-[var(--theme-foreground)]"
                 />
               </div>
             {/if}
@@ -464,12 +469,12 @@
             <!-- Linked Projects -->
             {#if currentMode() === 'create' || photoshoot}
               <div class="space-y-4">
-                <h3 class="text-sm font-medium text-muted-foreground">Linked Projects</h3>
+                <h3 class="text-sm font-medium text-[var(--theme-muted-foreground)]">Linked Projects</h3>
                 {#if !isReadOnly()}
                   <div class="space-y-3">
                     <div class="flex flex-wrap gap-2">
                       {#each availableProjects as project}
-                        <label class="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted">
+                        <label class="flex items-center gap-2 rounded-md border bg-[var(--theme-card-bg)] p-2 cursor-pointer hover:bg-[var(--theme-sidebar-hover)] transition-colors">
                           <input
                             type="checkbox"
                             checked={selectedProjectIds.includes(project.id)}
@@ -484,7 +489,7 @@
                               }
                             }}
                           />
-                          <span class="text-sm">
+                          <span class="text-sm text-[var(--theme-foreground)]">
                             {project.character} ({project.series})
                           </span>
                         </label>
@@ -497,18 +502,18 @@
                 {#if linkedProjects.length > 0}
                   <div class="flex flex-wrap gap-2">
                     {#each linkedProjects as project}
-                      <div class="flex items-center gap-2 rounded-md border bg-card p-2">
+                      <div class="flex items-center gap-2 rounded-md border bg-[var(--theme-card-bg)] p-2">
                         {#if project.coverImage}
                           <img src={project.coverImage} alt={project.character} class="size-8 rounded object-cover" />
                         {/if}
-                        <span class="text-sm">
+                        <span class="text-sm text-[var(--theme-foreground)]">
                           {project.character} ({project.series})
                         </span>
                       </div>
                     {/each}
                   </div>
                 {:else if !isReadOnly()}
-                  <p class="text-sm text-muted-foreground">No projects linked. Select projects above to link them.</p>
+                  <p class="text-sm text-[var(--theme-muted-foreground)]">No projects linked. Select projects above to link them.</p>
                 {/if}
               </div>
             {/if}
@@ -520,7 +525,7 @@
           <!-- Crew Tab -->
           <div class="mx-auto max-w-4xl space-y-6">
             <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold">Crew Members</h3>
+              <h3 class="text-lg font-semibold text-[var(--theme-foreground)]">Crew Members</h3>
               {#if !isReadOnly()}
                 <Button
                   size="sm"
@@ -536,8 +541,8 @@
 
             <!-- New Crew Form -->
             {#if showNewCrewForm && !isReadOnly()}
-              <div class="rounded-lg border bg-card p-4 space-y-4">
-                <h4 class="font-medium">New Crew Member</h4>
+              <div class="rounded-lg border bg-[var(--theme-card-bg)] p-4 space-y-4">
+                <h4 class="font-medium text-[var(--theme-foreground)]">New Crew Member</h4>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div class="space-y-2">
                     <label for="crew-name" class="text-sm font-medium">Name *</label>
@@ -616,7 +621,7 @@
                         variant="ghost"
                         size="sm"
                         onclick={() => handleDeleteCrew(crew.id)}
-                        class="text-destructive hover:text-destructive"
+                        class="text-[var(--theme-error)] hover:text-[var(--theme-error)]"
                       >
                         <X class="size-4" />
                       </Button>
@@ -626,17 +631,30 @@
               </div>
             {/if}
           </div>
+        {:else if activeTab === 'tasks' && photoshootId}
+          <!-- Tasks Tab -->
+          <div class="mx-auto max-w-4xl">
+            <EmbeddedTaskList
+              photoshootId={photoshootId}
+              teamId={get(currentTeam)?.id || ''}
+              title="Photoshoot Tasks"
+              showViewToggle={true}
+              showQuickCreate={true}
+              showViewAllLink={true}
+              maxHeight="600px"
+            />
+          </div>
         {:else if activeTab === 'gallery' && photoshootId}
           <!-- Gallery Tab -->
           <div class="mx-auto max-w-4xl space-y-6">
-            <h3 class="text-lg font-semibold">Gallery</h3>
-            <p class="text-sm text-muted-foreground">
+            <h3 class="text-lg font-semibold text-[var(--theme-foreground)]">Gallery</h3>
+            <p class="text-sm text-[var(--theme-muted-foreground)]">
               Upload final photos from the photoshoot. Photos can be linked to specific shots in the Shot List tab.
             </p>
             <!-- Gallery upload would go here - for now just a placeholder -->
-            <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
-              <ImageIcon class="mb-4 size-12 text-muted-foreground opacity-50" />
-              <p class="text-sm text-muted-foreground">Gallery upload coming soon</p>
+            <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-[var(--theme-section-bg)] py-16">
+              <ImageIcon class="mb-4 size-12 text-[var(--theme-muted-foreground)] opacity-50" />
+              <p class="text-sm text-[var(--theme-muted-foreground)]">Gallery upload coming soon</p>
             </div>
           </div>
         {/if}
@@ -651,8 +669,21 @@
     {/if}
 
     <!-- Create Button -->
-    {#if currentMode() === 'create' && !isFlyout}
-      <div class="border-t bg-background px-8 py-4">
+    {#if currentMode() === 'create' && isFlyout}
+      <div class="border-t bg-[var(--theme-card-bg)] px-10 py-4">
+        <div class="flex gap-3">
+          <Button variant="outline" class="flex-1" onclick={() => {
+            if (onSuccess) onSuccess('')
+          }} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onclick={handleCreate} disabled={saving || !titleValue.trim()} class="flex-1">
+            {saving ? 'Creating...' : 'Create Photoshoot'}
+          </Button>
+        </div>
+      </div>
+    {:else if currentMode() === 'create' && !isFlyout}
+      <div class="border-t bg-[var(--theme-card-bg)] px-8 py-4">
         <div class="flex justify-end gap-3">
           <Button variant="outline" onclick={() => goto('/photoshoots')}>Cancel</Button>
           <Button onclick={handleCreate} disabled={saving || !titleValue.trim()}>

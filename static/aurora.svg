@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <!-- Aurora wave filter -->
+    <filter id="aurora1" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.003 0.006" numOctaves="3" seed="42" result="noise1"/>
+      <feColorMatrix in="noise1" type="hueRotate" values="0" result="hue1">
+        <animate attributeName="values" from="0" to="360" dur="60s" repeatCount="indefinite"/>
+      </feColorMatrix>
+      <feDisplacementMap in="SourceGraphic" in2="hue1" scale="80" xChannelSelector="R" yChannelSelector="G" result="displace1"/>
+      <feGaussianBlur in="displace1" stdDeviation="8" result="blur1"/>
+    </filter>
+    
+    <filter id="aurora2" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.004 0.008" numOctaves="3" seed="84" result="noise2"/>
+      <feColorMatrix in="noise2" type="hueRotate" values="180" result="hue2">
+        <animate attributeName="values" from="180" to="540" dur="45s" repeatCount="indefinite"/>
+      </feColorMatrix>
+      <feDisplacementMap in="SourceGraphic" in2="hue2" scale="60" xChannelSelector="R" yChannelSelector="G" result="displace2"/>
+      <feGaussianBlur in="displace2" stdDeviation="10" result="blur2"/>
+    </filter>
+    
+    <filter id="aurora3" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.002 0.005" numOctaves="4" seed="126" result="noise3"/>
+      <feColorMatrix in="noise3" type="hueRotate" values="90" result="hue3">
+        <animate attributeName="values" from="90" to="450" dur="75s" repeatCount="indefinite"/>
+      </feColorMatrix>
+      <feDisplacementMap in="SourceGraphic" in2="hue3" scale="100" xChannelSelector="R" yChannelSelector="G" result="displace3"/>
+      <feGaussianBlur in="displace3" stdDeviation="12" result="blur3"/>
+    </filter>
+    
+    <!-- Gradient definitions for aurora colors (subtle 50% opacity) -->
+    <linearGradient id="auroraGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5eead4;stop-opacity:0.225"/>
+      <stop offset="30%" style="stop-color:#3b82f6;stop-opacity:0.21"/>
+      <stop offset="60%" style="stop-color:#8b5cf6;stop-opacity:0.19"/>
+      <stop offset="100%" style="stop-color:#f0abfc;stop-opacity:0.175"/>
+    </linearGradient>
+    
+    <linearGradient id="auroraGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.21"/>
+      <stop offset="40%" style="stop-color:#818cf8;stop-opacity:0.19"/>
+      <stop offset="80%" style="stop-color:#22d3ee;stop-opacity:0.175"/>
+      <stop offset="100%" style="stop-color:#5eead4;stop-opacity:0.16"/>
+    </linearGradient>
+    
+    <linearGradient id="auroraGradient3" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:0.19"/>
+      <stop offset="35%" style="stop-color:#d946ef;stop-opacity:0.18"/>
+      <stop offset="65%" style="stop-color:#8b5cf6;stop-opacity:0.17"/>
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.15"/>
+    </linearGradient>
+    
+    <radialGradient id="glowGradient" cx="50%" cy="40%">
+      <stop offset="0%" style="stop-color:#5eead4;stop-opacity:0.1"/>
+      <stop offset="40%" style="stop-color:#818cf8;stop-opacity:0.05"/>
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Transparent background -->
+  <rect width="1920" height="1080" fill="transparent"/>
+  
+  <!-- Subtle central glow (50% opacity) -->
+  <ellipse cx="960" cy="300" rx="1400" ry="500" fill="url(#glowGradient)" opacity="0.25"/>
+  
+  <!-- Aurora wave layer 1 - Cyan to Purple (50% opacity) -->
+  <ellipse cx="960" cy="250" rx="1600" ry="400" fill="url(#auroraGradient1)" filter="url(#aurora1)" opacity="0.425">
+    <animate attributeName="cy" values="250;300;250" dur="20s" repeatCount="indefinite"/>
+    <animate attributeName="rx" values="1600;1700;1600" dur="25s" repeatCount="indefinite"/>
+  </ellipse>
+  
+  <!-- Aurora wave layer 2 - Purple to Cyan (50% opacity) -->
+  <ellipse cx="960" cy="350" rx="1500" ry="350" fill="url(#auroraGradient2)" filter="url(#aurora2)" opacity="0.4">
+    <animate attributeName="cy" values="350;320;350" dur="18s" repeatCount="indefinite"/>
+    <animate attributeName="rx" values="1500;1650;1500" dur="22s" repeatCount="indefinite"/>
+  </ellipse>
+  
+  <!-- Aurora wave layer 3 - Pink to Blue (50% opacity) -->
+  <ellipse cx="960" cy="450" rx="1700" ry="380" fill="url(#auroraGradient3)" filter="url(#aurora3)" opacity="0.35">
+    <animate attributeName="cy" values="450;400;450" dur="23s" repeatCount="indefinite"/>
+    <animate attributeName="rx" values="1700;1800;1700" dur="28s" repeatCount="indefinite"/>
+  </ellipse>
+  
+  <!-- Additional flowing ribbons (50% opacity) -->
+  <path d="M -200 300 Q 480 280 960 300 Q 1440 320 2120 300" 
+        stroke="url(#auroraGradient1)" 
+        stroke-width="100" 
+        fill="none" 
+        opacity="0.25"
+        filter="url(#aurora1)">
+    <animate attributeName="d" 
+             values="M -200 300 Q 480 280 960 300 Q 1440 320 2120 300;
+                     M -200 320 Q 480 300 960 280 Q 1440 300 2120 320;
+                     M -200 300 Q 480 280 960 300 Q 1440 320 2120 300"
+             dur="15s" 
+             repeatCount="indefinite"/>
+  </path>
+  
+  <path d="M -200 400 Q 480 420 960 400 Q 1440 380 2120 400" 
+        stroke="url(#auroraGradient2)" 
+        stroke-width="90" 
+        fill="none" 
+        opacity="0.225"
+        filter="url(#aurora2)">
+    <animate attributeName="d" 
+             values="M -200 400 Q 480 420 960 400 Q 1440 380 2120 400;
+                     M -200 380 Q 480 400 960 420 Q 1440 400 2120 380;
+                     M -200 400 Q 480 420 960 400 Q 1440 380 2120 400"
+             dur="17s" 
+             repeatCount="indefinite"/>
+  </path>
+  
+  <path d="M -200 500 Q 480 480 960 500 Q 1440 520 2120 500" 
+        stroke="url(#auroraGradient3)" 
+        stroke-width="95" 
+        fill="none" 
+        opacity="0.2"
+        filter="url(#aurora3)">
+    <animate attributeName="d" 
+             values="M -200 500 Q 480 480 960 500 Q 1440 520 2120 500;
+                     M -200 520 Q 480 500 960 480 Q 1440 500 2120 520;
+                     M -200 500 Q 480 480 960 500 Q 1440 520 2120 500"
+             dur="19s" 
+             repeatCount="indefinite"/>
+  </path>
+</svg>

@@ -33,9 +33,9 @@
   });
   
   const priorityColors = {
-    high: 'bg-red-500/10 text-red-700 dark:text-red-300',
-    medium: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-    low: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
+    high: 'bg-[color-mix(in_srgb,var(--theme-error)_20%,transparent)] text-[var(--theme-error)]',
+    medium: 'bg-[color-mix(in_srgb,var(--theme-warning)_20%,transparent)] text-[var(--theme-warning)]',
+    low: 'bg-[color-mix(in_srgb,var(--theme-info)_20%,transparent)] text-[var(--theme-info)]',
   };
   
   function toggleTask(taskId: number) {

@@ -1,0 +1,1238 @@
+openapi: 3.0.3
+info:
+  title: Cosplay Tracker - Modern Task API
+  version: 1.0.0
+  description: API endpoints for modern task management UI (feature 003-modern-task-ui)
+
+servers:
+  - url: /api
+    description: API base path
+
+tags:
+  - name: Tasks
+    description: Task management operations (enhanced existing endpoints)
+  - name: Subtasks
+    description: Subtask operations
+  - name: Comments
+    description: Task comment operations
+  - name: Attachments
+    description: File attachment operations
+  - name: Notifications
+    description: Notification management
+  - name: Templates
+    description: Task template operations
+  - name: Saved Views
+    description: User-saved task view configurations
+
+paths:
+  # ========== TASKS (Enhanced) ==========
+  
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks with enhanced filtering
+      parameters:
+        - name: teamId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: view
+          in: query
+          schema:
+            type: string
+            enum: [list, board, calendar, timeline]
+            default: list
+        - name: filter
+          in: query
+          description: JSON-encoded TaskFilters object
+          schema:
+            type: string
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [stage, priority, project, assignee, dueDate]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: includeSubtasks
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  count:
+                    type: integer
+    
+    post:
+      tags: [Tasks]
+      summary: Create new task (enhanced with subtasks)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateInput'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+  
+  /tasks/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [Tasks]
+      summary: Get task by ID
+      parameters:
+        - name: includeSubtasks
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: includeComments
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: includeAttachments
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+    
+    patch:
+      tags: [Tasks]
+      summary: Update task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateInput'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    
+    delete:
+      tags: [Tasks]
+      summary: Delete task
+      responses:
+        '204':
+          description: Task deleted
+
+  /tasks/bulk-update:
+    post:
+      tags: [Tasks]
+      summary: Bulk update multiple tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                taskIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                updates:
+                  $ref: '#/components/schemas/TaskUpdateInput'
+      responses:
+        '200':
+          description: Tasks updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                  failed:
+                    type: array
+                    items:
+                      type: string
+
+  # ========== SUBTASKS ==========
+  
+  /tasks/{taskId}/subtasks:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [Subtasks]
+      summary: Get subtasks for a task
+      responses:
+        '200':
+          description: List of subtasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subtask'
+    
+    post:
+      tags: [Subtasks]
+      summary: Create subtask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskCreateInput'
+      responses:
+        '201':
+          description: Subtask created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subtask'
+  
+  /subtasks/{subtaskId}:
+    parameters:
+      - name: subtaskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    patch:
+      tags: [Subtasks]
+      summary: Update subtask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskUpdateInput'
+      responses:
+        '200':
+          description: Subtask updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subtask'
+    
+    delete:
+      tags: [Subtasks]
+      summary: Delete subtask
+      responses:
+        '204':
+          description: Subtask deleted
+
+  # ========== COMMENTS ==========
+  
+  /tasks/{taskId}/comments:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [Comments]
+      summary: Get comments for a task
+      parameters:
+        - name: includeDeleted
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskComment'
+    
+    post:
+      tags: [Comments]
+      summary: Create comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCommentCreateInput'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskComment'
+  
+  /comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    patch:
+      tags: [Comments]
+      summary: Update comment (content only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCommentUpdateInput'
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskComment'
+    
+    delete:
+      tags: [Comments]
+      summary: Delete comment (soft delete)
+      responses:
+        '204':
+          description: Comment deleted (marked as deleted)
+
+  # ========== ATTACHMENTS ==========
+  
+  /tasks/{taskId}/attachments:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [Attachments]
+      summary: Get attachments for a task
+      responses:
+        '200':
+          description: List of attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskAttachment'
+    
+    post:
+      tags: [Attachments]
+      summary: Create attachment record and get upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+                fileSize:
+                  type: integer
+                mimeType:
+                  type: string
+      responses:
+        '201':
+          description: Attachment record created with upload URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachment:
+                    $ref: '#/components/schemas/TaskAttachment'
+                  uploadUrl:
+                    type: string
+                    description: Presigned URL for file upload
+  
+  /attachments/{attachmentId}:
+    parameters:
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    get:
+      tags: [Attachments]
+      summary: Get signed download URL
+      responses:
+        '200':
+          description: Signed URL for download
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+    
+    delete:
+      tags: [Attachments]
+      summary: Delete attachment (removes file from storage)
+      responses:
+        '204':
+          description: Attachment deleted
+
+  # ========== NOTIFICATIONS ==========
+  
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get user notifications
+      parameters:
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskNotification'
+                  unreadCount:
+                    type: integer
+  
+  /notifications/{notificationId}:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    patch:
+      tags: [Notifications]
+      summary: Mark notification as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                read:
+                  type: boolean
+      responses:
+        '200':
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskNotification'
+    
+    delete:
+      tags: [Notifications]
+      summary: Delete notification
+      responses:
+        '204':
+          description: Notification deleted
+  
+  /notifications/mark-all-read:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+
+  # ========== TEMPLATES ==========
+  
+  /templates:
+    get:
+      tags: [Templates]
+      summary: Get task templates for team
+      parameters:
+        - name: teamId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskTemplate'
+    
+    post:
+      tags: [Templates]
+      summary: Create template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskTemplateCreateInput'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplate'
+  
+  /templates/{templateId}:
+    parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    patch:
+      tags: [Templates]
+      summary: Update template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskTemplateUpdateInput'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskTemplate'
+    
+    delete:
+      tags: [Templates]
+      summary: Delete template
+      responses:
+        '204':
+          description: Template deleted
+  
+  /templates/{templateId}/apply:
+    parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    post:
+      tags: [Templates]
+      summary: Apply template (create task from template)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                projectId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Task created from template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+
+  # ========== SAVED VIEWS ==========
+  
+  /task-views:
+    get:
+      tags: [Saved Views]
+      summary: Get user's saved task views
+      parameters:
+        - name: teamId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of saved views
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SavedTaskView'
+    
+    post:
+      tags: [Saved Views]
+      summary: Create saved view
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedTaskViewCreateInput'
+      responses:
+        '201':
+          description: Saved view created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedTaskView'
+  
+  /task-views/{viewId}:
+    parameters:
+      - name: viewId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    
+    patch:
+      tags: [Saved Views]
+      summary: Update saved view
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedTaskViewUpdateInput'
+      responses:
+        '200':
+          description: Saved view updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedTaskView'
+    
+    delete:
+      tags: [Saved Views]
+      summary: Delete saved view
+      responses:
+        '204':
+          description: Saved view deleted
+
+# ========== SCHEMAS ==========
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        resourceId:
+          type: string
+          format: uuid
+          nullable: true
+        teamId:
+          type: string
+          format: uuid
+        stageId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        completed:
+          type: boolean
+          description: Deprecated - use stage.isCompletionStage
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high]
+        assignedTo:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    TaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            subtasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Subtask'
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskComment'
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/TaskAttachment'
+            subtaskCompletion:
+              type: object
+              properties:
+                completed:
+                  type: integer
+                total:
+                  type: integer
+                percentage:
+                  type: number
+    
+    TaskCreateInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        stageId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+        dueDate:
+          type: string
+          format: date-time
+        assignedTo:
+          type: string
+          format: uuid
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              order:
+                type: integer
+    
+    TaskUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        stageId:
+          type: string
+          format: uuid
+        priority:
+          type: string
+          enum: [low, medium, high]
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        assignedTo:
+          type: string
+          format: uuid
+          nullable: true
+        projectId:
+          type: string
+          format: uuid
+          nullable: true
+        resourceId:
+          type: string
+          format: uuid
+          nullable: true
+    
+    Subtask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        completed:
+          type: boolean
+        displayOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    SubtaskCreateInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        displayOrder:
+          type: integer
+    
+    SubtaskUpdateInput:
+      type: object
+      properties:
+        title:
+          type: string
+        completed:
+          type: boolean
+        displayOrder:
+          type: integer
+    
+    TaskComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+            format: uuid
+        deleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatar:
+              type: string
+              nullable: true
+    
+    TaskCommentCreateInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+            format: uuid
+    
+    TaskCommentUpdateInput:
+      type: object
+      properties:
+        content:
+          type: string
+        mentions:
+          type: array
+          items:
+            type: string
+            format: uuid
+    
+    TaskAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        mimeType:
+          type: string
+        storageUrl:
+          type: string
+        uploadedBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        uploader:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+    
+    TaskNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [assignment, mention, comment, status_change]
+        message:
+          type: string
+        read:
+          type: boolean
+        actorUserId:
+          type: string
+          format: uuid
+          nullable: true
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        task:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            title:
+              type: string
+        actor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatar:
+              type: string
+              nullable: true
+    
+    TaskTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        defaultStageId:
+          type: string
+          format: uuid
+          nullable: true
+        defaultPriority:
+          type: string
+          enum: [low, medium, high]
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              order:
+                type: integer
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    TaskTemplateCreateInput:
+      type: object
+      required: [teamId, name]
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        defaultStageId:
+          type: string
+          format: uuid
+        defaultPriority:
+          type: string
+          enum: [low, medium, high]
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              order:
+                type: integer
+    
+    TaskTemplateUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        defaultStageId:
+          type: string
+          format: uuid
+        defaultPriority:
+          type: string
+          enum: [low, medium, high]
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              order:
+                type: integer
+    
+    SavedTaskView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+          properties:
+            stages:
+              type: array
+              items:
+                type: string
+                format: uuid
+            priorities:
+              type: array
+              items:
+                type: string
+                enum: [low, medium, high]
+            assignees:
+              type: array
+              items:
+                type: string
+                format: uuid
+            projects:
+              type: array
+              items:
+                type: string
+                format: uuid
+            dateRange:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date
+                end:
+                  type: string
+                  format: date
+            tags:
+              type: array
+              items:
+                type: string
+            includeArchived:
+              type: boolean
+        grouping:
+          type: string
+          enum: [stage, priority, project, assignee, dueDate]
+        viewMode:
+          type: string
+          enum: [list, board, calendar, timeline]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    SavedTaskViewCreateInput:
+      type: object
+      required: [teamId, name, filters]
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        filters:
+          type: object
+        grouping:
+          type: string
+          enum: [stage, priority, project, assignee, dueDate]
+        viewMode:
+          type: string
+          enum: [list, board, calendar, timeline]
+    
+    SavedTaskViewUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        filters:
+          type: object
+        grouping:
+          type: string
+          enum: [stage, priority, project, assignee, dueDate]
+        viewMode:
+          type: string
+          enum: [list, board, calendar, timeline]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+

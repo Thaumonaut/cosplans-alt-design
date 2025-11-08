@@ -1,82 +1,126 @@
 <script lang="ts">
-  import { cn } from '$lib/utils'
-  import Select from '$lib/components/ui/select.svelte'
+	/**
+	 * InlineSelect Component
+	 * 
+	 * Provides inline dropdown editing for "living document" UX.
+	 * Click to edit, save on selection, cancel on Escape.
+	 */
+	import { createEventDispatcher } from 'svelte';
 
-  interface Props {
-    value: string
-    editable?: boolean
-    onSave: (value: string) => Promise<void>
-    options: Array<{ value: string; label: string }>
-    placeholder?: string
-    class?: string
-  }
+	interface Props {
+		value: string;
+		options: Array<{ value: string; label: string; color?: string }>;
+		placeholder?: string;
+		disabled?: boolean;
+		variant?: 'default' | 'priority' | 'status';
+	}
 
-  let { value = $bindable(''), editable = true, onSave, options, placeholder, class: className = '' }: Props = $props()
+	let {
+		value = $bindable(),
+		options,
+		placeholder = 'Select...',
+		disabled = false,
+		variant = 'default'
+	}: Props = $props();
+	
+	const dispatch = createEventDispatcher<{
+		change: string;
+		cancel: void;
+	}>();
 
-  let isSaving = $state(false)
-  let error = $state<string | null>(null)
-  let lastSavedValue = $state(value)
-  let selectValue = $state(value)
+	let isEditing = $state(false);
+	let selectElement: HTMLSelectElement;
+	let displayElement: HTMLDivElement;
 
-  // Sync selectValue with value prop
-  $effect(() => {
-    if (value !== lastSavedValue) {
-      selectValue = value
-      lastSavedValue = value
-    }
-  })
+	const selectedOption = $derived(
+		options.find(opt => opt.value === value)
+	);
 
-  // Handle value change from Select component
-  async function handleChange(newValue: string) {
-    if (!editable || newValue === lastSavedValue || !newValue || isSaving) return
-    
-    const previousValue = value
-    value = newValue
-    selectValue = newValue
-    lastSavedValue = newValue
-    isSaving = true
-    error = null
-    
-    try {
-      await onSave(newValue)
-    } catch (err: any) {
-      value = previousValue
-      selectValue = previousValue
-      lastSavedValue = previousValue
-      error = err?.message || 'Save failed'
-    } finally {
-      isSaving = false
-    }
-  }
+	function startEditing() {
+		if (disabled) return;
+		isEditing = true;
+		setTimeout(() => selectElement?.focus(), 0);
+	}
 
-  // Watch for changes to selectValue (when user selects from dropdown)
-  $effect(() => {
-    if (selectValue !== lastSavedValue && editable && !isSaving) {
-      handleChange(selectValue)
-    }
-  })
+	function handleChange(event: Event) {
+		const newValue = (event.target as HTMLSelectElement).value;
+		value = newValue;
+		isEditing = false;
+		dispatch('change', newValue);
+	}
+
+	function handleBlur() {
+		// Delay to allow selection to register
+		setTimeout(() => {
+			isEditing = false;
+		}, 150);
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			isEditing = false;
+			dispatch('cancel');
+		}
+	}
+
+	const variantStyles = {
+		default: 'text-gray-900 dark:text-white',
+		priority: value === 'high' 
+			? 'text-red-600 dark:text-red-400' 
+			: value === 'medium'
+			? 'text-yellow-600 dark:text-yellow-400'
+			: 'text-green-600 dark:text-green-400',
+		status: selectedOption?.color 
+			? `text-[${selectedOption.color}]` 
+			: 'text-gray-900 dark:text-white'
+	};
 </script>
 
-<div class={cn('relative', className)}>
-  <Select
-    bind:value={selectValue}
-    {options}
-    {placeholder}
-    disabled={!editable || isSaving}
-    class={cn(
-      'w-full',
-      isSaving && 'opacity-60 pointer-events-none',
-      error && 'border-destructive'
-    )}
-  />
-  
-  {#if isSaving}
-    <div class="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none">
-      <div class="size-3 animate-spin rounded-full border-2 border-current border-t-transparent opacity-50"></div>
-    </div>
-  {/if}
-</div>
-
-{#if error}
-  <p class="mt-1.5 text-xs text-destructive">{error}</p>
+{#if isEditing}
+	<select
+		bind:this={selectElement}
+		{value}
+		on:change={handleChange}
+		on:blur={handleBlur}
+		on:keydown={handleKeydown}
+		class="inline-block px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+		{disabled}
+	>
+		{#if placeholder}
+			<option value="" disabled>{placeholder}</option>
+		{/if}
+		{#each options as option}
+			<option value={option.value}>{option.label}</option>
+		{/each}
+	</select>
+{:else}
+	<div
+		bind:this={displayElement}
+		role="button"
+		tabindex={disabled ? -1 : 0}
+		class="inline-flex items-center gap-1 px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors {variantStyles[variant]} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
+		on:click={startEditing}
+		on:keydown={(e) => e.key === 'Enter' && startEditing()}
+	>
+		{#if selectedOption?.color && variant === 'status'}
+			<span
+				class="w-2 h-2 rounded-full"
+				style="background-color: {selectedOption.color}"
+			/>
+		{/if}
+		<span>{selectedOption?.label || placeholder}</span>
+		<svg
+			class="w-3 h-3 text-gray-400"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M19 9l-7 7-7-7"
+			/>
+		</svg>
+	</div>
 {/if}

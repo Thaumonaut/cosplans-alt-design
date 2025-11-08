@@ -3,6 +3,7 @@
   import { Calendar, DollarSign } from 'lucide-svelte'
   import InlineTextEditor from '$lib/components/base/InlineTextEditor.svelte'
   import InlineNumberEditor from '$lib/components/base/InlineNumberEditor.svelte'
+  import { DatePicker } from '$lib/components/ui'
   import type { Project, ProjectUpdate } from '$lib/types/domain/project'
 
   interface Props {
@@ -50,7 +51,7 @@
       <Card class="p-6">
         <h3 class="mb-3 text-sm font-medium text-muted-foreground">Series</h3>
         <InlineTextEditor
-          value={project.series}
+          value={project.series || undefined}
           onSave={async (v: string) => handleFieldUpdate('series', v)}
           placeholder="Series name..."
         />
@@ -98,11 +99,11 @@
           <Calendar class="size-5 text-muted-foreground" />
           <h3 class="text-sm font-medium text-muted-foreground">Deadline</h3>
         </div>
-        <input
-          type="date"
-          value={project.deadline || ''}
-          onchange={async (e) => handleFieldUpdate('deadline', e.currentTarget.value || null)}
-          class="w-full rounded-md border px-3 py-2 text-sm"
+        <DatePicker
+          value={project.deadline || null}
+          onchange={async (v) => handleFieldUpdate('deadline', v || null)}
+          placeholder="Select deadline"
+          class="w-full"
         />
         {#if project.deadline}
           <p class="mt-2 text-sm text-muted-foreground">

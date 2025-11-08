@@ -3,9 +3,9 @@
   import { teamService, type Team, type TeamMember, type TeamRole } from '$lib/api/services/teamService'
   import { teams, currentTeam } from '$lib/stores/teams'
   import { user } from '$lib/stores/auth-store'
-  import { Button, Input } from '$lib/components/ui'
+  import { Button, Input, Dialog, DialogFooter } from '$lib/components/ui'
   import { Badge } from 'flowbite-svelte'
-  import { Plus, Users, Mail, Shield, Edit, Trash2, UserPlus } from 'lucide-svelte'
+  import { Plus, Users, Mail, Shield, Edit, Trash2, UserPlus, Sparkles, RefreshCw } from 'lucide-svelte'
   import { canManageTeam } from '$lib/utils/permissions'
   import { currentUserRole } from '$lib/stores/teams'
   import { get } from 'svelte/store'
@@ -19,6 +19,49 @@
 
   // Create form
   let newTeamName = $state('')
+  let suggestedTeamName = $state('')
+
+  // Generate team name based on user's name
+  function generateTeamNameFromUser(): string {
+    const currentUser = get(user);
+    if (!currentUser) {
+      return 'My Team';
+    }
+    
+    // Try to get name from user metadata first, then email
+    const firstName = currentUser.user_metadata?.first_name || 
+                      currentUser.user_metadata?.name?.split(' ')[0] ||
+                      currentUser.email?.split('@')[0] || 
+                      'User';
+    
+    return `${firstName}'s Team`;
+  }
+
+  // Generate a unique team name with random suffix
+  function generateUniqueTeamName(): string {
+    const currentUser = get(user);
+    const userName = currentUser?.user_metadata?.first_name || 
+                     currentUser?.user_metadata?.name?.split(' ')[0] ||
+                     currentUser?.email?.split('@')[0] || 
+                     'Team';
+    
+    // Generate random suffix
+    const adjectives = ['Epic', 'Awesome', 'Creative', 'Amazing', 'Fantastic', 'Brilliant', 'Stellar', 'Dynamic'];
+    const nouns = ['Squad', 'Group', 'Collective', 'Circle', 'Guild', 'Crew', 'Assembly'];
+    
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    
+    return `${randomAdjective} ${randomNoun}`;
+  }
+
+  // Update suggested name when form opens
+  function updateSuggestedName() {
+    suggestedTeamName = generateTeamNameFromUser();
+    if (!newTeamName.trim()) {
+      newTeamName = suggestedTeamName;
+    }
+  }
 
   // Invite form
   let inviteEmail = $state('')
@@ -108,11 +151,29 @@
     }
   }
 
-  async function handleRemoveMember(userId: string) {
-    if (!selectedTeam || !confirm('Are you sure you want to remove this member?')) return
+  let showRemoveMemberDialog = $state(false)
+  let memberToRemoveId = $state<string | null>(null)
+
+  function openRemoveMemberDialog(userId: string) {
+    memberToRemoveId = userId
+    showRemoveMemberDialog = true
+  }
+
+  async function handleRemoveMember() {
+    if (!selectedTeam || !memberToRemoveId) return
+
+    // Check if removing the last owner
+    const memberToRemove = teamMembers.find(m => m.userId === memberToRemoveId)
+    const ownerCount = teamMembers.filter(m => m.role === 'owner').length
+    if (memberToRemove?.role === 'owner' && ownerCount <= 1) {
+      error = 'Cannot remove the last owner from the team. Please transfer ownership to another member first.'
+      return
+    }
 
     try {
-      await teamService.removeMember(selectedTeam.id, userId)
+      await teamService.removeMember(selectedTeam.id, memberToRemoveId)
+      showRemoveMemberDialog = false
+      memberToRemoveId = null
       await loadTeamMembers(selectedTeam.id)
     } catch (err: any) {
       error = err?.message || 'Failed to remove member'
@@ -149,7 +210,12 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-semibold">Your Teams</h2>
-        <Button onclick={() => (showCreateForm = !showCreateForm)} size="sm">
+        <Button onclick={() => {
+          showCreateForm = !showCreateForm;
+          if (showCreateForm) {
+            updateSuggestedName();
+          }
+        }} size="sm">
           <Plus class="mr-2 size-4" />
           New Team
         </Button>
@@ -158,10 +224,37 @@
       <!-- Create Form -->
       {#if showCreateForm}
         <div class="rounded-lg border bg-card p-4 space-y-3">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-sm font-medium">Team Name</span>
+            <div class="flex gap-1">
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onclick={() => {
+                  newTeamName = generateTeamNameFromUser();
+                }}
+              >
+                <Sparkles class="mr-1 size-3" />
+                Suggest
+              </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onclick={() => {
+                  newTeamName = generateUniqueTeamName();
+                }}
+              >
+                <RefreshCw class="mr-1 size-3" />
+                Generate
+              </Button>
+            </div>
+          </div>
           <input
             type="text"
             bind:value={newTeamName}
-            placeholder="Team name"
+            placeholder={suggestedTeamName || "Team name"}
             class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             onkeydown={(e) => {
               if (e.key === 'Enter') {
@@ -169,9 +262,24 @@
               }
             }}
           />
+          {#if suggestedTeamName && newTeamName !== suggestedTeamName}
+            <p class="text-xs text-muted-foreground">
+              Suggested: <button 
+                type="button"
+                class="text-primary hover:underline"
+                onclick={() => newTeamName = suggestedTeamName}
+              >
+                {suggestedTeamName}
+              </button>
+            </p>
+          {/if}
           <div class="flex gap-2">
             <Button onclick={handleCreateTeam} disabled={!newTeamName.trim()}>Create</Button>
-            <Button variant="outline" onclick={() => (showCreateForm = false)}>Cancel</Button>
+            <Button variant="outline" onclick={() => {
+              showCreateForm = false;
+              newTeamName = '';
+              suggestedTeamName = '';
+            }}>Cancel</Button>
           </div>
         </div>
       {/if}
@@ -295,7 +403,7 @@
                       <Button
                         variant="ghost"
                         size="sm"
-                        onclick={() => handleRemoveMember(member.userId)}
+                        onclick={() => openRemoveMemberDialog(member.userId)}
                         class="text-destructive hover:text-destructive"
                       >
                         <Trash2 class="size-4" />
@@ -321,3 +429,28 @@
   </div>
 </div>
 
+
+  <!-- Remove Member Confirmation Dialog -->
+  <Dialog 
+    bind:open={showRemoveMemberDialog} 
+    title="Remove Team Member" 
+    description="Are you sure you want to remove this member from the team? This action cannot be undone."
+  >
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onclick={() => {
+          showRemoveMemberDialog = false;
+          memberToRemoveId = null;
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="destructive"
+        onclick={handleRemoveMember}
+      >
+        Remove Member
+      </Button>
+    </DialogFooter>
+  </Dialog>

@@ -8,8 +8,9 @@
     Camera,
     AlertCircle,
   } from 'lucide-svelte';
-  import { Button, Card, Badge } from '$lib/components/ui';
+  import { Button, Card, Badge, Dialog } from '$lib/components/ui';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { projectService } from '$lib/api/services/projectService';
   import { photoshootService } from '$lib/api/services/photoshootService';
   import { tasks, loadTasks } from '$lib/stores';
@@ -30,6 +31,8 @@
 
   let timelineItems = $state<TimelineItem[]>([]);
   let loading = $state(true);
+  let showPreviewModal = $state(false);
+  let selectedItem = $state<TimelineItem | null>(null);
 
   const typeColors = {
     project: "bg-primary/10 text-primary border-primary/20",
@@ -341,12 +344,16 @@
                     {#each items.slice(0, 3) as item}
                       {@const Icon = item.icon}
                       {@const itemType = item.type as keyof typeof typeColors}
-                      <div
-                        class="flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs {typeColors[itemType] || typeColors.task}"
+                      <button
+                        onclick={() => {
+                          selectedItem = item;
+                          showPreviewModal = true;
+                        }}
+                        class="flex w-full items-center gap-1 rounded border px-1.5 py-0.5 text-xs text-left transition-colors hover:opacity-80 {typeColors[itemType] || typeColors.task}"
                       >
                         <Icon class="size-3 shrink-0" />
                         <span class="truncate">{item.title}</span>
-                      </div>
+                      </button>
                     {/each}
                     {#if items.length > 3}
                       <div class="text-xs text-muted-foreground">+{items.length - 3} more</div>
@@ -442,7 +449,13 @@
             {@const itemType = item.type as keyof typeof typeColors}
             {@const itemPriority = item.priority as keyof typeof priorityColors}
 
-            <Card class="p-4">
+            <Card 
+              class="p-4 cursor-pointer transition-colors hover:bg-muted/50"
+              onclick={() => {
+                selectedItem = item;
+                showPreviewModal = true;
+              }}
+            >
               <div class="flex items-start gap-4">
                 <div class="flex w-24 shrink-0 flex-col items-end text-right">
                   <div class="text-sm font-medium">{formattedDate}</div>
@@ -487,4 +500,70 @@
       {/if}
     {/if}
   </div>
+
+  <!-- Event Preview Modal -->
+  {#if selectedItem}
+    {@const Icon = selectedItem.icon}
+    {@const itemType = selectedItem.type as keyof typeof typeColors}
+    <Dialog
+      bind:open={showPreviewModal}
+      title={selectedItem.title}
+      size="md"
+      placement="center"
+    >
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="mt-1 rounded-lg p-2 {typeColors[itemType] || typeColors.task}">
+            <Icon class="size-5" />
+          </div>
+          <div class="flex-1 space-y-2">
+            <div>
+              <p class="text-sm font-medium">{selectedItem.title}</p>
+              {#if selectedItem.project}
+                <p class="text-xs text-muted-foreground">Project: {selectedItem.project}</p>
+              {/if}
+            </div>
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock class="size-3" />
+              <span>{new Date(selectedItem.date).toLocaleDateString()}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Badge variant="outline" class={priorityColors[selectedItem.priority] || priorityColors.medium}>
+                {selectedItem.priority}
+              </Badge>
+              <Badge variant="outline">{selectedItem.status}</Badge>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={() => {
+              showPreviewModal = false;
+              selectedItem = null;
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            size="sm"
+            onclick={() => {
+              if (!selectedItem) return;
+              if (selectedItem.type === 'project') {
+                goto(`/projects/${selectedItem.id}`);
+              } else if (selectedItem.type === 'photoshoot') {
+                goto(`/photoshoots/${selectedItem.id}`);
+              } else if (selectedItem.type === 'task') {
+                goto(`/tasks?taskId=${selectedItem.id}`);
+              }
+              showPreviewModal = false;
+            }}
+          >
+            Open Full Page
+          </Button>
+        </div>
+      </div>
+    </Dialog>
+  {/if}
 </div>

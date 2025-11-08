@@ -169,14 +169,34 @@ export const teamService = {
 
     if (!user) throw new Error('Not authenticated')
 
+    // Ensure user profile exists in public.users (for existing users who signed up before migration)
+    // This is a no-op if user already has a profile
+    try {
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+      
+      if (!existingUser) {
+        // User doesn't have a profile - create it (and personal team if needed)
+        await (supabase.rpc as any)('setup_new_user', {
+          p_user_id: user.id
+        })
+      }
+    } catch (setupError) {
+      // Log but continue - setup_new_user may fail if user already exists
+      console.warn('Failed to ensure user profile exists:', setupError)
+    }
+
     // Check if user is trying to create a personal team and already has one
     if ((team.type || 'private') === 'personal') {
       // Check if user already has a personal team
       const { data: existingPersonalTeam } = await supabase
         .from('teams')
         .select('id')
-        .eq('owner_id', user.id)
-        .eq('is_personal', true)
+        .eq('created_by', user.id)
+        .eq('type', 'personal')
         .maybeSingle()
       
       if (existingPersonalTeam) {
@@ -472,14 +492,51 @@ export const teamService = {
       throw new Error('User is already a member of this team')
     }
 
-    // Add member (actual schema: no status or invited_at columns)
+    // Add member with status='invited' for invitation acceptance flow
     const { error } = await supabase.from('team_members').insert({
       team_id: teamId,
       user_id: userData.id,
       role: invite.role,
+      status: 'invited',
       invited_by: user.id,
-      joined_at: new Date().toISOString(),
+      invited_at: new Date().toISOString(),
     } as any)
+
+    if (error) throw error
+  },
+
+  /**
+   * Accept a team invitation (updates status from 'invited' to 'active')
+   */
+  async acceptInvite(teamId: string): Promise<void> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Not authenticated')
+
+    // Find the invitation
+    const { data: invitation, error: findError } = await supabase
+      .from('team_members')
+      .select('*')
+      .eq('team_id', teamId)
+      .eq('user_id', user.id)
+      .eq('status', 'invited')
+      .single()
+
+    if (findError || !invitation) {
+      throw new Error('Invitation not found or already accepted')
+    }
+
+    // Update status to active and set joined_at
+    const { error } = await supabase
+      .from('team_members')
+      .update({
+        status: 'active',
+        joined_at: new Date().toISOString(),
+      })
+      .eq('team_id', teamId)
+      .eq('user_id', user.id)
 
     if (error) throw error
   },
@@ -532,6 +589,87 @@ export const teamService = {
     
     return data.role
   },
+
+  /**
+   * Create a join link for a team (generates a unique code)
+   */
+  async createJoinLink(teamId: string, role: 'editor' | 'viewer' = 'viewer', expiresAt?: Date): Promise<TeamJoinLink> {
+    const { data, error } = await (supabase.rpc as any)('create_team_join_link', {
+      p_team_id: teamId,
+      p_role: role,
+      p_expires_at: expiresAt?.toISOString() || null,
+    })
+
+    if (error) throw error
+    return (data?.[0] || data) as TeamJoinLink
+  },
+
+  /**
+   * List all join links for a team
+   */
+  async listJoinLinks(teamId: string): Promise<TeamJoinLink[]> {
+    const { data, error } = await supabase
+      .from('team_join_links')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return (data || []) as TeamJoinLink[]
+  },
+
+  /**
+   * Join a team using a join code
+   */
+  async joinByCode(code: string): Promise<{ teamId: string; teamName: string; role: string }> {
+    const { data, error } = await (supabase.rpc as any)('join_team_by_code', {
+      p_code: code.toUpperCase().trim(),
+    })
+
+    if (error) throw error
+    return (data?.[0] || data) as { teamId: string; teamName: string; role: string }
+  },
+
+  /**
+   * Update a join link (activate/deactivate or change role)
+   */
+  async updateJoinLink(linkId: string, updates: { active?: boolean; role?: 'editor' | 'viewer'; expiresAt?: Date | null }): Promise<void> {
+    const updateData: any = {}
+    if (updates.active !== undefined) updateData.is_active = updates.active
+    if (updates.role !== undefined) updateData.role = updates.role
+    if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt?.toISOString() || null
+
+    const { error } = await supabase
+      .from('team_join_links')
+      .update(updateData)
+      .eq('id', linkId)
+
+    if (error) throw error
+  },
+
+  /**
+   * Delete a join link
+   */
+  async deleteJoinLink(linkId: string): Promise<void> {
+    const { error } = await supabase
+      .from('team_join_links')
+      .delete()
+      .eq('id', linkId)
+
+    if (error) throw error
+  },
+}
+
+export interface TeamJoinLink {
+  id: string
+  team_id: string
+  code: string
+  role: 'editor' | 'viewer'
+  is_active: boolean
+  expires_at: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
 }
 
 

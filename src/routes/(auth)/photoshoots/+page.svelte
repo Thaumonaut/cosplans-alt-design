@@ -6,6 +6,9 @@
   import { Button, Input } from '$lib/components/ui'
   import { Plus, Search, Camera, Filter } from 'lucide-svelte'
   import PhotoshootCard from '$lib/components/cards/PhotoshootCard.svelte'
+  import PhotoshootDetail from '$lib/components/photoshoots/PhotoshootDetail.svelte'
+  import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import type { Photoshoot, PhotoshootStatus } from '$lib/types/domain/photoshoot'
 
@@ -13,6 +16,9 @@
   let loading = $state(true)
   let searchQuery = $state('')
   let statusFilter = $state<PhotoshootStatus | 'all'>('all')
+  let showNewPhotoshootFlyout = $state(false)
+  let showPhotoshootDetailFlyout = $state(false)
+  let selectedPhotoshootId = $state<string | null>(null)
 
   const statusOptions: { value: PhotoshootStatus | 'all'; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -72,12 +78,32 @@
     })
   })
 
+  // Empty state message
+  const emptyMessage = $derived(
+    searchQuery.trim() || statusFilter !== 'all'
+      ? 'Try adjusting your search or filters to find what you\'re looking for.'
+      : 'Get started by creating your first photoshoot. Plan shots, manage crew, and track your cosplay photography.'
+  )
+
   function handleNewPhotoshoot() {
-    goto('/photoshoots/new')
+    selectedPhotoshootId = null
+    showNewPhotoshootFlyout = true
   }
 
   function handlePhotoshootClick(photoshootId: string) {
-    goto(`/photoshoots/${photoshootId}`)
+    selectedPhotoshootId = photoshootId
+    showPhotoshootDetailFlyout = true
+  }
+
+  async function handlePhotoshootSuccess(id: string) {
+    // Reload photoshoots after create/update
+    await loadPhotoshoots()
+    // If creating, switch to detail view
+    if (!selectedPhotoshootId && id) {
+      selectedPhotoshootId = id
+      showNewPhotoshootFlyout = false
+      showPhotoshootDetailFlyout = true
+    }
   }
 
   const statusCounts = $derived({
@@ -96,7 +122,7 @@
   <!-- Header -->
   <div class="mb-8">
     <h1 class="text-balance text-3xl font-bold leading-tight">Photoshoots</h1>
-    <p class="text-pretty text-gray-600 dark:text-gray-400">
+    <p class="text-pretty text-[var(--theme-muted-foreground)]">
       Plan and track your cosplay photoshoots • {statusCounts.all} total
     </p>
   </div>
@@ -143,36 +169,62 @@
 
   <!-- Photoshoots List -->
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-        <p class="text-sm text-muted-foreground">Loading photoshoots...</p>
-      </div>
-    </div>
+    <LoadingState loading={true} />
   {:else if sorted.length === 0}
-    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
-      <Camera class="mb-4 size-12 text-muted-foreground opacity-50" />
-      <h3 class="mb-2 text-lg font-semibold">No photoshoots found</h3>
-      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
-        {#if searchQuery.trim() || statusFilter !== 'all'}
-          Try adjusting your search or filters to find what you're looking for.
-        {:else}
-          Get started by creating your first photoshoot. Plan shots, manage crew, and track your cosplay photography.
-        {/if}
-      </p>
-      <Button onclick={handleNewPhotoshoot}>
-        <Plus class="mr-2 size-4" />
-        Create First Photoshoot
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyIcon={Camera}
+      emptyMessage={emptyMessage}
+      emptyAction={{
+        label: 'Create First Photoshoot',
+        onclick: handleNewPhotoshoot
+      }}
+    />
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {#each sorted as photoshoot (photoshoot.id)}
+      {#each sorted() as photoshoot (photoshoot.id)}
         <PhotoshootCard
-          {photoshoot}
+          photoshoot={photoshoot}
           onclick={() => handlePhotoshootClick(photoshoot.id)}
         />
       {/each}
     </div>
   {/if}
 </div>
+
+<!-- New Photoshoot Flyout -->
+{#if showNewPhotoshootFlyout}
+  <CreationFlyout 
+    bind:open={showNewPhotoshootFlyout} 
+    title="New Photoshoot"
+    onFullScreen={() => {
+      goto('/photoshoots/new')
+      showNewPhotoshootFlyout = false
+    }}
+  >
+    <PhotoshootDetail
+      mode="create"
+      isFlyout={true}
+      onSuccess={handlePhotoshootSuccess}
+    />
+  </CreationFlyout>
+{/if}
+
+<!-- Photoshoot Detail Flyout -->
+{#if showPhotoshootDetailFlyout && selectedPhotoshootId}
+  <CreationFlyout 
+    bind:open={showPhotoshootDetailFlyout} 
+    title="Photoshoot"
+    onFullScreen={() => {
+      goto(`/photoshoots/${selectedPhotoshootId}`)
+      showPhotoshootDetailFlyout = false
+    }}
+  >
+    <PhotoshootDetail
+      photoshootId={selectedPhotoshootId}
+      mode="edit"
+      isFlyout={true}
+      onSuccess={handlePhotoshootSuccess}
+    />
+  </CreationFlyout>
+{/if}

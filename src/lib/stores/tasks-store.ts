@@ -9,7 +9,7 @@ interface TasksState {
 }
 
 interface TasksFilter {
-  projectId?: string
+  projectId?: string | null
   resourceId?: string | null
   completed?: boolean
 }
@@ -25,7 +25,7 @@ function createTasksStore() {
     subscribe,
     reset: () => set({ items: [], loading: false, error: null }),
 
-    load: async (filters: { projectId: string; resourceId?: string }) => {
+    load: async (filters?: { projectId?: string | null; resourceId?: string }) => {
       update((state) => ({ ...state, loading: true, error: null }))
       try {
         const items = await taskService.list(filters)

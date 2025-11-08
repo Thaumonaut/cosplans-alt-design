@@ -56,6 +56,21 @@ export const resourceService = {
 
     if (error) {
       if (error.code === 'PGRST116') return null // Not found
+      // Handle 406 and schema cache errors gracefully
+      if (error.message?.includes('schema cache') || error.code === 'PGRST205' || error.code === 'PGRST204' || 
+          (error as any).status === 406 || error.message?.includes('406')) {
+        console.warn('[ResourceService] Schema cache issue when fetching resource, trying list method:', id)
+        // Fallback: try to find it in the list
+        try {
+          const allResources = await this.list()
+          const found = allResources.find(r => r.id === id)
+          if (found) return found
+        } catch (listErr) {
+          console.error('[ResourceService] List fallback also failed:', listErr)
+        }
+        // If still not found, return null (resource might exist but not accessible due to cache)
+        return null
+      }
       throw error
     }
 

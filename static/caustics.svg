@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <!-- Layer 1: Large smooth caustics -->
+    <filter id="voronoi1" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="turbulence" baseFrequency="0.0052 0.0048" numOctaves="1" seed="42" result="noise1"/>
+      <feColorMatrix in="noise1" type="saturate" values="0" result="gray1"/>
+      <feGaussianBlur in="gray1" stdDeviation="2" result="smooth1"/>
+      <feComposite in="gray1" in2="smooth1" operator="arithmetic" k1="0" k2="4" k3="-3.5" k4="0" result="edges1"/>
+      <feComponentTransfer in="edges1" result="ridges1">
+        <feFuncR type="table" tableValues="0.7 0.75 0.8 0.9 1"/>
+        <feFuncG type="table" tableValues="0.7 0.75 0.8 0.9 1"/>
+        <feFuncB type="table" tableValues="0.7 0.75 0.8 0.9 1"/>
+      </feComponentTransfer>
+      
+      <!-- Smooth glow -->
+      <feGaussianBlur in="ridges1" stdDeviation="3" result="glow1"/>
+      <feComponentTransfer in="glow1" result="glowIntense1">
+        <feFuncR type="table" tableValues="0.15 0.18 0.18 0.15 0.1"/>
+        <feFuncG type="table" tableValues="0.15 0.18 0.18 0.15 0.1"/>
+        <feFuncB type="table" tableValues="0.15 0.18 0.18 0.15 0.1"/>
+      </feComponentTransfer>
+      
+      <!-- Wide diffuse glow -->
+      <feGaussianBlur in="ridges1" stdDeviation="6" result="wideGlow1"/>
+      <feComponentTransfer in="wideGlow1" result="glowWide1">
+        <feFuncR type="table" tableValues="0.1 0.2 0.17 0.92 0.17"/>
+        <feFuncG type="table" tableValues="0.1 0.2 0.17 0.92 0.17"/>
+        <feFuncB type="table" tableValues="0.1 0.2 0.17 0.92 0.17"/>
+      </feComponentTransfer>
+      
+      <!-- Chromatic aberration on sharp core -->
+      <feOffset in="coreIntense1" dx="3.5" dy="1.4" result="coreRed1"/>
+      <feColorMatrix in="coreRed1" type="matrix"
+        values="0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 1 0" result="coreRedTint1"/>
+      <feOffset in="coreIntense1" dx="-3.2" dy="-1.3" result="coreBlue1"/>
+      <feColorMatrix in="coreBlue1" type="matrix"
+        values="0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 1 0" result="coreBlueTint1"/>
+      
+      <!-- Additive blend all layers -->
+      <feBlend in="coreIntense1" in2="glowMed1" mode="lighten" result="layer1"/>
+      <feBlend in="layer1" in2="glowWide1" mode="lighten" result="layer2"/>
+      <feBlend in="layer2" in2="coreRedTint1" mode="screen" result="layer3"/>
+      <feBlend in="layer3" in2="coreBlueTint1" mode="screen" result="final1"/>
+    </filter>
+    
+    <!-- Layer 2: Mid-scale Voronoi details -->
+    <filter id="voronoi2" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="turbulence" baseFrequency="0.0068 0.0084" numOctaves="1" seed="84" result="noise2"/>
+      <feColorMatrix in="noise2" type="saturate" values="0" result="gray2"/>
+      <feGaussianBlur in="gray2" stdDeviation="0.12" result="smooth2"/>
+      <feComposite in="gray2" in2="smooth2" operator="arithmetic" k1="0" k2="5.2" k3="-4.7" k4="0" result="edges2"/>
+      <feComponentTransfer in="edges2" result="ridges2">
+        <feFuncR type="table" tableValues="0 0 0 0.08 0.58 1"/>
+        <feFuncG type="table" tableValues="0 0 0 0.08 0.58 1"/>
+        <feFuncB type="table" tableValues="0 0 0 0.08 0.58 1"/>
+      </feComponentTransfer>
+      
+      <!-- Sharp bright core -->
+      <feGaussianBlur in="ridges2" stdDeviation="0.25" result="sharpCore2"/>
+      <feComponentTransfer in="sharpCore2" result="coreIntense2">
+        <feFuncR type="table" tableValues="0 0.58 0.88 1 1"/>
+        <feFuncG type="table" tableValues="0 0.58 0.88 1 1"/>
+        <feFuncB type="table" tableValues="0 0.56 0.86 1 1"/>
+      </feComponentTransfer>
+      
+      <!-- Medium glow -->
+      <feGaussianBlur in="ridges2" stdDeviation="1.2" result="medGlow2"/>
+      <feComponentTransfer in="medGlow2" result="glowMed2">
+        <feFuncR type="table" tableValues="0 0.28 0.58 0.83 1"/>
+        <feFuncG type="table" tableValues="0 0.28 0.58 0.83 1"/>
+        <feFuncB type="table" tableValues="0 0.26 0.56 0.81 1"/>
+      </feComponentTransfer>
+      
+      <!-- Wide soft glow -->
+      <feGaussianBlur in="ridges2" stdDeviation="3" result="wideGlow2"/>
+      <feComponentTransfer in="wideGlow2" result="glowWide2">
+        <feFuncR type="table" tableValues="0 0.14 0.33 0.58 0.83"/>
+        <feFuncG type="table" tableValues="0 0.14 0.33 0.58 0.83"/>
+        <feFuncB type="table" tableValues="0 0.13 0.31 0.56 0.81"/>
+      </feComponentTransfer>
+      
+      <!-- Chromatic aberration on sharp core -->
+      <feOffset in="coreIntense2" dx="2.7" dy="1" result="coreRed2"/>
+      <feColorMatrix in="coreRed2" type="matrix"
+        values="2.8 0 0 0 10
+                0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 .1 0" result="coreRedTint2"/>
+      <feOffset in="coreIntense2" dx="-2.5" dy="-0.9" result="coreBlue2"/>
+      <feColorMatrix in="coreBlue2" type="matrix"
+        values="0 10 0 0 20
+                0 10 0 0 20
+                0 10 2.8 0 20
+                0 0 0 .1 0" result="coreBlueTint2"/>
+      
+      <!-- Additive blend all layers -->
+      <feBlend in="coreIntense2" in2="glowMed2" mode="lighten" result="layer1"/>
+      <feBlend in="layer1" in2="glowWide2" mode="lighten" result="layer2"/>
+      <feBlend in="layer2" in2="coreRedTint2" mode="screen" result="layer3"/>
+      <feBlend in="layer3" in2="coreBlueTint2" mode="screen" result="final2"/>
+    </filter>
+    
+    <!-- Layer 3: Fine Voronoi sparkle -->
+    <filter id="voronoi3" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="turbulence" baseFrequency="0.012 0.011" numOctaves="1" seed="126" result="noise3"/>
+      <feColorMatrix in="noise3" type="saturate" values="0" result="gray3"/>
+      <feGaussianBlur in="gray3" stdDeviation="0.1" result="smooth3"/>
+      <feComposite in="gray3" in2="smooth3" operator="arithmetic" k1="0" k2="5.5" k3="-5" k4="0" result="edges3"/>
+      <feComponentTransfer in="edges3" result="ridges3">
+        <feFuncR type="table" tableValues="0 0 0 0.07 0.56 1"/>
+        <feFuncG type="table" tableValues="0 0 0 0.07 0.56 1"/>
+        <feFuncB type="table" tableValues="0 0 0 0.07 0.56 1"/>
+      </feComponentTransfer>
+      
+      <!-- Sharp bright core -->
+      <feGaussianBlur in="ridges3" stdDeviation="0.2" result="sharpCore3"/>
+      <feComponentTransfer in="sharpCore3" result="coreIntense3">
+        <feFuncR type="table" tableValues="0 0.56 0.86 1 1"/>
+        <feFuncG type="table" tableValues="0 0.56 0.86 1 1"/>
+        <feFuncB type="table" tableValues="0 0.54 0.84 1 1"/>
+      </feComponentTransfer>
+      
+      <!-- Medium glow -->
+      <feGaussianBlur in="ridges3" stdDeviation="0.9" result="medGlow3"/>
+      <feComponentTransfer in="medGlow3" result="glowMed3">
+        <feFuncR type="table" tableValues="0 0.26 0.56 0.81 1"/>
+        <feFuncG type="table" tableValues="0 0.26 0.56 0.81 1"/>
+        <feFuncB type="table" tableValues="0 0.24 0.54 0.79 1"/>
+      </feComponentTransfer>
+      
+      <!-- Wide soft glow -->
+      <feGaussianBlur in="ridges3" stdDeviation="2" result="wideGlow3"/>
+      <feComponentTransfer in="wideGlow3" result="glowWide3">
+        <feFuncR type="table" tableValues="0 0.13 0.31 0.56 0.81"/>
+        <feFuncG type="table" tableValues="0 0.13 0.31 0.56 0.81"/>
+        <feFuncB type="table" tableValues="0 0.12 0.29 0.54 0.79"/>
+      </feComponentTransfer>
+      
+      <!-- Chromatic aberration on sharp core -->
+      <feOffset in="coreIntense3" dx="1.8" dy="0.65" result="coreRed3"/>
+      <feColorMatrix in="coreRed3" type="matrix"
+        values="1 0 0 0 10
+                0 0 0 0 10
+                0 0 0 0 10
+                0 0 0 .1 0" result="coreRedTint3"/>
+      <feOffset in="coreIntense3" dx="-1.7" dy="-0.6" result="coreBlue3"/>
+      <feColorMatrix in="coreBlue3" type="matrix"
+        values="1 0 0 0 10
+                0 0 0 0 10
+                0 0 2.5 0 10
+                0 0 0 .1 0" result="coreBlueTint3"/>
+      
+      <!-- Additive blend all layers -->
+      <feBlend in="coreIntense3" in2="glowMed3" mode="lighten" result="layer1"/>
+      <feBlend in="layer1" in2="glowWide3" mode="lighten" result="layer2"/>
+      <feBlend in="layer2" in2="coreRedTint3" mode="screen" result="layer3"/>
+      <feBlend in="layer3" in2="coreBlueTint3" mode="screen" result="final3"/>
+    </filter>
+    
+    <!-- Layer 4: Extra fine detail sparkle -->
+    <filter id="voronoi4" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="turbulence" baseFrequency="0.012 0.011" numOctaves="2" seed="200" result="noise4"/>
+      <feColorMatrix in="noise4" type="saturate" values="0" result="gray4"/>
+      <feGaussianBlur in="gray4" stdDeviation="0.8" result="smooth4"/>
+      <feComposite in="gray4" in2="smooth4" operator="arithmetic" k1="0" k2="6" k3="-5.5" k4="0" result="edges4"/>
+      <feComponentTransfer in="edges4" result="ridges4">
+        <feFuncR type="table" tableValues="10 10 0 0.55 0.2 1"/>
+        <feFuncG type="table" tableValues="10 10 0 0.55 0.2 1"/>
+        <feFuncB type="table" tableValues="10 10 0 0.55 0.2 1"/>
+      </feComponentTransfer>
+      
+      <!-- Sharp bright core -->
+      <feGaussianBlur in="ridges4" stdDeviation="0.15" result="sharpCore4"/>
+      <feComponentTransfer in="sharpCore4" result="coreIntense4">
+        <feFuncR type="table" tableValues="0 0.52 0.84 1 1"/>
+        <feFuncG type="table" tableValues="0 0.52 0.84 1 1"/>
+        <feFuncB type="table" tableValues="0 0.5 0.82 1 1"/>
+      </feComponentTransfer>
+      
+      <!-- Medium glow -->
+      <feGaussianBlur in="ridges4" stdDeviation="0.6" result="medGlow4"/>
+      <feComponentTransfer in="medGlow4" result="glowMed4">
+        <feFuncR type="table" tableValues="0 0.74 0.12 0.78 1"/>
+        <feFuncG type="table" tableValues="0 0.74 0.12 0.78 1"/>
+        <feFuncB type="table" tableValues="0 0.72 0.1 0.76 1"/>
+      </feComponentTransfer>
+      
+      <!-- Wide soft glow -->
+      <feGaussianBlur in="ridges4" stdDeviation="1.4" result="wideGlow4"/>
+      <feComponentTransfer in="wideGlow4" result="glowWide4">
+        <feFuncR type="table" tableValues="0 0.11 0.28 0.52 0.78"/>
+        <feFuncG type="table" tableValues="0 0.11 0.28 0.52 0.78"/>
+        <feFuncB type="table" tableValues="0 0.1 0.26 0.5 0.76"/>
+      </feComponentTransfer>
+      
+      <!-- Chromatic aberration on sharp core -->
+      <feOffset in="coreIntense4" dx="1.2" dy="0.4" result="coreRed4"/>
+      <feColorMatrix in="coreRed4" type="matrix"
+        values="2.2 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 1.2 0" result="coreRedTint4"/>
+      <feOffset in="coreIntense4" dx="-1.1" dy="-0.35" result="coreBlue4"/>
+      <feColorMatrix in="coreBlue4" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 2.2 0 0
+                0 0 0 1.2 0" result="coreBlueTint4"/>
+      
+      <!-- Additive blend all layers -->
+      <feBlend in="coreIntense4" in2="glowMed4" mode="lighten" result="layer1"/>
+      <feBlend in="layer1" in2="glowWide4" mode="lighten" result="layer2"/>
+      <feBlend in="layer2" in2="coreRedTint4" mode="screen" result="layer3"/>
+      <feBlend in="layer3" in2="coreBlueTint4" mode="screen" result="final4"/>
+    </filter>
+  </defs>
+  
+  <!-- Light gray background -->
+  <rect width="1920" height="1080" fill="#e8f4f8"/>
+  
+  <!-- Layer 1: Large smooth dark caustics -->
+  <rect width="1920" height="1080" fill="#2a4a5a" opacity="0.65" filter="url(#voronoi1)" blend="add"/>
+  
+  <!-- Layer 2: Medium dark caustics -->
+  <rect width="1920" height="1080" fill="#2a4a5a" opacity="0.15" filter="url(#voronoi2)"/>
+  
+  <!-- Layer 3: Detail dark caustics -->
+  <rect width="1920" height="1080" fill="#2a4a5a" opacity="0.1" filter="url(#voronoi3)"/>
+</svg>

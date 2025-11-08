@@ -5,6 +5,7 @@
   import { preloadData, invalidate, goto } from '$app/navigation';
   import AppSidebar from '$lib/components/app-sidebar.svelte';
   import PageHeader from '$lib/components/page-header.svelte';
+  import KeyboardShortcutsHandler from '$lib/components/base/KeyboardShortcutsHandler.svelte';
 
   import { initializeStores } from '$lib/stores/init.js';
   import { CRITICAL_ROUTES, CRITICAL_RESOURCES } from '$lib/config/preload.js';
@@ -108,14 +109,21 @@
   <title>Cosplans - Cosplay Project Tracker</title>
   <meta name="description" content="Track your cosplay projects from inspiration to completion" />
   <meta name="generator" content="SvelteKit" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
 </svelte:head>
 
 <!-- Authenticated app layout with sidebar and header -->
+<KeyboardShortcutsHandler />
 <div class="font-sans antialiased">
   <div class="flex min-h-screen w-full">
     <AppSidebar />
-    <main class="max-w-full flex-1 overflow-x-hidden">
-      {@render children()}
+    <main class="max-w-full flex-1 overflow-x-hidden flex flex-col">
+      <PageHeader />
+      <div class="flex-1 overflow-y-auto">
+        {@render children()}
+      </div>
     </main>
   </div>
   <Toast />

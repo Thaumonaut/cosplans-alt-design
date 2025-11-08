@@ -30,12 +30,12 @@ END $$;
 
 -- Ensure all team owners have active membership records
 INSERT INTO public.team_members (team_id, user_id, role, joined_at)
-SELECT id, owner_id, 'owner', created_at
+SELECT id, created_by, 'owner', created_at
 FROM public.teams
-WHERE owner_id IS NOT NULL
+WHERE created_by IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM public.team_members tm
-    WHERE tm.team_id = teams.id AND tm.user_id = teams.owner_id
+    WHERE tm.team_id = teams.id AND tm.user_id = teams.created_by
   )
 ON CONFLICT (team_id, user_id) 
 DO UPDATE SET 

@@ -12,8 +12,10 @@
   import InlineSelect from '$lib/components/base/InlineSelect.svelte'
   import InlineImageUpload from '$lib/components/base/InlineImageUpload.svelte'
   import TagSelector from '$lib/components/base/TagSelector.svelte'
+  import MaterialSelector from '$lib/components/base/MaterialSelector.svelte'
   import CommentBox from '$lib/components/base/CommentBox.svelte'
   import UsedInProjectsSection from './UsedInProjectsSection.svelte'
+  import EmbeddedTaskList from '$lib/components/tasks/EmbeddedTaskList.svelte'
   import type { Resource, ResourceCreate, ResourceCategory } from '$lib/types/domain/resource'
   import { get } from 'svelte/store'
 
@@ -41,7 +43,7 @@
   let saving = $state(false)
   let deleting = $state(false)
   let showDeleteDialog = $state(false)
-  let activeTab = $state<'overview' | 'details' | 'gallery'>('overview')
+  let activeTab = $state<'overview' | 'details' | 'tasks' | 'gallery'>('overview')
 
   let costValue = $state(0)
   $effect(() => {
@@ -126,10 +128,42 @@
       if (loaded) {
         resource = loaded
       } else {
-        error = 'Resource not found'
+        // If not found, might be a schema cache issue - try listing all and finding it
+        if (currentMode() === 'view') {
+          try {
+            const allResources = await resourceService.list()
+            const found = allResources.find(r => r.id === resourceId)
+            if (found) {
+              resource = found
+            } else {
+              error = 'Resource not found'
+            }
+          } catch (listErr: any) {
+            error = 'Resource not found or not accessible due to schema cache issue'
+          }
+        } else {
+          error = 'Resource not found'
+        }
       }
     } catch (err: any) {
-      error = err?.message || 'Failed to load resource'
+      // Handle 406 and schema cache errors
+      if ((err as any).status === 406 || err?.message?.includes('406') || 
+          err?.message?.includes('schema cache') || err?.code === 'PGRST205' || err?.code === 'PGRST204') {
+        console.warn('[ResourceDetail] Schema cache issue, trying alternative fetch method')
+        try {
+          const allResources = await resourceService.list()
+          const found = allResources.find(r => r.id === resourceId)
+          if (found) {
+            resource = found
+          } else {
+            error = 'Resource not accessible due to schema cache issue. Please refresh the page.'
+          }
+        } catch (listErr: any) {
+          error = err?.message || 'Failed to load resource (schema cache issue)'
+        }
+      } else {
+        error = err?.message || 'Failed to load resource'
+      }
     } finally {
       loading = false
     }
@@ -447,6 +481,12 @@
           Details
         </button>
         <button
+          onclick={() => activeTab = 'tasks'}
+          class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'tasks' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+        >
+          Tasks
+        </button>
+        <button
           onclick={() => activeTab = 'gallery'}
           class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'gallery' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
         >
@@ -534,6 +574,20 @@
                 />
               </div>
             {/if}
+          </div>
+
+        {:else if activeTab === 'tasks' && resourceId}
+          <!-- Tasks Tab -->
+          <div class="mx-auto max-w-4xl">
+            <EmbeddedTaskList
+              {resourceId}
+              teamId={get(currentTeam)?.id || ''}
+              title="Resource Tasks"
+              showViewToggle={true}
+              showQuickCreate={true}
+              showViewAllLink={true}
+              maxHeight="600px"
+            />
           </div>
 
         {:else if activeTab === 'gallery'}
@@ -659,13 +713,14 @@
                   </div>
                   <div>
                     <div class="mb-2 block text-sm font-medium">Material</div>
-                    <InlineTextEditor
-                      value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material || ''}
+                    <MaterialSelector
+                      value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material}
                       editable={!isReadOnly()}
-                      onSave={async (v: string) => {
-                        await updateMetadataField('material', v || undefined)
+                      onSave={async (v: string | string[] | undefined) => {
+                        await updateMetadataField('material', v)
                       }}
-                        placeholder="e.g., EVA foam"
+                      placeholder="e.g., EVA foam, Metal, Fabric"
+                      multiple={true}
                     />
                   </div>
                   <div class="flex flex-wrap gap-4">
@@ -677,7 +732,7 @@
                           await updateMetadataField('fragile', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Fragile</span>
                     </div>
@@ -689,7 +744,7 @@
                           await updateMetadataField('requiresAssembly', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Requires Assembly</span>
                     </div>
@@ -787,7 +842,7 @@
                           await updateMetadataField('stretch', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Stretch</span>
                     </div>
@@ -799,7 +854,7 @@
                           await updateMetadataField('washable', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Washable</span>
                     </div>
@@ -872,7 +927,7 @@
                           await updateMetadataField('needsStyling', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Needs Styling</span>
                     </div>
@@ -884,7 +939,7 @@
                           await updateMetadataField('heatResistant', e.currentTarget.checked)
                         }}
                         disabled={isReadOnly()}
-                        class="size-4 rounded border-gray-300"
+                        class="size-4 rounded border-[var(--theme-border)]"
                       />
                       <span class="text-sm">Heat Resistant</span>
                     </div>
@@ -1008,14 +1063,14 @@
                   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <div class="mb-2 block text-sm font-medium">Material</div>
-                      <InlineTextEditor
-                        value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material || ''}
+                      <MaterialSelector
+                        value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material}
                         editable={!isReadOnly()}
-                        onSave={async (v: string) => {
-                          await updateMetadataField('material', v || undefined)
+                        onSave={async (v: string | string[] | undefined) => {
+                          await updateMetadataField('material', v)
                         }}
-                        placeholder="e.g., Polyester"
-                        
+                        placeholder="e.g., Cotton, Polyester"
+                        multiple={true}
                       />
                     </div>
                     <div>
@@ -1063,14 +1118,14 @@
                     </div>
                     <div>
                       <div class="mb-2 block text-sm font-medium">Material</div>
-                      <InlineTextEditor
-                        value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material || ''}
+                      <MaterialSelector
+                        value={(resource?.metadata as any)?.material || (newResource.metadata as any)?.material}
                         editable={!isReadOnly()}
-                        onSave={async (v: string) => {
-                          await updateMetadataField('material', v || undefined)
+                        onSave={async (v: string | string[] | undefined) => {
+                          await updateMetadataField('material', v)
                         }}
-                        placeholder="e.g., Metal"
-                        
+                        placeholder="e.g., Metal, Plastic, Fabric"
+                        multiple={true}
                       />
                     </div>
                   </div>
@@ -1108,14 +1163,14 @@
                   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <div class="mb-2 block text-sm font-medium">Material Type</div>
-                      <InlineTextEditor
-                        value={(resource?.metadata as any)?.materialType || (newResource.metadata as any)?.materialType || ''}
+                      <MaterialSelector
+                        value={(resource?.metadata as any)?.materialType || (newResource.metadata as any)?.materialType}
                         editable={!isReadOnly()}
-                        onSave={async (v: string) => {
-                          await updateMetadataField('materialType', v || undefined)
+                        onSave={async (v: string | string[] | undefined) => {
+                          await updateMetadataField('materialType', v)
                         }}
-                        placeholder="e.g., Foam"
-                        
+                        placeholder="e.g., Foam, Metal"
+                        multiple={true}
                       />
                     </div>
                     <div>

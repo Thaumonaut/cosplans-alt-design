@@ -193,32 +193,94 @@ export const projectService = {
     quantity: number = 1,
     status: 'needed' | 'acquired' | 'in-progress' | 'completed' = 'needed'
   ): Promise<void> {
+    // Try using RPC function first (bypasses schema cache issues)
     try {
-      const { error } = await supabase.from('project_resources').insert({
+      const { data: rpcData, error: rpcError } = await supabase.rpc('link_resource_safe', {
+        p_project_id: projectId,
+        p_resource_id: resourceId,
+        p_quantity: quantity,
+        p_status: status,
+      } as any)
+
+      if (!rpcError) {
+        // Success - function exists and worked
+        return
+      }
+      
+      // If RPC fails due to function not existing (404 or function error code), fall through to direct insert
+      const isFunctionNotFound = 
+        rpcError.message?.includes('function') || 
+        rpcError.code?.includes('42883') ||
+        (rpcError as any).status === 404 ||
+        rpcError.message?.includes('does not exist')
+      
+      if (isFunctionNotFound) {
+        console.warn('[ProjectService] link_resource_safe function not found, trying direct insert')
+        // Fall through to direct insert
+      } else {
+        // Function exists but returned an error (permission, validation, etc.)
+        console.error('[ProjectService] link_resource_safe error:', rpcError)
+        throw new Error(rpcError.message || 'Failed to link resource: ' + JSON.stringify(rpcError))
+      }
+    } catch (rpcErr: any) {
+      // If it's not a "function doesn't exist" error, throw it
+      const isFunctionNotFound = 
+        rpcErr?.message?.includes('function') || 
+        rpcErr?.code?.includes('42883') ||
+        rpcErr?.status === 404 ||
+        rpcErr?.message?.includes('does not exist')
+      
+      if (!isFunctionNotFound) {
+        console.error('[ProjectService] link_resource_safe exception:', rpcErr)
+        throw rpcErr
+      }
+      // Otherwise, continue to direct insert fallback
+      console.warn('[ProjectService] link_resource_safe function not available, using direct insert')
+    }
+
+    // Fallback: Direct insert (for when RPC function doesn't exist)
+    try {
+      const { data, error } = await supabase.from('project_resources').insert({
         project_id: projectId,
         resource_id: resourceId,
         quantity,
         status,
-      } as any)
+      } as any).select()
 
       if (error) {
-        // If schema cache error, provide helpful message
-        if (error.message?.includes('schema cache') || error.code === 'PGRST205') {
+        console.error('[ProjectService] Direct insert error:', error)
+        
+        // Table doesn't exist
+        if (error.code === 'PGRST116' || error.message?.includes('does not exist') || (error as any).status === 404) {
           throw new Error(
-            'Cannot link resource: project_resources table is not available. ' +
-            'This is a schema cache issue. Please refresh the Supabase schema cache or try again later.'
+            'Cannot link resource: project_resources table does not exist. ' +
+            'Please run migration 20250000000007_join_tables.sql in your Supabase SQL Editor.'
           )
         }
-        throw error
+        
+        // Schema cache issue
+        if (error.message?.includes('schema cache') || error.code === 'PGRST205' || error.code === 'PGRST204') {
+          throw new Error(
+            'Cannot link resource: project_resources table not available (schema cache issue). ' +
+            'Please run: NOTIFY pgrst, \'reload schema\'; in SQL Editor and wait 5-10 minutes, ' +
+            'or use link_resource_safe function by running migration 20251101150000_create_link_resource_safe.sql'
+          )
+        }
+        
+        // Permission errors
+        if (error.code === '42501' || error.message?.includes('permission')) {
+          throw new Error(
+            'Permission denied: You must be an owner or editor to link resources. ' +
+            'Ensure your team membership has status=\'active\'.'
+          )
+        }
+        
+        throw new Error(error.message || 'Failed to link resource: ' + JSON.stringify(error))
       }
+      
+      console.log('[ProjectService] Resource linked successfully via direct insert')
     } catch (err: any) {
-      // If it's a schema cache error, throw a user-friendly message
-      if (err?.message?.includes('schema cache') || err?.code === 'PGRST205') {
-        throw new Error(
-          'Cannot link resource: project_resources table is not available. ' +
-          'Please try again later or contact support.'
-        )
-      }
+      console.error('[ProjectService] Link resource failed:', err)
       throw err
     }
   },
@@ -351,12 +413,39 @@ export const projectService = {
       if (!error && data !== null && data !== undefined) {
         return data as number
       }
+
+      // If error is 404 or function not found, fall back to client-side calculation
+      if (error) {
+        const isFunctionNotFound = 
+          (error as any)?.status === 404 ||
+          error?.message?.includes('function') ||
+          error?.message?.includes('does not exist') ||
+          error?.code?.includes('42883') ||
+          error?.message?.includes('schema cache') ||
+          error?.code === 'PGRST204'
+        
+        if (isFunctionNotFound) {
+          console.warn('[ProjectService] RPC calculate_project_progress not available, using fallback calculation')
+        } else {
+          // Other errors - try fallback but log the error
+          console.warn('[ProjectService] calculate_project_progress RPC error, using fallback:', error.message)
+        }
+      }
     } catch (rpcError: any) {
-      // If RPC fails due to schema cache, fall back to client-side calculation
-      if (rpcError?.message?.includes('schema cache') || rpcError?.code === 'PGRST204') {
+      // If RPC fails due to schema cache or function not found, fall back to client-side calculation
+      const isFunctionNotFound = 
+        rpcError?.status === 404 ||
+        rpcError?.message?.includes('function') ||
+        rpcError?.message?.includes('does not exist') ||
+        rpcError?.code?.includes('42883') ||
+        rpcError?.message?.includes('schema cache') ||
+        rpcError?.code === 'PGRST204'
+      
+      if (isFunctionNotFound) {
         console.warn('[ProjectService] RPC calculate_project_progress not available, using fallback calculation')
       } else {
-        throw rpcError
+        // Other unexpected errors - still try fallback but log
+        console.warn('[ProjectService] calculate_project_progress exception, using fallback:', rpcError?.message)
       }
     }
 

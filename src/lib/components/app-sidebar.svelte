@@ -58,12 +58,14 @@
     DropdownMenuItem,
   } from "$lib/components/ui";
   import TeamSelector from "./team-selector.svelte";
+  import Logo from "./Logo.svelte";
 
   // MVP Navigation - Only show implemented features
   const mainNav = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, ready: true },
     { title: "Ideas", url: "/ideas", icon: Sparkles, ready: true },
     { title: "Projects", url: "/projects", icon: Folder, ready: true },
+    { title: "Tasks", url: "/tasks", icon: CheckSquare, ready: true },
     { title: "Resources", url: "/resources", icon: Package, ready: true },
     { title: "Tools", url: "/tools", icon: Hammer, ready: true },
     { title: "Photoshoots", url: "/photoshoots", icon: Clapperboard, ready: true },
@@ -120,16 +122,14 @@
 </script>
 
 <Sidebar>
-  <SidebarHeader class="border-b border-sidebar-border px-6 py-4">
+  <SidebarHeader class="border-b border-[var(--theme-sidebar-border)] px-6 py-4">
     <div class="flex items-center gap-3">
-      <div
-        class="flex size-10 items-center justify-center rounded-xl bg-primary"
-      >
-        <Sparkles class="size-5 text-primary-foreground" />
-      </div>
-      <div class="flex flex-1 flex-col overflow-hidden">
-        <span class="text-lg font-semibold">Cosplans</span>
-      </div>
+      <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Logo size="lg" />
+        <div class="flex flex-1 flex-col overflow-hidden">
+          <span class="text-lg font-semibold">Cosplans</span>
+        </div>
+      </a>
     </div>
     <div class="mt-3">
       <TeamSelector />
@@ -200,8 +200,8 @@
 
   </SidebarContent>
 
-  <SidebarFooter class="border-t border-sidebar-border p-4">
-    <DropdownMenu placement="top-start">
+  <SidebarFooter class="border-t border-[var(--theme-sidebar-border)] p-4">
+    <DropdownMenu placement="top">
       {#snippet trigger()}
         <span class="flex w-full items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent">
           <Avatar class="size-8">

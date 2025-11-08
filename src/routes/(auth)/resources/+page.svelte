@@ -8,6 +8,7 @@
   import ResourceCard from '$lib/components/cards/ResourceCard.svelte'
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import ResourceDetail from '$lib/components/resources/ResourceDetail.svelte'
+  import LoadingState from '$lib/components/base/LoadingState.svelte'
   import Fuse from 'fuse.js'
   import type { Resource, ResourceCategory } from '$lib/types/domain/resource'
 
@@ -93,6 +94,12 @@
     loadResources()
   }
 
+  const emptyMessage = $derived(
+    searchQuery.trim() || categoryFilter !== 'all'
+      ? "Try adjusting your search or filters to find what you're looking for."
+      : 'Get started by creating your first resource. Resources can be reused across multiple projects.'
+  )
+
   const categoryCounts = $derived({
     all: resources.length,
     prop: resources.filter((r) => r.metadata?.category === 'prop').length,
@@ -160,28 +167,17 @@
 
   <!-- Resources Grid -->
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-center">
-        <div class="mb-4 inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-        <p class="text-sm text-muted-foreground">Loading resources...</p>
-      </div>
-    </div>
+    <LoadingState loading={true} />
   {:else if filtered.length === 0}
-    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 py-16">
-      <Package class="mb-4 size-12 text-muted-foreground opacity-50" />
-      <h3 class="mb-2 text-lg font-semibold">No resources found</h3>
-      <p class="mb-6 text-center text-sm text-muted-foreground max-w-md">
-        {#if searchQuery.trim() || categoryFilter !== 'all'}
-          Try adjusting your search or filters to find what you're looking for.
-        {:else}
-          Get started by creating your first resource. Resources can be reused across multiple projects.
-        {/if}
-      </p>
-      <Button onclick={handleNewResource}>
-        <Plus class="mr-2 size-4" />
-        Create First Resource
-      </Button>
-    </div>
+    <LoadingState
+      empty={true}
+      emptyIcon={Package}
+      {emptyMessage}
+      emptyAction={{
+        label: 'Create First Resource',
+        onclick: handleNewResource
+      }}
+    />
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {#each filtered as resource (resource.id)}

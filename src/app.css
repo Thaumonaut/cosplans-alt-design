@@ -2,6 +2,32 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Scrollbar styles for modern task UI */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
 :root {
   /* Fresh green theme inspired by cosplay creativity */
   --background: 145 5% 98%;
@@ -81,13 +107,29 @@
     outline-color: hsl(var(--ring) / 0.5);
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    /* Use new theme system variables if available, fallback to old HSL variables */
+    background-color: var(--theme-background, hsl(var(--background)));
+    background-image: var(--theme-background-pattern, none);
+    background-size: var(--theme-background-size, auto);
+    background-position: var(--theme-background-position, 0 0);
+    background-repeat: var(--theme-background-repeat, repeat);
+    background-blend-mode: var(--theme-background-blend, normal);
+    color: var(--theme-foreground, hsl(var(--foreground)));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer utilities {
+  .hover-sidebar {
+    transition: background-color 0.2s;
+  }
+  .hover-sidebar:hover {
+    background-color: var(--theme-sidebar-hover) !important;
+  }
+  .button-hover-sidebar:hover {
+    background-color: var(--theme-sidebar-hover) !important;
+    color: var(--theme-foreground) !important;
+  }
   .line-clamp-1 {
     overflow: hidden;
     display: -webkit-box;
@@ -108,5 +150,27 @@
   
   .text-pretty {
     text-wrap: pretty;
+  }
+  
+  /* Logo theme colors - make logo use theme primary color */
+  .logo-theme {
+    color: var(--theme-primary, hsl(var(--primary)));
+    filter: none;
+  }
+  
+  /* For SVG logos, ensure they use currentColor */
+  .logo-theme svg,
+  .logo-theme img[src$=".svg"] {
+    color: inherit;
+  }
+  
+  /* Alternative: Use filter to colorize logo to match theme */
+  .logo-theme-filter {
+    filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+  }
+  
+  /* Dark mode logo adjustment */
+  .dark .logo-theme {
+    color: var(--theme-primary, hsl(var(--primary)));
   }
 }
