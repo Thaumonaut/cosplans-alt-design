@@ -48,22 +48,7 @@
     // 3. The new prop value is different from what the user just set (to avoid overwriting user changes)
     if (!isUserChanging && value !== internalValue) {
       // If the user just set a value and the prop is reverting to an old value, ignore it
-      if (lastUserValue !== null && value === lastUserValue) {
-        console.log('[ColorPicker] Ignoring prop sync - prop is reverting to old value:', { 
-          dataStageId, 
-          internalValue,
-          propValue: value,
-          lastUserValue
-        })
-        return
-      }
-      
-      console.log('[ColorPicker] Syncing value from prop:', { 
-        dataStageId, 
-        oldValue: internalValue, 
-        newValue: value,
-        reason: 'prop changed'
-      })
+      // if (lastUserValue !== null && value === lastUserValue) {
       internalValue = value
       lastUserValue = null // Clear the flag after syncing
     }
@@ -77,29 +62,12 @@
     internalValue = color
     dispatch('change', color)
     
-    console.log('[ColorPicker] handleChange - user selected color:', {
-      dataStageId,
-      previousValue,
-      newColor: color,
-      currentPropValue: value,
-      capturedCallback: !!capturedOnChangeCallback,
-      currentCallback: !!onchange
-    })
-    
     // CRITICAL: Use the captured callback from initialization, not the current prop
     // This ensures we use the correct handler for this specific ColorPicker instance
     const callbackToUse = capturedOnChangeCallback || onchange
     
     if (callbackToUse) {
-      console.log('[ColorPicker] handleChange calling onchange callback:', { 
-        dataStageId, 
-        color, 
-        usingCaptured: !!capturedOnChangeCallback,
-        hasCallback: true
-      })
       callbackToUse(color)
-    } else {
-      console.warn('[ColorPicker] handleChange: no onchange callback provided', { dataStageId, color })
     }
     
     // Reset flag after a delay, but only if prop matches what we set
@@ -109,37 +77,15 @@
         // Prop matches what user set - update is complete
         isUserChanging = false
         lastUserValue = null
-        console.log('[ColorPicker] User change complete, prop matches user value:', { dataStageId, color })
       } else if (value === previousValue && color !== previousValue) {
         // Prop reverted to old value - this is a stale update, block it
-        console.warn('[ColorPicker] BLOCKING - Prop reverted to old value after user change:', { 
-          dataStageId, 
-          userSetValue: color, 
-          propValue: value,
-          previousValue,
-          reason: 'stale prop update detected'
-        })
         // Keep blocking for longer to prevent stale updates
         setTimeout(() => {
-          // Check again - if prop still doesn't match, something is wrong
-          if (value !== color) {
-            console.error('[ColorPicker] Prop still incorrect after delay:', {
-              dataStageId,
-              expected: color,
-              actual: value
-            })
-          }
           isUserChanging = false
           lastUserValue = null
         }, 1000)
       } else {
         // Prop doesn't match but it's not a revert - might be a different update
-        console.log('[ColorPicker] Prop value differs but not a revert:', {
-          dataStageId,
-          userValue: color,
-          propValue: value,
-          previousValue
-        })
         // Allow syncing after a delay
         setTimeout(() => {
           isUserChanging = false
@@ -151,7 +97,6 @@
   
   async function openPicker() {
     if (disabled || !inputElement) {
-      console.log('Color picker: disabled or no input element', { disabled, inputElement: !!inputElement })
       return
     }
     
@@ -173,7 +118,6 @@
     }
     
     if (!inputElement || !isInitialized) {
-      console.warn('Color picker not initialized yet', { inputElement: !!inputElement, isInitialized })
       return
     }
     
@@ -183,7 +127,7 @@
         ;(Coloris as any).open(`#${uniqueId}`)
         return
       } catch (e) {
-        console.warn('Coloris.open failed, falling back to click', e)
+        // Fallback to click if open fails
       }
     }
     
@@ -242,12 +186,6 @@
         const target = e.target as HTMLInputElement
         if (target.id === currentInputId && target.value !== internalValue) {
           const newColor = target.value || null
-          console.log('[ColorPicker] Native input event detected:', {
-            capturedStageId: currentStageId,
-            capturedInputId: currentInputId,
-            newColor,
-            previousInternalValue: internalValue
-          })
           
           // Update internal state
           isUserChanging = true
@@ -270,13 +208,15 @@
         }
       }
       
-      inputElement.addEventListener('input', handleInputChange)
-      inputElement.addEventListener('change', handleInputChange)
-      
-      // Store cleanup function
-      ;(inputElement as any).__colorPickerCleanup = () => {
-        inputElement.removeEventListener('input', handleInputChange)
-        inputElement.removeEventListener('change', handleInputChange)
+      if (inputElement) {
+        inputElement.addEventListener('input', handleInputChange)
+        inputElement.addEventListener('change', handleInputChange)
+        
+        // Store cleanup function
+        ;(inputElement as any).__colorPickerCleanup = () => {
+          inputElement?.removeEventListener('input', handleInputChange)
+          inputElement?.removeEventListener('change', handleInputChange)
+        }
       }
     }
     
@@ -304,6 +244,12 @@
       
       // Import CSS
       await import('@melloware/coloris/dist/coloris.css')
+      
+      // Check if inputElement still exists after async operations
+      // (it might have been destroyed during column drag)
+      if (!inputElement) {
+        return
+      }
       
       // Initialize Coloris globally if not already done
       if (!(window as any).__colorisInitialized) {
@@ -342,14 +288,6 @@
       // Store the captured callback so handleChange can use it
       capturedOnChangeCallback = capturedOnChange
       
-      console.log('[ColorPicker] Initializing Coloris with captured values:', {
-        capturedStageId,
-        capturedInputId,
-        hasOnChange: !!capturedOnChange,
-        currentDataStageId: dataStageId,
-        uniqueId
-      })
-      
       colorisInstance = Coloris({
         el: selector,
         theme: 'default',
@@ -379,7 +317,6 @@
           
           const ourInputElement = document.getElementById(capturedInputId) as HTMLInputElement | null
           if (!ourInputElement) {
-            console.warn('[ColorPicker] Our input element not found:', { capturedInputId })
             return
           }
           
@@ -420,54 +357,20 @@
           
           const isOurElement = activeElement?.id === capturedInputId
           
-          console.log('[ColorPicker] Coloris onChange triggered:', { 
-            capturedStageId: capturedStageId,
-            capturedInputId: capturedInputId,
-            color: normalizedColor,
-            activeElementId: activeElement?.id,
-            isOurElement: isOurElement,
-            previousValue: previousValue
-          })
-          
           // CRITICAL: Only process if the active element is OUR input
           if (activeElement && !isOurElement) {
-            console.log('[ColorPicker] Ignoring onChange - active element is different:', {
-              capturedInputId,
-              capturedStageId,
-              activeElementId: activeElement.id,
-              reportedColor: normalizedColor
-            })
             return // Don't process this change - it's for a different instance
           }
           
           // If we couldn't determine the active element, we need another strategy
           // For now, we'll ignore ALL onChange calls and rely on the input's native change event instead
           if (!activeElement) {
-            console.log('[ColorPicker] Could not determine active element - ignoring Coloris onChange, will use input event:', {
-              capturedInputId,
-              capturedStageId
-            })
             return // Don't process - we'll handle it via the input event listener
-          }
-          
-          // Verify the stage ID matches the actual DOM element
-          const actualDataStageId = ourInputElement?.getAttribute('data-stage-id') || capturedStageId
-          if (actualDataStageId && actualDataStageId !== capturedStageId) {
-            console.error('[ColorPicker] CRITICAL: Stage ID mismatch!', {
-              captured: capturedStageId,
-              actualFromDOM: actualDataStageId,
-              currentProp: dataStageId
-            })
           }
           
           // CRITICAL: Call the captured callback directly, not handleChange
           // This ensures we use the exact handler that was bound to this specific ColorPicker instance
           if (capturedOnChange) {
-            console.log('[ColorPicker] Calling captured onChange callback directly:', {
-              capturedStageId,
-              color,
-              hasCallback: true
-            })
             // Update internal state and user change tracking
             isUserChanging = true
             lastUserValue = normalizedColor
@@ -482,7 +385,6 @@
               if (value === normalizedColor) {
                 isUserChanging = false
                 lastUserValue = null
-                console.log('[ColorPicker] User change complete, prop matches:', { capturedStageId, color: normalizedColor })
               } else {
                 setTimeout(() => {
                   isUserChanging = false
@@ -491,7 +393,6 @@
               }
             }, 300)
           } else {
-            console.warn('[ColorPicker] No captured onChange callback, falling back to handleChange')
             // Fallback to handleChange if no captured callback
             handleChange(normalizedColor)
           }
@@ -523,8 +424,8 @@
       
       isInitialized = true
       
-      // Set initial value
-      if (value) {
+      // Set initial value (check inputElement is still available)
+      if (value && inputElement) {
         inputElement.value = value
       }
     } catch (error) {
