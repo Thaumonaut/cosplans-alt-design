@@ -1,14 +1,23 @@
-<script lang="ts">
+<script lang="ts" >
 	/**
 	 * TaskBoardView Component
 	 * 
 	 * Renders tasks as a kanban board with columns by stage.
 	 * Supports drag-and-drop between columns.
 	 */
+import { browser } from '$app/environment';
 import { createEventDispatcher } from 'svelte';
 import { tick } from 'svelte';
 import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from 'svelte-dnd-action';
+import type { DndEvent } from 'svelte-dnd-action';
 import TaskCard from './TaskCard.svelte';
+import ColorPicker from '$lib/components/ui/color-picker.svelte';
+import { taskStageService } from '$lib/api/services/taskStageService';
+import { currentTeam, currentUserRole } from '$lib/stores/teams';
+import { get } from 'svelte/store';
+import { toast } from '$lib/stores/toast';
+import { GripVertical } from 'lucide-svelte';
+import { debounce } from '$lib/utils/performance';
 
 	interface Task {
 		id: string;
@@ -23,13 +32,127 @@ import TaskCard from './TaskCard.svelte';
 		total_subtasks?: number;
 		completed_subtasks?: number;
 		assignee?: any;
+	[SHADOW_ITEM_MARKER_PROPERTY_NAME]?: boolean;
 	}
 
 	interface Stage {
 		id: string;
 		name: string;
-		color?: string;
+	color?: string | null;
+	[SHADOW_ITEM_MARKER_PROPERTY_NAME]?: boolean;
 	}
+
+const STAGE_COLOR_CACHE_PREFIX = 'task-stage-colors-';
+let stageColorCache: Record<string, string | null> | null = null;
+let stageColorCacheTeamId: string | null = null;
+
+function getActiveTeamId(): string | null {
+	const team = get(currentTeam);
+	return team?.id ?? null;
+}
+
+function getColorCacheKey(teamId: string | null) {
+	return `${STAGE_COLOR_CACHE_PREFIX}${teamId ?? 'global'}`;
+}
+
+function loadStageColorCache(): Record<string, string | null> {
+	if (!browser) return {};
+	const teamId = getActiveTeamId();
+	if (stageColorCache && stageColorCacheTeamId === teamId) {
+		return stageColorCache;
+	}
+	stageColorCacheTeamId = teamId;
+	if (!teamId) {
+		stageColorCache = {};
+		return stageColorCache;
+	}
+	try {
+		const raw = window.localStorage.getItem(getColorCacheKey(teamId));
+		stageColorCache = raw ? (JSON.parse(raw) as Record<string, string | null>) ?? {} : {};
+	} catch (err) {
+		// Failed to read cache, continue without it
+		stageColorCache = {};
+	}
+	return stageColorCache ?? {};
+}
+
+function persistStageColorCache(cache: Record<string, string | null>) {
+	if (!browser) return;
+	const teamId = stageColorCacheTeamId;
+	if (!teamId) return;
+	try {
+		window.localStorage.setItem(getColorCacheKey(teamId), JSON.stringify(cache));
+	} catch (err) {
+		// Failed to persist cache, continue without it
+	}
+}
+
+function mergeColorsFromCache(stages: Stage[]): Stage[] {
+	if (!browser || stages.length === 0) return stages;
+	const cache = loadStageColorCache();
+	let updated = false;
+
+	const merged = stages.map((stage) => {
+		const color = stage.color;
+		const cached = cache[stage.id];
+		if ((color === undefined || color === null || color === '') && cached !== undefined) {
+			updated = true;
+			return { ...stage, color: cached };
+		}
+		return stage;
+	});
+
+	return updated ? merged : stages;
+}
+
+function recordStageColors(stages: Stage[]): void {
+	if (!browser || stages.length === 0) return;
+	const cache = loadStageColorCache();
+	let mutated = false;
+
+	for (const stage of stages) {
+		if (stage.color !== undefined) {
+			const normalized = stage.color ?? null;
+			if (cache[stage.id] !== normalized) {
+				cache[stage.id] = normalized;
+				mutated = true;
+			}
+		}
+	}
+
+	if (mutated) {
+		persistStageColorCache(cache);
+	}
+}
+
+function applyStageColors(source: Stage[]): Stage[] {
+	const cloned = source.map((stage) => ({ ...stage }));
+	const merged = mergeColorsFromCache(cloned);
+	recordStageColors(merged);
+	return merged;
+}
+
+function applyStageColorsInPlace(stages: Stage[]): Stage[] {
+	if (stages.length === 0) {
+		return stages;
+	}
+
+	if (browser) {
+		const cache = loadStageColorCache();
+		for (const stage of stages) {
+			const cached = cache[stage.id];
+			if (
+				(stage.color === undefined || stage.color === null || stage.color === '') &&
+				cached !== undefined
+			) {
+				stage.color = cached;
+			}
+		}
+	}
+
+	recordStageColors(stages);
+	return stages;
+}
 
 	interface Props {
 		tasks: Task[];
@@ -37,7 +160,7 @@ import TaskCard from './TaskCard.svelte';
 		statusOptions?: Array<{ value: string; label: string; color?: string }>;
 	}
 
-	let { tasks, stages, statusOptions = [] }: Props = $props();
+	let { tasks, stages: stagesProp, statusOptions = [] }: Props = $props();
 
 	const dispatch = createEventDispatcher<{
 		taskClick: { id: string };
@@ -46,13 +169,145 @@ import TaskCard from './TaskCard.svelte';
 		dueDateChange: { id: string; due_date: string | null };
 		taskDrop: { taskId: string; newStatusId: string };
 		addTask: { stageId: string };
+		stageReorder: { stageIds: string[] };
+		stageColorChange: { stageId: string; color: string | null };
 	}>();
 
-const LOG_PREFIX = '[TaskBoardView]';
+// Task drag state (declared early for use in column drag handlers)
+let boardContainer: HTMLElement | null = $state(null);
+let isDragging = $state(false); // Track if a drag is currently in progress
+let collapsedColumns = $state(new Set<string>()); // Track which columns are collapsed
+let autoExpandedColumnId: string | null = $state(null); // Track single auto-expanded column during drag
+let draggedSourceStage: string | null = $state(null);
+let lastHoveredStageId: string | null = null;
+let currentDragItemId: string | null = $state(null);
+let finalizedZones = $state(new Set<string>()); // Track which zones have finalized
 
-	// Use stageTasks state for reactive task arrays
-	// tasksByStage is now derived from stageTasks for backwards compatibility
-	const tasksByStage = $derived(stageTasks);
+// Column drag state for svelte-dnd-action (declared early for use in handlers)
+let isHoveringColumnHandle = $state(false);
+let columnDragStartElement: HTMLElement | null = $state(null);
+let isDraggingColumn = $state(false);
+let originalColumnStages: Stage[] | null = $state(null);
+
+// Reactive stages array for column reordering
+// Initialize from prop and sync when prop changes (including colors)
+const initialStageState = applyStageColors(stagesProp);
+let stages = $state<Stage[]>(initialStageState.map((stage) => ({ ...stage })));
+let columnStages = $state<Stage[]>(initialStageState);
+
+// Create a map of stage IDs to their latest data (for color lookups)
+const stageMap = $derived.by(() => {
+	const source = columnStages.length > 0 ? columnStages : stages;
+	return new Map(source.map((stage) => [stage.id, stage]));
+});
+
+
+// Initialize columnStages on mount
+// IMPORTANT: Apply cache only for stages missing colors from Supabase
+$effect(() => {
+	if (columnStages.length === 0 && stagesProp.length > 0) {
+		// First pass: use colors from props (Supabase) if available
+		const withPropColors = stagesProp.map(s => ({ ...s }));
+		// Second pass: fill in missing colors from cache
+		const initialStages = applyStageColors(withPropColors);
+		columnStages = initialStages;
+		stages = initialStages.map((stage) => ({ ...stage }));
+	}
+});
+
+// Sync stages when prop changes (including colors), preserving local reordering during drag
+$effect(() => {
+	// Track stagesProp to ensure reactivity - access the array and colors
+	const propStages = stagesProp;
+	
+		
+		// Only sync if we're not currently dragging a column
+		if (!isDraggingColumn) {
+			// Store current state before reading to avoid loop
+			const currentColumnStages = columnStages;
+			const currentStages = stages;
+			
+			// Update columnStages - merge prop data into existing order to preserve reordering
+			// IMPORTANT: Always prefer prop color if it exists (from Supabase), only use local/cached if prop is null/undefined
+			let newColumnStages = currentColumnStages.length > 0 
+				? currentColumnStages.map(colStage => {
+					const propStage = propStages.find(s => s.id === colStage.id);
+					if (!propStage) return colStage;
+					return {
+						...propStage,
+						// Prefer prop color (from Supabase) if it exists, otherwise use local/cached
+						color: propStage.color !== undefined && propStage.color !== null 
+							? propStage.color 
+							: (colStage.color !== undefined ? colStage.color : propStage.color),
+						name: colStage.name ?? propStage.name,
+						description: (colStage as any).description ?? (propStage as any).description
+					};
+				})
+				: [...propStages];
+
+			// Apply cache only for stages that don't have colors from Supabase
+			newColumnStages = applyStageColors(newColumnStages);
+			
+			// Check if any colors or data changed
+			const dataChanged = newColumnStages.length !== currentColumnStages.length || 
+				newColumnStages.some((s, i) => {
+					const old = currentColumnStages[i];
+					return !old || old.id !== s.id || old.color !== s.color || old.name !== s.name;
+				});
+			
+			// Only update if something actually changed to prevent loops
+			if (dataChanged) {
+				columnStages = newColumnStages;
+			}
+			
+			// Update stages array (used for other logic) - don't read from stages inside
+			// IMPORTANT: Always prefer prop color if it exists (from Supabase), only use local/cached if prop is null/undefined
+			let newStages = propStages.map(propStage => {
+				const existing = currentStages.find(s => s.id === propStage.id);
+				if (!existing) return propStage;
+				return {
+					...propStage,
+					// Prefer prop color (from Supabase) if it exists, otherwise use local/cached
+					color: propStage.color !== undefined && propStage.color !== null
+						? propStage.color
+						: (existing.color !== undefined ? existing.color : propStage.color),
+					name: existing.name ?? propStage.name
+				};
+			});
+
+			// Apply cache only for stages that don't have colors from Supabase
+			newStages = applyStageColors(newStages);
+			
+			// Only update if changed
+			const stagesChanged = newStages.length !== currentStages.length || 
+				newStages.some((s, i) => {
+					const old = currentStages[i];
+					return !old || old.id !== s.id || old.color !== s.color || old.name !== s.name;
+				});
+			
+			if (stagesChanged) {
+				stages = newStages;
+			}
+		}
+	});
+
+	// Check if user can edit (owner or editor)
+	const canEdit = $derived(() => {
+		const role = get(currentUserRole);
+		return role === 'owner' || role === 'editor';
+	});
+
+
+// Create reactive arrays for each stage's tasks
+let stageTasks: Record<string, Task[]> = $state(
+	stages.reduce((acc, stage) => {
+		acc[stage.id] = tasks.filter((task) => task.status_id === stage.id);
+		return acc;
+	}, {} as Record<string, Task[]>)
+);
+
+// Use stageTasks state for reactive task arrays
+const tasksByStage = $derived(stageTasks);
 
 	// Calculate subtask counts per stage
 	const stageSubtaskCounts = $derived(
@@ -77,6 +332,228 @@ const LOG_PREFIX = '[TaskBoardView]';
 		collapsedColumns = new Set(collapsedColumns); // Trigger reactivity
 	}
 
+const debouncedColorUpdate = debounce(
+	async (stageId: string, color: string | null, previousColor: string | null | undefined) => {
+		if (!canEdit()) return;
+
+		try {
+			await taskStageService.update(stageId, { color: color ?? null });
+			dispatch('stageColorChange', { stageId, color });
+			toast.success('Color updated', 'Stage color has been changed');
+		} catch (err: any) {
+			toast.error('Failed to update color', err.message || 'Unknown error');
+			console.error('Failed to update stage color:', err);
+
+			// Revert to the previous color if the update fails
+			const fallbackColor = previousColor ?? undefined;
+			stages = stages.map((s) => (s.id === stageId ? { ...s, color: fallbackColor } : s));
+			columnStages = columnStages.map((s) =>
+				s.id === stageId ? { ...s, color: fallbackColor } : s
+			);
+			recordStageColors(columnStages);
+		}
+	},
+	300
+);
+
+// Handle stage color change
+function handleStageColorChange(stageId: string, color: string | null) {
+	if (!canEdit()) return;
+
+	const normalizedColor = color ?? null;
+	const previousColor = stageMap.get(stageId)?.color;
+
+	// Optimistically update local state for immediate visual feedback
+	stages = stages.map((s) =>
+		s.id === stageId ? { ...s, color: normalizedColor } : s
+	);
+	columnStages = columnStages.map((s) =>
+		s.id === stageId ? { ...s, color: normalizedColor } : s
+	);
+
+	recordStageColors(columnStages);
+
+	debouncedColorUpdate(stageId, normalizedColor, previousColor);
+}
+
+// Handle column reordering with svelte-dnd-action
+function handleColumnConsider(e: CustomEvent) {
+	const { items, info } = e.detail;
+
+	if (info?.trigger === 'dragStarted') {
+		originalColumnStages = columnStages.slice();
+	}
+
+	// CRITICAL: Always update items so svelte-dnd-action can manage placeholders
+	// Pass items through as-is during drag - svelte-dnd-action needs the exact structure
+	// We'll clean IDs only in finalize to avoid breaking internal tracking
+	columnStages = items as Stage[];
+
+	if (!info) {
+		return;
+	}
+
+	// When drag starts, confirm it originated from the handle
+	if (info.trigger === 'dragStarted') {
+		const isValidStart = !!columnDragStartElement && canEdit() && !isDragging;
+		isDraggingColumn = isValidStart;
+
+		if (!isValidStart) {
+			originalColumnStages = null;
+			// Immediately revert to the canonical order to avoid visual glitches
+			columnDragStartElement = null;
+			isHoveringColumnHandle = false;
+			isDraggingColumn = false; // Ensure it's reset
+			columnStages = applyStageColors(stages);
+		}
+	}
+}
+
+async function handleColumnFinalize(e: CustomEvent) {
+	const { items, info } = e.detail;
+	const wasValidDrag = !!info && canEdit() && !!columnDragStartElement && isDraggingColumn;
+
+	if (!wasValidDrag) {
+		isDraggingColumn = false;
+		isHoveringColumnHandle = false;
+		columnDragStartElement = null;
+		// Reset to prop order if drag was cancelled
+		columnStages = applyStageColors(stages);
+		return;
+	}
+
+	try {
+		const team = get(currentTeam);
+		if (!team) {
+			toast.error('No team', 'Cannot reorder stages without an active team');
+			const resetStages = applyStageColors(stagesProp);
+			columnStages = resetStages;
+			stages = resetStages.map((stage) => ({ ...stage }));
+			// Reset drag state before returning
+			isDraggingColumn = false;
+			isHoveringColumnHandle = false;
+			columnDragStartElement = null;
+			return;
+		}
+
+		// Determine new order based on items emitted by svelte-dnd-action
+		const orderedStageIds = (items as Stage[])
+			.filter((item) => item && !(item as any)[SHADOW_ITEM_MARKER_PROPERTY_NAME])
+			.map((item) => String(item.id ?? '').replace(/:dnd-shadow-placeholder.*$/, ''))
+			.filter((id) => id && id.length > 0);
+
+		const uniqueStageIds: string[] = [];
+		const seen = new Set<string>();
+
+		for (const id of orderedStageIds) {
+			if (!seen.has(id)) {
+				seen.add(id);
+				uniqueStageIds.push(id);
+			}
+		}
+
+		// Append any stages that might be missing (safety for edge cases)
+		const currentOrder = (columnStages.length > 0 ? columnStages : stages)
+			.map((s) => s.id)
+			.filter((id): id is string => typeof id === 'string' && id.length > 0);
+		for (const id of currentOrder) {
+			if (!seen.has(id)) {
+				seen.add(id);
+				uniqueStageIds.push(id);
+			}
+		}
+
+		const lookupSource =
+			originalColumnStages && originalColumnStages.length > 0
+				? originalColumnStages
+				: columnStages.length > 0
+				? columnStages
+				: stages;
+		const originalMap = new Map(
+			lookupSource
+				.filter((stage) => stage.id)
+				.map((stage) => [stage.id, stage] as [string, Stage])
+		);
+
+		const reorderedStages = uniqueStageIds
+			.map((id) => originalMap.get(id) ?? stages.find((s) => s.id === id) ?? stagesProp.find((s) => s.id === id))
+			.filter((stage): stage is Stage => !!stage)
+			.map((stage, index) => {
+				const target = stage;
+				if ('displayOrder' in target) {
+					target.displayOrder = index;
+				}
+				return target;
+			});
+
+		applyStageColorsInPlace(reorderedStages);
+
+		columnStages = [...reorderedStages];
+		stages = reorderedStages.map((stage) => ({ ...stage }));
+		const stageIds = uniqueStageIds;
+
+		// Save new order to backend
+		await taskStageService.reorder(team.id, stageIds);
+		
+		dispatch('stageReorder', { stageIds });
+		toast.success('Columns reordered', 'Stage order has been updated');
+	} catch (err: any) {
+		toast.error('Failed to reorder', err.message || 'Unknown error');
+		console.error('Failed to reorder columns:', err);
+		// Reload stages to reset
+		const team = get(currentTeam);
+		if (team) {
+			const reloaded = await taskStageService.list(team.id);
+			const sorted = reloaded.sort((a, b) => a.displayOrder - b.displayOrder);
+			const applied = applyStageColors(sorted);
+			columnStages = applied;
+			stages = applied.map((stage) => ({ ...stage }));
+		}
+	} finally {
+		isDraggingColumn = false;
+		isHoveringColumnHandle = false;
+		columnDragStartElement = null;
+		originalColumnStages = null;
+	}
+}
+
+// Track when drag starts from handle
+function handleColumnHandlePointerDown(event: PointerEvent) {
+	if (!canEdit() || isDragging) return;
+
+	const handle = event.currentTarget as HTMLElement | null;
+	if (handle) {
+		columnDragStartElement = handle;
+		isHoveringColumnHandle = true;
+	}
+}
+
+function handleColumnHandlePointerUp() {
+	// Only clear if we're not actively dragging (pointer up without drag start)
+	if (!isDraggingColumn) {
+		columnDragStartElement = null;
+		isHoveringColumnHandle = false;
+	}
+}
+
+function handleColumnHandlePointerCancel() {
+	// Cancel always clears drag state
+	isDraggingColumn = false;
+	columnDragStartElement = null;
+	isHoveringColumnHandle = false;
+}
+
+// Check if mouse is over any column handle (for visual feedback)
+function checkHandleHover(e: MouseEvent) {
+	if (!canEdit() || isDragging || isDraggingColumn) {
+		return;
+	}
+	
+	const target = e.target as HTMLElement;
+	const isOverHandle = target.closest('.column-drag-handle') !== null;
+	isHoveringColumnHandle = isOverHandle;
+}
+
 	function handleTaskClick(event: CustomEvent<{ id: string }>) {
 		dispatch('taskClick', event.detail);
 	}
@@ -93,23 +570,7 @@ const LOG_PREFIX = '[TaskBoardView]';
 		dispatch('dueDateChange', event.detail);
 	}
 
-	let boardContainer: HTMLElement | null = $state(null);
-	let isDragging = $state(false); // Track if a drag is currently in progress
-	let collapsedColumns = $state(new Set<string>()); // Track which columns are collapsed
-	let autoExpandedColumnId: string | null = $state(null); // Track single auto-expanded column during drag
-	let draggedSourceStage: string | null = $state(null);
-	let lastHoveredStageId: string | null = null;
-	let currentDragItemId: string | null = $state(null);
-	let finalizedZones = $state(new Set<string>()); // Track which zones have finalized
-
 	// Create reactive arrays for each stage's tasks
-	let stageTasks: Record<string, Task[]> = $state(
-		stages.reduce((acc, stage) => {
-			acc[stage.id] = tasks.filter((task) => task.status_id === stage.id);
-			return acc;
-		}, {} as Record<string, Task[]>)
-	);
-
 	function shallowEqualTask(a: Task, b: Task) {
 		if (a === b) return true;
 		const keysA = Object.keys(a);
@@ -240,31 +701,26 @@ const LOG_PREFIX = '[TaskBoardView]';
 			handleAutoScroll(e);
 			const hoveredStageId = getHoveredColumnId(mouseX, mouseY);
 		if (hoveredStageId !== lastHoveredStageId) {
-			console.debug(`${LOG_PREFIX} handleDragMove`, {
-				hoveredStageId,
-				isCollapsed: hoveredStageId ? collapsedColumns.has(hoveredStageId) : false
-			});
 			lastHoveredStageId = hoveredStageId ?? null;
 		}
-			if (hoveredStageId && collapsedColumns.has(hoveredStageId)) {
+		if (hoveredStageId && collapsedColumns.has(hoveredStageId)) {
 			if (autoExpandedColumnId !== hoveredStageId) {
-				console.debug(`${LOG_PREFIX} auto-expand`, { stageId: hoveredStageId });
 				autoExpandedColumnId = hoveredStageId;
 			}
-			} else if (autoExpandedColumnId !== null) {
-			console.debug(`${LOG_PREFIX} auto-expand clear`, { previous: autoExpandedColumnId });
-				autoExpandedColumnId = null;
-			}
+		} else if (autoExpandedColumnId !== null) {
+			autoExpandedColumnId = null;
+		}
 		}
 	}
 
-	function handleConsider(e: CustomEvent, stageId: string) {
-		const { items, info } = e.detail;
-		
-		// CRITICAL: Always update items - this includes the insertion placeholder when dragging
-		// The library manages the items array and includes placeholders during drag
-		// Per svelte-dnd-action docs: each zone should independently update its items array
-		stageTasks = { ...stageTasks, [stageId]: items };
+function handleConsider(e: CustomEvent<DndEvent<Task>>, stageId: string) {
+	const { items, info } = e.detail;
+	const typedItems = items as Task[];
+	
+	// CRITICAL: Always update items - this includes the insertion placeholder when dragging
+	// The library manages the items array and includes placeholders during drag
+	// Per svelte-dnd-action docs: each zone should independently update its items array
+	stageTasks = { ...stageTasks, [stageId]: typedItems };
 
 		if (!info) {
 			return;
@@ -274,6 +730,10 @@ const LOG_PREFIX = '[TaskBoardView]';
 		currentDragItemId = id ?? currentDragItemId;
 
 		if (!isDragging && trigger === 'dragStarted') {
+			// Clear column drag state when task drag starts
+			columnDragStartElement = null;
+			isHoveringColumnHandle = false;
+			
 			isDragging = true;
 			draggedSourceStage = stageId;
 			finalizedZones = new Set(); // Reset finalized zones tracking
@@ -286,14 +746,15 @@ const LOG_PREFIX = '[TaskBoardView]';
 		}
 	}
 
-	function handleFinalize(e: CustomEvent, stageId: string) {
+function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		const { items, info } = e.detail;
+		const typedItems = items as Task[];
 		
 		// CRITICAL: Per svelte-dnd-action docs, each zone should independently update its items array
 		// The library handles cross-zone moves automatically - when an item is moved between zones,
 		// BOTH zones get finalize calls: source zone gets items without the moved item,
 		// target zone gets items with the moved item added
-		stageTasks = { ...stageTasks, [stageId]: items };
+		stageTasks = { ...stageTasks, [stageId]: typedItems };
 		
 		// Track that this zone has finalized (create new Set for reactivity)
 		finalizedZones = new Set([...finalizedZones, stageId]);
@@ -301,12 +762,13 @@ const LOG_PREFIX = '[TaskBoardView]';
 		// Dispatch status change event for parent to update backend
 		// Only dispatch if this is the target zone (where the item was dropped)
 		// Check if item was moved between columns by comparing draggedSourceStage
-		if (info && draggedSourceStage && draggedSourceStage !== stageId) {
+	if (info && draggedSourceStage && draggedSourceStage !== stageId) {
+			const detail = info as any;
 			const dragInfo = {
-				id: info.id,
-				activeIndex: info.activeIndex,
-				dragged: (info as any)?.dragged,
-				draggedContext: (info as any)?.draggedContext
+				id: (detail as any)?.id as string | undefined,
+				activeIndex: (detail as any)?.activeIndex as number | undefined,
+				dragged: (detail as any)?.dragged,
+				draggedContext: (detail as any)?.draggedContext
 			};
 			const draggedItemId =
 				dragInfo.id ??
@@ -314,49 +776,31 @@ const LOG_PREFIX = '[TaskBoardView]';
 				(dragInfo.draggedContext as any)?.id ??
 				currentDragItemId ??
 				(dragInfo.activeIndex !== undefined && dragInfo.activeIndex !== null
-					? items[dragInfo.activeIndex]?.id
+					? typedItems[dragInfo.activeIndex]?.id
 					: null);
 			const draggedItem = draggedItemId
-				? items.find((task) => task.id === draggedItemId)
+				? typedItems.find((task) => task.id === draggedItemId)
 				: undefined;
 			if (!draggedItem && dragInfo.activeIndex !== undefined && dragInfo.activeIndex !== null) {
 				// Fallback: use the item at the reported index if available
-				const fallbackItem = items[dragInfo.activeIndex];
+				const fallbackItem = typedItems[dragInfo.activeIndex];
 				if (fallbackItem) {
-					console.warn(`${LOG_PREFIX} Using fallback activeIndex to identify dragged item`, {
-						from: draggedSourceStage,
-						to: stageId,
-						dragInfo,
-						fallbackId: fallbackItem.id
-					});
 					currentDragItemId = fallbackItem.id;
 					dispatch('statusChange', { id: fallbackItem.id, status_id: stageId });
 				}
 			} else if (draggedItem) {
 				currentDragItemId = draggedItem.id;
-				console.debug(`${LOG_PREFIX} Cross-column move detected`, {
-					from: draggedSourceStage,
-					to: stageId,
-					taskId: draggedItem.id,
-					taskTitle: draggedItem.title,
-					dragInfo
-				});
 				dispatch('statusChange', { id: draggedItem.id, status_id: stageId });
-			} else {
-				console.warn(`${LOG_PREFIX} Unable to resolve dragged item during cross-column finalize`, {
-					from: draggedSourceStage,
-					to: stageId,
-					dragInfo,
-					items: items.map((task) => task.id)
-				});
 			}
 		}
 
 		// Clean up drag state AFTER both zones have finalized (for cross-column moves)
 		// or immediately (for same-column moves)
-		const isCrossColumnMove = info && draggedSourceStage && draggedSourceStage !== stageId;
+		const sourceStageId = draggedSourceStage;
+		const isCrossColumnMove = !!info && !!sourceStageId && sourceStageId !== stageId;
 		const bothZonesFinalized = isCrossColumnMove && 
-			finalizedZones.has(draggedSourceStage) && 
+			sourceStageId !== null &&
+			finalizedZones.has(sourceStageId) && 
 			finalizedZones.has(stageId);
 		
 		if (bothZonesFinalized || !isCrossColumnMove) {
@@ -386,18 +830,37 @@ const LOG_PREFIX = '[TaskBoardView]';
 <div 
 	class="task-board-container flex gap-4 overflow-x-auto h-full p-4"
 	bind:this={boardContainer}
+	role="group"
+	aria-label="Task board columns"
+	onmousemove={checkHandleHover}
+	onpointerup={handleColumnHandlePointerUp}
+	onpointercancel={handleColumnHandlePointerCancel}
+	use:dndzone={{
+		items: columnStages,
+		type: 'column',
+		flipDurationMs: 150,
+		dragDisabled: !canEdit() || isDragging || (!isHoveringColumnHandle && !isDraggingColumn)
+	}}
+	onconsider={handleColumnConsider}
+	onfinalize={handleColumnFinalize}
 >
-	{#each stages as stage (stage.id)}
-		{@const tasksForStage = tasksByStage[stage.id] || []}
-		{@const isCollapsed = collapsedColumns.has(stage.id)}
-		{@const isVisuallyExpanded = autoExpandedColumnId === stage.id}
-		{@const subtaskCounts = stageSubtaskCounts[stage.id] || { total: 0, completed: 0 }}
+	{#each columnStages as stage (stage.id || `stage-${columnStages.indexOf(stage)}`)}
+		{@const stageId = String(stage.id || '').replace(/:dnd-shadow-placeholder.*$/, '')}
+		{@const latestStage = stageMap.get(stageId) || stage}
+		{@const stageColor = latestStage.color || stage.color}
+		{@const tasksForStage = tasksByStage[stageId] || []}
+		{@const isCollapsed = collapsedColumns.has(stageId)}
+		{@const isVisuallyExpanded = autoExpandedColumnId === stageId}
+		{@const subtaskCounts = stageSubtaskCounts[stageId] || { total: 0, completed: 0 }}
 		{@const effectiveWidth = (isCollapsed && !isVisuallyExpanded) ? '80px' : '320px'}
 		{@const effectivePadding = (isCollapsed && !isVisuallyExpanded) ? '0.75rem' : '1rem'}
+		{@const columnBgColor = stageColor ? `color-mix(in srgb, ${stageColor} 10%, var(--theme-section-bg, rgba(255, 255, 255, 0.9)))` : 'var(--theme-section-bg, rgba(255, 255, 255, 0.9))'}
+		{@const columnBorderColor = stageColor ? `color-mix(in srgb, ${stageColor} 30%, transparent)` : 'var(--theme-border, rgba(120, 113, 108, 0.2))'}
 		<div
 			class="board-column flex-shrink-0 rounded-lg flex flex-col transition-all duration-300"
-			style="background-color: var(--theme-section-bg, rgba(255, 255, 255, 0.9)); width: {effectiveWidth}; padding: {effectivePadding};"
-			data-stage-id={stage.id}
+			style="background-color: {columnBgColor}; border: 1px solid {columnBorderColor}; width: {effectiveWidth}; padding: {effectivePadding};"
+			data-stage-id={stageId}
+			data-is-dnd-shadow-item-hint={stage[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
 		>
 			<!-- Always render the full structure - use CSS to hide/show content -->
 			<!-- Column Header - Expanded View -->
@@ -406,6 +869,36 @@ const LOG_PREFIX = '[TaskBoardView]';
 				style="opacity: {(isCollapsed && !isVisuallyExpanded) ? '0' : '1'}; pointer-events: {(isCollapsed && !isVisuallyExpanded) ? 'none' : 'auto'}; position: {(isCollapsed && !isVisuallyExpanded) ? 'absolute' : 'relative'}; width: {(isCollapsed && !isVisuallyExpanded) ? '0' : 'auto'}; overflow: hidden;"
 			>
 				<div class="flex items-center gap-2 flex-1">
+					<!-- Drag Handle for Column Reordering -->
+					{#if canEdit()}
+						<button
+							type="button"
+							class="column-drag-handle w-4 h-4 cursor-grab active:cursor-grabbing flex items-center justify-center"
+							title="Drag to reorder columns"
+							aria-label={`Drag ${stage.name} column`}
+							style="color: var(--theme-text-muted, #78716c); background: none; border: none; padding: 0;"
+							onpointerdown={handleColumnHandlePointerDown}
+							onpointerup={handleColumnHandlePointerUp}
+							onpointercancel={handleColumnHandlePointerCancel}
+							onmouseenter={(e) => {
+								if (e.currentTarget instanceof HTMLElement) {
+									e.currentTarget.style.color = 'var(--theme-foreground, #1c1917)';
+									isHoveringColumnHandle = true;
+								}
+							}}
+							onmouseleave={(e) => {
+								if (e.currentTarget instanceof HTMLElement) {
+									e.currentTarget.style.color = 'var(--theme-text-muted, #78716c)';
+									// Only clear if not dragging
+									if (!isDraggingColumn) {
+										isHoveringColumnHandle = false;
+									}
+								}
+							}}
+						>
+							<GripVertical class="w-4 h-4" />
+						</button>
+					{/if}
 					<button
 						type="button"
 						class="inline-flex items-center justify-center rounded-md p-1 text-sm transition-colors hover:bg-muted"
@@ -427,8 +920,16 @@ const LOG_PREFIX = '[TaskBoardView]';
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 						</svg>
 					</button>
-					{#if stage.color}
-						<div class="w-3 h-3 rounded-full" style="background-color: {stage.color}"></div>
+					<!-- Color Picker for Stage Color -->
+					{#if canEdit()}
+						<ColorPicker
+							id={`board-stage-color-${stageId}`}
+							value={stageColor ?? ''}
+							dataStageId={stageId}
+							onchange={(color) => handleStageColorChange(stageId, color)}
+						/>
+					{:else if stageColor}
+						<div class="w-3 h-3 rounded-full" style="background-color: {stageColor}"></div>
 					{/if}
 					<h3 class="text-sm font-semibold" style="color: var(--theme-foreground, #1c1917);">
 						{stage.name}
@@ -544,8 +1045,9 @@ const LOG_PREFIX = '[TaskBoardView]';
 				data-stage-id={stage.id}
 				use:dndzone={{
 					items: tasksForStage,
+					type: 'task',
 					flipDurationMs: 150,
-					dragDisabled: false
+					dragDisabled: isDraggingColumn
 				}}
 				onconsider={(e) => handleConsider(e, stage.id)}
 				onfinalize={(e) => handleFinalize(e, stage.id)}
