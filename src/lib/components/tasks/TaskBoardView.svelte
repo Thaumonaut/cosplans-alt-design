@@ -1194,6 +1194,7 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		visibility: visible !important;
 		display: block !important;
 		pointer-events: none !important;
+		border: 2px dashed var(--theme-border) !important;
 	}
 
 	/* Custom shadow placeholder styling - ensures it never disappears */
@@ -1206,7 +1207,7 @@ function handleFinalize(e: CustomEvent<DndEvent<Task>>, stageId: string) {
 		transition: none !important;
 		animation: none !important;
 		/* Add visual distinction for the placeholder */
-		border: 2px dashed var(--theme-primary) !important;
+		border: 2px dashed var(--theme-border) !important;
 		background-color: var(--theme-section-bg) !important;
 		position: relative !important;
 	}

@@ -148,10 +148,20 @@
 
 	// Active columns state (starts with required columns + row number)
 	let columns = $state<Column[]>([...defaultColumns]);
+	
+	// Column configuration UI state
+	let showColumnConfig = $state(false);
 
 	// Virtual scrolling setup
 	let scrollElement = $state<HTMLDivElement | null>(null);
 	let tableHeader = $state<HTMLTableElement | null>(null);
+	let headerWrapper = $state<HTMLDivElement | null>(null);
+	let columnConfigButton = $state<HTMLButtonElement | null>(null);
+	
+	// Calculate total table width to ensure header and body match
+	const totalTableWidth = $derived.by(() => {
+		return columns.reduce((sum, col) => sum + col.width, 0);
+	});
 
 	const virtualizer = $derived.by(() => {
 		if (!scrollElement) return null;
@@ -372,6 +382,60 @@
 			virtualizerInstance.scrollToIndex(rowIndex, { align: 'center' });
 		}
 	});
+	
+	// Sync horizontal scroll between header and body
+	$effect(() => {
+		if (!scrollElement || !headerWrapper) return;
+		
+		const bodyScrollHandler = () => {
+			if (headerWrapper) {
+				headerWrapper.scrollLeft = scrollElement.scrollLeft;
+			}
+		};
+		
+		scrollElement.addEventListener('scroll', bodyScrollHandler);
+		return () => {
+			scrollElement.removeEventListener('scroll', bodyScrollHandler);
+		};
+	});
+	
+	// Column management functions
+	function toggleColumn(columnId: string) {
+		const column = optionalColumns.find(c => c.id === columnId);
+		if (!column) return;
+		
+		const isActive = columns.some(c => c.id === columnId);
+		if (isActive) {
+			// Remove column
+			columns = columns.filter(c => c.id !== columnId);
+		} else {
+			// Add column
+			columns = [...columns, { ...column }];
+		}
+	}
+	
+	function isColumnActive(columnId: string): boolean {
+		return columns.some(c => c.id === columnId);
+	}
+	
+	// Close column config when clicking outside
+	$effect(() => {
+		if (!showColumnConfig) return;
+		
+		function handleClickOutside(event: MouseEvent) {
+			if (columnConfigButton && !columnConfigButton.contains(event.target as Node)) {
+				const dropdown = document.querySelector('.column-config-dropdown');
+				if (dropdown && !dropdown.contains(event.target as Node)) {
+					showColumnConfig = false;
+				}
+			}
+		}
+		
+		document.addEventListener('click', handleClickOutside);
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
 </script>
 
 <div
@@ -388,9 +452,52 @@
 	role="grid"
 	aria-label="Task table"
 >
+	<!-- Column Configuration Button -->
+	<div class="flex items-center justify-end p-2 border-b relative" style="border-color: var(--theme-border, #e7e5e4); background-color: var(--theme-card-bg);">
+		<button
+			type="button"
+			bind:this={columnConfigButton}
+			onclick={(e) => {
+				e.stopPropagation();
+				showColumnConfig = !showColumnConfig;
+			}}
+			class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border transition-colors hover:opacity-90"
+			style="background-color: var(--theme-card-bg); border-color: var(--theme-border); color: var(--theme-foreground);"
+		>
+			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+			</svg>
+			Columns
+		</button>
+		{#if showColumnConfig}
+			<div
+				class="column-config-dropdown absolute right-2 top-full mt-1 p-3 rounded-lg border shadow-lg z-50 min-w-[200px]"
+				style="background-color: var(--theme-card-bg); border-color: var(--theme-border);"
+				onclick={(e) => e.stopPropagation()}
+			>
+				<div class="text-xs font-semibold mb-2" style="color: var(--theme-foreground);">Show Columns</div>
+				<div class="space-y-1">
+					{#each optionalColumns as optColumn}
+						<label class="flex items-center gap-2 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={isColumnActive(optColumn.id)}
+								onchange={() => toggleColumn(optColumn.id)}
+								class="rounded border"
+								style="border-color: var(--theme-border); color: var(--theme-primary);"
+							/>
+							<span class="text-sm" style="color: var(--theme-foreground);">{optColumn.label}</span>
+						</label>
+					{/each}
+				</div>
+			</div>
+		{/if}
+	</div>
+	
 	<!-- Table Header -->
 	<div
 		class="table-header-wrapper"
+		bind:this={headerWrapper}
 		style="
 			overflow-x: auto;
 			overflow-y: hidden;
@@ -401,7 +508,7 @@
 			bind:this={tableHeader}
 			class="task-table"
 			style="
-				width: 100%;
+				width: {totalTableWidth}px;
 				border-collapse: collapse;
 				table-layout: fixed;
 			"
@@ -473,7 +580,7 @@
 				<table
 					class="task-table"
 					style="
-						width: 100%;
+						width: {totalTableWidth}px;
 						border-collapse: collapse;
 						table-layout: fixed;
 					"
@@ -537,23 +644,27 @@
 												className="w-full"
 											/>
 										{:else if column.type === 'status'}
-											<InlineSelect
-												value={task.status_id}
-												options={statusOptions}
-												variant="status"
-												on:change={(e) => handleStatusChange(task.id, e.detail)}
-											/>
+											<div onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+												<InlineSelect
+													value={task.status_id}
+													options={statusOptions}
+													variant="status"
+													on:change={(e) => handleStatusChange(task.id, e.detail)}
+												/>
+											</div>
 										{:else if column.type === 'priority'}
-											<InlineSelect
-												value={task.priority}
-												options={[
-													{ value: 'low', label: 'Low' },
-													{ value: 'medium', label: 'Medium' },
-													{ value: 'high', label: 'High' }
-												]}
-												variant="priority"
-												on:change={(e) => handlePriorityChange(task.id, e.detail)}
-											/>
+											<div onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+												<InlineSelect
+													value={task.priority}
+													options={[
+														{ value: 'low', label: 'Low' },
+														{ value: 'medium', label: 'Medium' },
+														{ value: 'high', label: 'High' }
+													]}
+													variant="priority"
+													on:change={(e) => handlePriorityChange(task.id, e.detail)}
+												/>
+											</div>
 										{:else if column.type === 'due-date'}
 											<InlineDatePicker
 												value={task.due_date}
@@ -615,6 +726,7 @@
 
 	.table-header-wrapper {
 		flex-shrink: 0;
+		position: relative;
 	}
 
 	.table-body-wrapper {

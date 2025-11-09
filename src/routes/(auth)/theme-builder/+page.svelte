@@ -501,7 +501,17 @@
 				initializeTheme(DEFAULT_THEME_ID);
 			}
 		} else {
-			initializeTheme(DEFAULT_THEME_ID);
+			// Use the currently selected theme instead of defaulting to light theme
+			const currentThemeState = get(theme);
+			const activeThemeId = currentThemeState.activeId || DEFAULT_THEME_ID;
+			
+			// Check if it's a custom theme
+			const customTheme = theme.getCustomTheme(activeThemeId);
+			if (customTheme) {
+				initializeTheme(undefined, activeThemeId);
+			} else {
+				initializeTheme(activeThemeId);
+			}
 		}
 		
 		// Add keyboard shortcuts for undo/redo
