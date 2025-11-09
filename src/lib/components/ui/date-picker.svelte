@@ -109,15 +109,15 @@
       
       if (isSelected) {
         // Force apply theme colors using inline styles (highest priority)
-        button.style.setProperty('background-color', 'var(--theme-primary, #8b5cf6)', 'important')
-        button.style.setProperty('color', 'white', 'important')
+        button.style.setProperty('background-color', 'var(--theme-primary)', 'important')
+        button.style.setProperty('color', 'var(--theme-card-bg)', 'important')
         button.style.setProperty('font-weight', '600', 'important')
         button.style.setProperty('border-radius', '0.375rem', 'important')
-        // Also ensure any child elements have white text
+        // Also ensure any child elements have contrasting text
         const children = button.querySelectorAll('*')
         children.forEach((child) => {
           if (child instanceof HTMLElement) {
-            child.style.setProperty('color', 'white', 'important')
+            child.style.setProperty('color', 'var(--theme-card-bg)', 'important')
           }
         })
       } else {
@@ -218,7 +218,7 @@
   
   /* Style placeholder text to use theme colors */
   :global(input::placeholder) {
-    color: var(--theme-text-muted, #78716c) !important;
+    color: var(--theme-text-muted) !important;
   }
   
   /* ============================================
@@ -237,11 +237,11 @@
   :global(div[style*="z-index"]:has([class*="datepicker"])),
   :global(div:has(table[class*="datepicker"])),
   :global(div:has(button[data-datepicker-day])) {
-    background-color: var(--theme-background, var(--theme-section-bg, rgba(255, 255, 255, 0.9))) !important;
-    border: 1px solid var(--theme-border, rgba(120, 113, 108, 0.2)) !important;
+    background-color: var(--theme-section-bg) !important;
+    border: 1px solid var(--theme-border) !important;
     border-radius: 0.5rem !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-    color: var(--theme-foreground, #1c1917) !important;
+    box-shadow: var(--theme-shadow-lg) !important;
+    color: var(--theme-foreground) !important;
     position: fixed !important;
   }
   
@@ -249,14 +249,14 @@
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) *),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) span),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:not([style*="background"][style*="blue"])) {
-    color: var(--theme-foreground, #1c1917) !important;
+    color: var(--theme-foreground) !important;
   }
   
   /* Force all table elements to use theme */
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) table),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) table *) {
     background-color: transparent !important;
-    color: var(--theme-foreground, #1c1917) !important;
+    color: var(--theme-foreground) !important;
   }
   
   /* ============================================
@@ -273,7 +273,7 @@
   :global(div:has(table) > div:first-child > *),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child *) {
-    color: var(--theme-foreground, #1c1917) !important;
+    color: var(--theme-foreground) !important;
     background-color: transparent !important;
   }
   
@@ -289,8 +289,8 @@
   :global(div:has(table[class*="datepicker"]) button:not([data-datepicker-day]):not([data-datepicker-month])),
   :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month])),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month])) {
-    color: var(--theme-primary, #8b5cf6) !important;
-    background-color: var(--theme-card-bg, #fafaf9) !important;
+    color: var(--theme-primary) !important;
+    background-color: var(--theme-card-bg) !important;
     border: none !important;
     border-radius: 0.375rem !important;
   }
@@ -305,8 +305,8 @@
   :global([data-datepicker-next]:hover),
   :global(div:has(table[class*="datepicker"]) button:not([data-datepicker-day]):not([data-datepicker-month]):hover),
   :global(div:has(button[data-datepicker-day]) button:not([data-datepicker-day]):not([data-datepicker-month]):hover) {
-    background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
-    color: var(--theme-primary, #8b5cf6) !important;
+    background-color: var(--theme-hover) !important;
+    color: var(--theme-primary) !important;
     border-radius: 0.375rem !important;
   }
   
@@ -320,7 +320,7 @@
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > span),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > button + span),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) > div:first-child > span + button) {
-    color: var(--theme-primary, #8b5cf6) !important;
+    color: var(--theme-primary) !important;
     font-weight: 600 !important;
   }
   
@@ -339,7 +339,7 @@
   :global(table[class*="datepicker"] th),
   :global(table th:has(button)),
   :global(table:has(button[data-datepicker-day]) th) {
-    color: var(--theme-text-muted, #78716c) !important;
+    color: var(--theme-text-muted) !important;
     font-weight: 600 !important;
     background-color: transparent !important;
   }
@@ -360,7 +360,7 @@
   :global(table[class*="datepicker"] button),
   :global(table:has(button[data-datepicker-day]) button),
   :global(table button:not([disabled])) {
-    color: var(--theme-text-muted, #78716c) !important;
+    color: var(--theme-text-muted) !important;
     background-color: transparent !important;
     border: none !important;
   }
@@ -372,8 +372,8 @@
   :global(div:has(table[class*="datepicker"]) button:hover:not([aria-selected="true"])),
   :global(div[style*="position: fixed"]:has(table):has(button[data-datepicker-day]) button:hover:not([aria-selected="true"])),
   :global(table button:not([disabled]):hover:not([aria-selected="true"])) {
-    background-color: var(--theme-hover, rgba(237, 233, 254, 0.6)) !important;
-    color: var(--theme-foreground, #1c1917) !important;
+    background-color: var(--theme-hover) !important;
+    color: var(--theme-foreground) !important;
     border-radius: 0.375rem !important;
   }
   
@@ -391,8 +391,8 @@
   :global([data-datepicker-day].bg-primary-500),
   :global([data-datepicker-day].bg-primary-600),
   :global([data-datepicker-day].bg-primary-700) {
-    background-color: var(--theme-primary, #8b5cf6) !important;
-    color: var(--theme-background) !important;
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-card-bg) !important;
   }
   
   /* ============================================
@@ -422,15 +422,15 @@
   :global(table button[style*="background"][style*="blue"]),
   :global(button[data-datepicker-day][aria-selected="true"]),
   :global(button[data-datepicker-day].selected) {
-    background-color: var(--theme-primary, #8b5cf6) !important;
-    color: white !important;
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-card-bg) !important;
     font-weight: 600 !important;
     border-radius: 0.375rem !important;
   }
   
   /* Selected date using Tailwind classes via Flowbite classes prop */
   :global(button[data-datepicker-day][aria-selected="true"] *) {
-    color: white !important;
+    color: var(--theme-card-bg) !important;
   }
   
   /* Selected date text/span inside button - force white text */
@@ -445,7 +445,7 @@
   :global(button[data-datepicker-day].active *),
   :global(button[style*="background"][style*="blue"] *),
   :global(button[style*="background-color: rgb(59"] *) {
-    color: white !important;
+    color: var(--theme-card-bg) !important;
   }
   
   :global(.datepicker-day.selected:hover),
@@ -458,8 +458,8 @@
   :global(button[data-datepicker-day][aria-selected="true"]:hover),
   :global(button[data-datepicker-day].active:hover),
   :global(button[style*="background"][style*="blue"]:hover) {
-    background-color: var(--theme-primary-hover, #7c3aed) !important;
-    color: white !important;
+    background-color: var(--theme-primary-hover) !important;
+    color: var(--theme-card-bg) !important;
   }
   
   /* ============================================
@@ -469,8 +469,8 @@
   :global([data-datepicker-day].today),
   :global(button[data-datepicker-day].today),
   :global(button[class*="datepicker"][class*="day"].today) {
-    border: 2px solid var(--theme-primary, #8b5cf6) !important;
-    color: var(--theme-foreground, #1c1917) !important;
+    border: 2px solid var(--theme-primary) !important;
+    color: var(--theme-foreground) !important;
     background-color: transparent !important;
   }
   
@@ -480,9 +480,9 @@
   :global(.datepicker-day.today.active),
   :global(button[data-datepicker-day].today.selected),
   :global(button[data-datepicker-day].today[aria-selected="true"]) {
-    background-color: var(--theme-primary, #8b5cf6) !important;
-    color: white !important;
-    border-color: var(--theme-primary, #8b5cf6) !important;
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-card-bg) !important;
+    border-color: var(--theme-primary) !important;
   }
   
   /* ============================================
@@ -492,7 +492,7 @@
   :global([data-datepicker-day].disabled),
   :global(button[data-datepicker-day].disabled),
   :global(button[class*="datepicker"][class*="day"].disabled) {
-    color: var(--theme-text-muted, #78716c) !important;
+    color: var(--theme-text-muted) !important;
     opacity: 0.5 !important;
     cursor: not-allowed !important;
   }
@@ -504,7 +504,7 @@
   :global([data-datepicker-day].other-month),
   :global(button[data-datepicker-day].other-month),
   :global(button[class*="datepicker"][class*="day"].other-month) {
-    color: var(--theme-text-muted, #78716c) !important;
+    color: var(--theme-text-muted) !important;
     opacity: 0.6 !important;
   }
 </style>

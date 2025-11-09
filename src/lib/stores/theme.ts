@@ -5,7 +5,8 @@ import type { ThemeState, ThemeVariant } from "$lib/types/theme";
 import { DEFAULT_THEME_ID, THEME_VARIANTS, getThemeVariantById } from "$lib/utils/theme-variants";
 
 const THEME_STORAGE_KEY = "cosplans:theme-id";
-const CUSTOM_THEME_STORAGE_KEY = "cosplans:theme-custom";
+const CUSTOM_THEMES_STORAGE_KEY = "cosplans:custom-themes";
+const MAX_CUSTOM_THEMES = 10;
 
 function applyTheme(variant: ThemeVariant) {
   if (!browser) return;
@@ -36,22 +37,43 @@ function applyTheme(variant: ThemeVariant) {
   root.dataset.themeMode = variant.mode;
 }
 
-function loadCustomTheme(): ThemeVariant | undefined {
-  if (!browser) return undefined;
+function loadCustomThemes(): ThemeVariant[] {
+  if (!browser) return [];
 
-  const raw = localStorage.getItem(CUSTOM_THEME_STORAGE_KEY);
-  if (!raw) return undefined;
-
-  try {
-    const parsed = JSON.parse(raw) as ThemeVariant;
-    if (parsed && parsed.cssVars) {
-      return { ...parsed, source: "custom" };
+  const raw = localStorage.getItem(CUSTOM_THEMES_STORAGE_KEY);
+  if (!raw) {
+    // Migration: Check for old single custom theme
+    const oldRaw = localStorage.getItem("cosplans:theme-custom");
+    if (oldRaw) {
+      try {
+        const oldTheme = JSON.parse(oldRaw) as ThemeVariant;
+        if (oldTheme && oldTheme.cssVars) {
+          const migrated = { ...oldTheme, id: oldTheme.id || `custom-${Date.now()}`, source: "custom" as const };
+          const themes = [migrated];
+          persistCustomThemes(themes);
+          localStorage.removeItem("cosplans:theme-custom");
+          return themes;
+        }
+      } catch (error) {
+        console.warn("Failed to migrate old custom theme", error);
+      }
     }
-  } catch (error) {
-    console.warn("Failed to parse custom theme configuration", error);
+    return [];
   }
 
-  return undefined;
+  try {
+    const parsed = JSON.parse(raw) as ThemeVariant[];
+    if (Array.isArray(parsed)) {
+      return parsed.filter(theme => theme && theme.cssVars && theme.id).map(theme => ({
+        ...theme,
+        source: "custom" as const
+      }));
+    }
+  } catch (error) {
+    console.warn("Failed to parse custom themes configuration", error);
+  }
+
+  return [];
 }
 
 function persistThemeId(id: string) {
@@ -59,13 +81,13 @@ function persistThemeId(id: string) {
   localStorage.setItem(THEME_STORAGE_KEY, id);
 }
 
-function persistCustomTheme(variant?: ThemeVariant) {
+function persistCustomThemes(themes: ThemeVariant[]) {
   if (!browser) return;
-  if (!variant) {
-    localStorage.removeItem(CUSTOM_THEME_STORAGE_KEY);
+  if (themes.length === 0) {
+    localStorage.removeItem(CUSTOM_THEMES_STORAGE_KEY);
     return;
   }
-  localStorage.setItem(CUSTOM_THEME_STORAGE_KEY, JSON.stringify(variant));
+  localStorage.setItem(CUSTOM_THEMES_STORAGE_KEY, JSON.stringify(themes));
 }
 
 const defaultVariant = getThemeVariantById(DEFAULT_THEME_ID) ?? THEME_VARIANTS[0];
@@ -74,14 +96,17 @@ const initialState: ThemeState = {
   activeId: defaultVariant.id,
   resolvedMode: defaultVariant.mode,
   variants: THEME_VARIANTS,
-  custom: undefined,
+  customThemes: [],
 };
 
-function resolveVariant(id: string, custom?: ThemeVariant): ThemeVariant {
-  if (id === "custom" && custom) {
-    return custom;
+function resolveVariant(id: string, customThemes: ThemeVariant[]): ThemeVariant {
+  // Check if it's a custom theme ID
+  const customTheme = customThemes.find(t => t.id === id);
+  if (customTheme) {
+    return customTheme;
   }
-  return getThemeVariantById(id) ?? custom ?? defaultVariant;
+  // Fallback to built-in theme
+  return getThemeVariantById(id) ?? defaultVariant;
 }
 
 function createThemeStore() {
@@ -89,60 +114,134 @@ function createThemeStore() {
 
   function setTheme(id: string) {
     update((state) => {
-      const variant = resolveVariant(id, state.custom);
-      const effectiveId = variant.source === "custom" ? "custom" : variant.id;
+      const variant = resolveVariant(id, state.customThemes);
 
       applyTheme(variant);
-      persistThemeId(effectiveId);
+      persistThemeId(variant.id);
 
       return {
         ...state,
-        activeId: effectiveId,
+        activeId: variant.id,
         resolvedMode: variant.mode,
       };
     });
   }
 
-  function setCustomTheme(variant: ThemeVariant | undefined) {
+  function addCustomTheme(variant: ThemeVariant): void {
     update((state) => {
-      const nextCustom = variant
-        ? { ...variant, id: "custom", source: "custom" as const }
-        : undefined;
+      if (state.customThemes.length >= MAX_CUSTOM_THEMES) {
+        console.warn(`Maximum of ${MAX_CUSTOM_THEMES} custom themes allowed`);
+        return state;
+      }
 
-      persistCustomTheme(nextCustom);
+      const customTheme: ThemeVariant = {
+        ...variant,
+        id: variant.id || `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        source: "custom" as const,
+      };
 
-      const targetId = nextCustom ? "custom" : state.activeId;
-      const resolvedVariant = resolveVariant(targetId, nextCustom);
-      const activeId = resolvedVariant.source === "custom" ? "custom" : resolvedVariant.id;
-
-      applyTheme(resolvedVariant);
-      persistThemeId(activeId);
+      const newThemes = [...state.customThemes, customTheme];
+      persistCustomThemes(newThemes);
 
       return {
         ...state,
-        custom: nextCustom,
-        activeId,
-        resolvedMode: resolvedVariant.mode,
+        customThemes: newThemes,
       };
     });
   }
 
+  function updateCustomTheme(id: string, variant: ThemeVariant): void {
+    update((state) => {
+      const index = state.customThemes.findIndex(t => t.id === id);
+      if (index === -1) {
+        console.warn(`Custom theme with id ${id} not found`);
+        return state;
+      }
+
+      const updatedTheme: ThemeVariant = {
+        ...variant,
+        id, // Preserve the ID
+        source: "custom" as const,
+      };
+
+      const newThemes = [...state.customThemes];
+      newThemes[index] = updatedTheme;
+      persistCustomThemes(newThemes);
+
+      // If this is the active theme, reapply it
+      if (state.activeId === id) {
+        applyTheme(updatedTheme);
+      }
+
+      return {
+        ...state,
+        customThemes: newThemes,
+      };
+    });
+  }
+
+  function deleteCustomTheme(id: string): void {
+    update((state) => {
+      const newThemes = state.customThemes.filter(t => t.id !== id);
+      persistCustomThemes(newThemes);
+
+      // If deleted theme was active, switch to default
+      if (state.activeId === id) {
+        applyTheme(defaultVariant);
+        persistThemeId(DEFAULT_THEME_ID);
+        return {
+          ...state,
+          customThemes: newThemes,
+          activeId: DEFAULT_THEME_ID,
+          resolvedMode: defaultVariant.mode,
+        };
+      }
+
+      return {
+        ...state,
+        customThemes: newThemes,
+      };
+    });
+  }
+
+  function getCustomTheme(id: string): ThemeVariant | undefined {
+    const state = get(theme);
+    return state.customThemes.find(t => t.id === id);
+  }
+
+  // Legacy function for backward compatibility
+  function setCustomTheme(variant: ThemeVariant | undefined) {
+    if (!variant) {
+      // If variant is undefined, this was used to clear custom theme
+      // In new system, we just don't set it as active
+      return;
+    }
+    // If variant has an ID and exists, update it; otherwise add it
+    const existing = getCustomTheme(variant.id);
+    if (existing) {
+      updateCustomTheme(variant.id, variant);
+      setTheme(variant.id);
+    } else {
+      addCustomTheme(variant);
+      setTheme(variant.id);
+    }
+  }
+
   function initialize() {
-    const custom = loadCustomTheme();
+    const customThemes = loadCustomThemes();
     const storedId = browser
       ? (localStorage.getItem(THEME_STORAGE_KEY) ?? DEFAULT_THEME_ID)
       : DEFAULT_THEME_ID;
-    const variant = resolveVariant(storedId, custom);
-    const activeId = variant.source === "custom" ? "custom" : variant.id;
+    const variant = resolveVariant(storedId, customThemes);
 
-    set({ activeId, resolvedMode: variant.mode, variants: THEME_VARIANTS, custom });
-    persistThemeId(activeId);
+    set({ activeId: variant.id, resolvedMode: variant.mode, variants: THEME_VARIANTS, customThemes });
+    persistThemeId(variant.id);
     applyTheme(variant);
   }
 
   function reset() {
     persistThemeId(DEFAULT_THEME_ID);
-    persistCustomTheme(undefined);
+    persistCustomThemes([]);
     set(initialState);
     applyTheme(defaultVariant);
   }
@@ -150,7 +249,11 @@ function createThemeStore() {
   return {
     subscribe,
     setTheme,
-    setCustomTheme,
+    setCustomTheme, // Legacy compatibility
+    addCustomTheme,
+    updateCustomTheme,
+    deleteCustomTheme,
+    getCustomTheme,
     initialize,
     reset,
   };

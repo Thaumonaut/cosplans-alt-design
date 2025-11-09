@@ -452,7 +452,7 @@
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-medium">{stage.name}</span>
                   {#if isLastStage(stage)}
-                    <Badge variant="secondary" class="bg-green-500/10 text-green-700 dark:text-green-300 text-xs">
+                    <Badge variant="secondary" class="text-xs" style="background-color: color-mix(in srgb, var(--theme-success) 10%, transparent); color: var(--theme-success);">
                       Completion Stage
                     </Badge>
                   {/if}
@@ -489,12 +489,12 @@
       {/each}
     </div>
 
-    <div class="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/50">
+    <div class="rounded-lg border p-4" style="border-color: color-mix(in srgb, var(--theme-info) 30%, transparent); background-color: color-mix(in srgb, var(--theme-info) 10%, transparent);">
       <div class="flex items-start gap-2">
-        <AlertCircle class="mt-0.5 size-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+        <AlertCircle class="mt-0.5 size-4 flex-shrink-0" style="color: var(--theme-info);" />
         <div class="flex-1 text-sm">
-          <p class="font-medium text-blue-900 dark:text-blue-100">About Completion Stages</p>
-          <p class="mt-1 text-blue-700 dark:text-blue-300">
+          <p class="font-medium" style="color: var(--theme-foreground);">About Completion Stages</p>
+          <p class="mt-1" style="color: var(--theme-text-muted);">
             The last stage in the list is automatically the completion stage. Tasks in this stage are considered "done". 
             Drag stages to reorder them and change which one is the completion stage.
           </p>
@@ -507,7 +507,8 @@
 <!-- Add Stage Dialog -->
 {#if showAddStageDialog}
   <div 
-    class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" 
+    class="fixed inset-0 z-[9999] flex items-center justify-center"
+    style="background-color: var(--theme-overlay-bg);" 
     role="button"
     tabindex={-1}
     onclick={() => {

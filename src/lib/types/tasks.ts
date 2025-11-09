@@ -242,7 +242,7 @@ export type TaskGroupBy =
 /**
  * Task View Modes
  */
-export type TaskViewMode = 'list' | 'board' | 'calendar' | 'timeline';
+export type TaskViewMode = 'list' | 'board' | 'table' | 'calendar' | 'timeline';
 
 /**
  * Task Sort Options

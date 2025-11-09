@@ -204,7 +204,7 @@ import { createEventDispatcher } from 'svelte';
 							class="w-6 h-6 rounded-full"
 						/>
 					{:else}
-						<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium" style="background-color: var(--theme-primary, #8b5cf6);">
+						<div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--theme-primary); color: var(--theme-card-bg);">
 							{(assignee.first_name?.[0] || assignee.email[0]).toUpperCase()}
 						</div>
 					{/if}
@@ -279,8 +279,27 @@ import { createEventDispatcher } from 'svelte';
 
 	<!-- Status (only in list view, hidden in board view since column shows it) -->
 	{#if viewMode === 'list'}
-		<div class="pt-3 border-t" style="border-color: var(--theme-border, rgba(120, 113, 108, 0.2));">
-			<!-- Status selector would go here if needed -->
+		<div class="pt-3 border-t flex items-center gap-2" style="border-color: var(--theme-border, rgba(120, 113, 108, 0.2));">
+			<span class="text-xs font-medium" style="color: var(--theme-text-muted, #78716c);">Status:</span>
+			{#if statusOptions && statusOptions.length > 0}
+				{@const currentStatus = statusOptions.find(opt => opt.value === status_id)}
+				<div class="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded-md border" 
+					style="background-color: var(--theme-card-bg); border-color: var(--theme-border); color: var(--theme-foreground);"
+					onclick={(e) => e.stopPropagation()}
+					onkeydown={(e) => e.stopPropagation()}
+					role="none"
+				>
+					{#if currentStatus?.color}
+						<span
+							class="w-2 h-2 rounded-full"
+							style="background-color: {currentStatus.color}"
+						></span>
+					{/if}
+					<span>{currentStatus?.label || status_id}</span>
+				</div>
+			{:else}
+				<span class="text-xs" style="color: var(--theme-text-muted, #78716c);">{status_id}</span>
+			{/if}
 		</div>
 	{/if}
 </ClickableCard>

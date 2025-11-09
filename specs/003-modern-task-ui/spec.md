@@ -75,11 +75,11 @@ The following features were discussed and are valuable but deferred to post-MVP 
 
 ### User Story 1 - Quick Task Overview and Management (Priority: P1)
 
-As a cosplayer, I need to quickly see all my tasks across all projects in different visual formats (list, board, timeline) so I can understand my workload at a glance and prioritize effectively.
+As a cosplayer, I need to quickly see all my tasks across all projects in different visual formats (list, board, table, timeline) so I can understand my workload at a glance and prioritize effectively.
 
 **Why this priority**: This is the primary task interface that users will interact with daily. Without clear task visibility, users cannot effectively manage their cosplay projects.
 
-**Independent Test**: Can be fully tested by creating multiple tasks across different projects and stages, then switching between list, kanban, and calendar views to verify all tasks display correctly with proper filtering.
+**Independent Test**: Can be fully tested by creating multiple tasks across different projects and stages, then switching between list, kanban, table, and calendar views to verify all tasks display correctly with proper filtering.
 
 **Acceptance Scenarios**:
 
@@ -88,6 +88,10 @@ As a cosplayer, I need to quickly see all my tasks across all projects in differ
 3. **Given** I am viewing tasks in board view, **When** I switch to "Calendar View", **Then** tasks with due dates appear on calendar dates, and I can see task density by day
 4. **Given** I have tasks without due dates, **When** I view the calendar, **Then** undated tasks appear in a "Backlog" section below the calendar
 5. **Given** I am in any view, **When** I click a filter option (by project, by priority, by assignee), **Then** only matching tasks display and the filter state is visually indicated
+6. **Given** I am viewing tasks in any view, **When** I switch to "Table View", **Then** tasks display in a spreadsheet-style table with Title and Status columns always visible, and I can add/remove other columns via the plus button
+7. **Given** I am in table view, **When** I click a cell, **Then** I can edit the value inline using the appropriate input widget (text editor, dropdown, date picker, etc.)
+8. **Given** I am in table view, **When** I use arrow keys to navigate between cells, **Then** the focus moves accordingly and I can press Enter to edit the current cell
+9. **Given** I am in table view, **When** I scroll horizontally, **Then** the Title column remains frozen and visible for context
 
 ---
 
@@ -431,7 +435,7 @@ As a cosplayer, wig maker, prop creator, or specialist, I need to add custom fie
 
 **View Capabilities**
 
-- **FR-001**: System MUST provide four primary task view modes: List, Kanban Board, Calendar, and Timeline
+- **FR-001**: System MUST provide five primary task view modes: List, Kanban Board, Table, Calendar, and Timeline
 - **FR-002**: Users MUST be able to switch between view modes instantly without losing filter or grouping state
 - **FR-003**: System MUST persist user's preferred view mode per context (main Tasks page vs. project-embedded view)
 - **FR-004**: Calendar view MUST display tasks on their due dates with visual indicators for task density (1-2 tasks, 3-5 tasks, 6+ tasks)
@@ -440,6 +444,14 @@ As a cosplayer, wig maker, prop creator, or specialist, I need to add custom fie
 **Task Display & Information Density**
 
 - **FR-006**: List view MUST show task cards with visible properties: title, status badge, priority indicator, assignee avatar, due date, project tag, and completion progress
+- **FR-006a**: Table view MUST display tasks as rows with customizable columns (Title and Status always visible, other columns can be added/removed)
+- **FR-006b**: Table view MUST support inline editing of all cell values using appropriate input widgets
+- **FR-006c**: Table view MUST support keyboard navigation (arrow keys, Enter, Tab, Escape) for spreadsheet-like UX
+- **FR-006d**: Table view MUST support frozen/pinned Title column that stays visible during horizontal scrolling
+- **FR-006e**: Table view MUST support column header filters for quick filtering without opening filter panel
+- **FR-006f**: Table view MUST support row reordering via drag-and-drop to change task display order
+- **FR-006g**: Table view MUST display row numbers in the first column
+- **FR-006h**: Table view MUST apply conditional formatting (e.g., overdue dates in red, high priority highlighted)
 - **FR-007**: Board view MUST organize tasks into vertical columns representing stages, with column headers showing stage name and task count
 - **FR-007a**: Board view MUST support horizontal column collapse/expand with task and subtask counts displayed when collapsed
 - **FR-007b**: Task stages MUST support custom colors per stage for visual organization and differentiation

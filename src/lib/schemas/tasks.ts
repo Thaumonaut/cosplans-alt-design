@@ -15,7 +15,7 @@ export const PrioritySchema = z.enum(['low', 'medium', 'high']);
 /**
  * Task View Mode
  */
-export const TaskViewModeSchema = z.enum(['list', 'board', 'calendar', 'timeline']);
+export const TaskViewModeSchema = z.enum(['list', 'board', 'table', 'calendar', 'timeline']);
 
 /**
  * Task Group By

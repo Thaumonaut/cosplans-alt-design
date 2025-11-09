@@ -9,7 +9,9 @@
 	import { taskViewStore, activeFilterCount, filterSummary } from '$lib/stores/task-view-store';
 	import TaskListView from '$lib/components/tasks/TaskListView.svelte';
 	import TaskBoardView from '$lib/components/tasks/TaskBoardView.svelte';
+	import TaskTableView from '$lib/components/tasks/TaskTableView.svelte';
 	import TaskCalendarView from '$lib/components/tasks/TaskCalendarView.svelte';
+	import TaskTimelineView from '$lib/components/tasks/TaskTimelineView.svelte';
 	import ViewModeSelector from '$lib/components/tasks/ViewModeSelector.svelte';
 	import TaskFilterPanel from '$lib/components/tasks/TaskFilterPanel.svelte';
 	import TaskDetailPanel from '$lib/components/tasks/TaskDetailPanel.svelte';
@@ -45,6 +47,7 @@
 	let assigneeOptions = $state(data.assigneeOptions || []);
 	let labelOptions = $state(data.labelOptions || []);
 	let completionStageIds = $state(data.completionStageIds || []);
+	let customFields = $state(data.customFields || []);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let filterPanelOpen = $state(false);
@@ -677,29 +680,68 @@
 					on:priorityChange={handlePriorityChange}
 					on:dueDateChange={handleDueDateChange}
 					on:addTask={handleAddTaskToStage}
+					on:stageReorder={async (e) => {
+						// Reload stages to get updated order
+						const team = get(currentTeam);
+						if (team) {
+							const stages = await taskStageService.list(team.id);
+							statusOptions = stages.map(s => ({
+								value: s.id,
+								label: s.name,
+								color: s.color || undefined
+							}));
+						}
+					}}
+					on:stageColorChange={async (e) => {
+						// Update the color in statusOptions
+						const { stageId, color } = e.detail;
+						statusOptions = statusOptions.map(opt => 
+							opt.value === stageId 
+								? { ...opt, color: color || undefined }
+								: opt
+						);
+					}}
 				/>
 			{:else}
 				<div class="flex flex-col items-center justify-center py-12 text-center">
 					<p class="text-sm text-gray-500">No task stages available. Please configure task stages first.</p>
 				</div>
 			{/if}
+		{:else if viewMode === 'table'}
+			<TaskTableView
+				tasks={sortedTasks as any}
+				{statusOptions}
+				{customFields}
+				teamId={get(currentTeam)?.id}
+				on:taskClick={handleTaskClick}
+				on:statusChange={handleStatusChange}
+				on:priorityChange={handlePriorityChange}
+				on:dueDateChange={handleDueDateChange}
+				on:titleChange={async (e) => {
+					const { id, title } = e.detail;
+					try {
+						loading = true;
+						const result = await taskService.updateTask(id, { title });
+						if (result.error) throw result.error;
+						tasks = tasks.map(t => t.id === id ? { ...t, title } : t);
+					} catch (err: any) {
+						error = err.message || 'Failed to update task title';
+					} finally {
+						loading = false;
+					}
+				}}
+			/>
 		{:else if viewMode === 'calendar'}
 			<TaskCalendarView
 				tasks={sortedTasks as any}
 				on:taskClick={handleTaskClick}
 			/>
-		{:else}
-			<!-- Timeline view - Coming later -->
-			<div class="flex items-center justify-center h-full p-8">
-				<div class="text-center">
-					<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-						Timeline View Coming Soon
-					</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						This view will show tasks on a gantt-style timeline.
-					</p>
-				</div>
-			</div>
+		{:else if viewMode === 'timeline'}
+			<TaskTimelineView
+				tasks={sortedTasks as any}
+				{statusOptions}
+				on:taskClick={handleTaskClick}
+			/>
 		{/if}
 	</div>
 </div>

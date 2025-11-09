@@ -21,7 +21,7 @@ export interface ThemeState {
   activeId: string;
   resolvedMode: ThemeMode;
   variants: ThemeVariant[];
-  custom?: ThemeVariant;
+  customThemes: ThemeVariant[];
 }
 
 export interface CustomThemeConfig {

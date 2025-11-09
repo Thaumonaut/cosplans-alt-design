@@ -17,6 +17,7 @@
 	import CommentThread from './CommentThread.svelte';
 	import AttachmentList from './AttachmentList.svelte';
 	import ActivityLog from './ActivityLog.svelte';
+	import CustomFieldsSection from './detail/CustomFieldsSection.svelte';
 	import { Button } from '$lib/components/ui';
 	import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte';
 	import { Loader2 } from 'lucide-svelte';
@@ -505,6 +506,19 @@
 							onSave={(value) => mode === 'create' ? (task.description = value) : updateField('description', value)}
 						/>
 					</div>
+
+					<!-- Custom Fields -->
+					{#if taskId}
+						<div>
+							<label class="mb-2 block text-sm font-medium" style="color: var(--theme-foreground, #1c1917);">
+								Custom Fields
+							</label>
+							<CustomFieldsSection
+								{taskId}
+								editable={isEditMode}
+							/>
+						</div>
+					{/if}
 
 					<!-- Create Task Button (only in create mode) -->
 					{#if mode === 'create'}

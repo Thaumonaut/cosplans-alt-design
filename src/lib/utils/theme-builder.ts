@@ -1,4 +1,4 @@
-import { lighten, darken, mix } from 'color2k';
+import { lighten, darken, mix, rgba } from 'color2k';
 
 /**
  * Theme Builder - Complete theme generation system
@@ -147,9 +147,20 @@ export function buildTheme(config: ThemeConfig): Record<string, string> {
     '--theme-border-strong': primaryShades[300],
     
     // === INTERACTIVE STATES ===
-    '--theme-hover': primaryShades[600],
-    '--theme-active': primaryShades[700],
+    // Hover and active should be background colors with opacity, not text colors
+    '--theme-hover': mode === 'light' 
+      ? rgba(primaryShades[500], 0.1)
+      : 'rgba(255, 255, 255, 0.1)',
+    '--theme-active': mode === 'light'
+      ? rgba(primaryShades[500], 0.15)
+      : 'rgba(255, 255, 255, 0.15)',
     '--theme-focus': accentShades[500],
+    '--theme-interactive-hover': mode === 'light'
+      ? rgba(primaryShades[500], 0.1)
+      : 'rgba(255, 255, 255, 0.1)',
+    '--theme-interactive-active': mode === 'light'
+      ? rgba(primaryShades[500], 0.15)
+      : 'rgba(255, 255, 255, 0.15)',
     
     // === ACCENT COLORS ===
     '--theme-primary': primaryShades[500],

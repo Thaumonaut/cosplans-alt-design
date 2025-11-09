@@ -4,8 +4,11 @@
 	 * 
 	 * Provides inline dropdown editing for "living document" UX.
 	 * Click to edit, save on selection, cancel on Escape.
+	 * Rebuilt to use DropdownMenu like TagSelector for better UX.
 	 */
 	import { createEventDispatcher } from 'svelte';
+	import { DropdownMenu, DropdownMenuItem } from '$lib/components/ui';
+	import { ChevronDown, Check } from 'lucide-svelte';
 
 	interface Props {
 		value: string;
@@ -28,99 +31,120 @@
 		cancel: void;
 	}>();
 
-	let isEditing = $state(false);
-	let selectElement: HTMLSelectElement;
-	let displayElement: HTMLDivElement;
+	let isOpen = $state(false);
+	let wasOpen = $state(false);
+	let selectionMade = $state(false);
 
 	const selectedOption = $derived(
 		options.find(opt => opt.value === value)
 	);
 
-	function startEditing() {
-		if (disabled) return;
-		isEditing = true;
-		setTimeout(() => selectElement?.focus(), 0);
-	}
-
-	function handleChange(event: Event) {
-		const newValue = (event.target as HTMLSelectElement).value;
-		value = newValue;
-		isEditing = false;
-		dispatch('change', newValue);
-	}
-
-	function handleBlur() {
-		// Delay to allow selection to register
-		setTimeout(() => {
-			isEditing = false;
-		}, 150);
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			isEditing = false;
+	// Watch for dropdown closing to dispatch cancel event if no selection was made
+	$effect(() => {
+		if (wasOpen && !isOpen && !selectionMade) {
+			// Dropdown was closed without selecting (wasOpen was true, now isOpen is false, and no selection was made)
+			// This means user clicked outside or pressed Escape
 			dispatch('cancel');
 		}
+		if (isOpen) {
+			// Reset selectionMade when opening
+			selectionMade = false;
+		}
+		wasOpen = isOpen;
+	});
+
+	function selectOption(option: { value: string; label: string; color?: string }) {
+		if (disabled || option.value === value) return;
+		selectionMade = true;
+		value = option.value;
+		isOpen = false;
+		dispatch('change', option.value);
 	}
 
-	const variantStyles = {
-		default: 'text-gray-900 dark:text-white',
-		priority: value === 'high' 
-			? 'text-red-600 dark:text-red-400' 
-			: value === 'medium'
-			? 'text-yellow-600 dark:text-yellow-400'
-			: 'text-green-600 dark:text-green-400',
-		status: selectedOption?.color 
-			? `text-[${selectedOption.color}]` 
-			: 'text-gray-900 dark:text-white'
-	};
+	// Get styling for the trigger button based on variant
+	function getTriggerStyles(): string {
+		if (variant === 'priority') {
+			if (value === 'high') {
+				return 'bg-[var(--theme-priority-high-bg)] text-[var(--theme-priority-high-text)] border-[var(--theme-priority-high-border)]';
+			} else if (value === 'medium') {
+				return 'bg-[var(--theme-priority-medium-bg)] text-[var(--theme-priority-medium-text)] border-[var(--theme-priority-medium-border)]';
+			} else {
+				return 'bg-[var(--theme-priority-low-bg)] text-[var(--theme-priority-low-text)] border-[var(--theme-priority-low-border)]';
+			}
+		}
+		// Default and status variants
+		return 'bg-[var(--theme-card-bg)] text-[var(--theme-foreground)] border-[var(--theme-border)]';
+	}
 </script>
 
-{#if isEditing}
-	<select
-		bind:this={selectElement}
-		{value}
-		on:change={handleChange}
-		on:blur={handleBlur}
-		on:keydown={handleKeydown}
-		class="inline-block px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-		{disabled}
-	>
-		{#if placeholder}
-			<option value="" disabled>{placeholder}</option>
-		{/if}
-		{#each options as option}
-			<option value={option.value}>{option.label}</option>
-		{/each}
-	</select>
-{:else}
-	<div
-		bind:this={displayElement}
-		role="button"
-		tabindex={disabled ? -1 : 0}
-		class="inline-flex items-center gap-1 px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors {variantStyles[variant]} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
-		on:click={startEditing}
-		on:keydown={(e) => e.key === 'Enter' && startEditing()}
-	>
-		{#if selectedOption?.color && variant === 'status'}
-			<span
-				class="w-2 h-2 rounded-full"
-				style="background-color: {selectedOption.color}"
-			/>
-		{/if}
-		<span>{selectedOption?.label || placeholder}</span>
-		<svg
-			class="w-3 h-3 text-gray-400"
-			fill="none"
-			stroke="currentColor"
-			viewBox="0 0 24 24"
+<div class="relative inline-block">
+	{#if disabled}
+		<!-- Disabled state - just show the value -->
+		<div
+			class="inline-flex items-center gap-1.5 px-2 py-1 text-sm rounded-md border cursor-not-allowed opacity-50 {getTriggerStyles()}"
 		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M19 9l-7 7-7-7"
-			/>
-		</svg>
-	</div>
-{/if}
+			{#if selectedOption?.color && variant === 'status'}
+				<span
+					class="w-2 h-2 rounded-full"
+					style="background-color: {selectedOption.color}"
+				></span>
+			{/if}
+			<span>{selectedOption?.label || placeholder}</span>
+		</div>
+	{:else}
+		<DropdownMenu 
+			bind:open={isOpen} 
+			placement="bottom-start"
+		>
+			{#snippet trigger()}
+				<button
+					type="button"
+					class="inline-flex items-center gap-1.5 px-2 py-1 text-sm rounded-md border transition-all cursor-pointer hover:opacity-90 hover:shadow-sm {getTriggerStyles()}"
+					style="background-color: var(--theme-card-bg); color: var(--theme-foreground); border-color: var(--theme-border);"
+					onmouseenter={(e) => {
+						if (e.currentTarget instanceof HTMLElement) {
+							e.currentTarget.style.backgroundColor = 'var(--theme-hover)';
+						}
+					}}
+					onmouseleave={(e) => {
+						if (e.currentTarget instanceof HTMLElement) {
+							e.currentTarget.style.backgroundColor = 'var(--theme-card-bg)';
+						}
+					}}
+				>
+					{#if selectedOption?.color && variant === 'status'}
+						<span
+							class="w-2 h-2 rounded-full"
+							style="background-color: {selectedOption.color}"
+						></span>
+					{/if}
+					<span>{selectedOption?.label || placeholder}</span>
+					<ChevronDown class="size-3 opacity-80" style="color: var(--theme-text-muted);" />
+				</button>
+			{/snippet}
+			
+			{#snippet children()}
+				<div class="py-1.5 min-w-[180px]">
+					{#each options as option}
+						<DropdownMenuItem onclick={() => selectOption(option)}>
+							<div class="flex w-full items-center justify-between gap-3 text-left">
+								<div class="flex items-center gap-2">
+									{#if option.color && variant === 'status'}
+										<div 
+											class="size-2 rounded-full"
+											style="background-color: {option.color}"
+										></div>
+									{/if}
+									<span class="text-sm font-medium text-left">{option.label}</span>
+								</div>
+								{#if value === option.value}
+									<Check class="size-4 shrink-0" style="color: var(--theme-primary);" />
+								{/if}
+							</div>
+						</DropdownMenuItem>
+					{/each}
+				</div>
+			{/snippet}
+		</DropdownMenu>
+	{/if}
+</div>

@@ -2,13 +2,12 @@
 	/**
 	 * TaskListView Component
 	 * 
-	 * Renders tasks as a scrollable list with virtual scrolling for performance.
-	 * Uses Tanstack Virtual for rendering only visible tasks.
+	 * Renders tasks grouped by status in accordions with flexbox layout.
+	 * Cards flow naturally with proper spacing using flexbox gap.
 	 */
 	import { createEventDispatcher } from 'svelte';
-	import { createVirtualizer } from '@tanstack/svelte-virtual';
+	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import TaskCard from './TaskCard.svelte';
-	import type { DragData } from '$lib/utils/drag-drop';
 
 	interface Task {
 		id: string;
@@ -47,24 +46,90 @@
 		dueDateChange: { id: string; due_date: string | null };
 	}>();
 
-	let scrollElement: HTMLDivElement;
+	// Group tasks by status
+	const tasksByStatus = $derived.by(() => {
+		const grouped: Record<string, Task[]> = {};
+		
+		tasks.forEach(task => {
+			if (!grouped[task.status_id]) {
+				grouped[task.status_id] = [];
+			}
+			grouped[task.status_id].push(task);
+		});
+		
+		return grouped;
+	});
 
-	// Virtual scrolling setup
-	const virtualizer = $derived(
-		scrollElement
-			? createVirtualizer({
-					get count() {
-						return tasks.length;
-					},
-					getScrollElement: () => scrollElement,
-					estimateSize: () => 120, // Estimated height of each task card
-					overscan: 5, // Render 5 extra items above/below viewport
-			  })
-			: null
-	);
+	// Get status order based on statusOptions order, then add any missing statuses
+	const statusOrder = $derived.by(() => {
+		const ordered: string[] = [];
+		
+		// Add statuses in the order they appear in statusOptions
+		statusOptions.forEach(opt => {
+			if (tasksByStatus[opt.value]) {
+				ordered.push(opt.value);
+			}
+		});
+		
+		// Add any statuses that aren't in statusOptions
+		Object.keys(tasksByStatus).forEach(statusId => {
+			if (!ordered.includes(statusId)) {
+				ordered.push(statusId);
+			}
+		});
+		
+		return ordered;
+	});
 
-	const virtualItems = $derived(virtualizer?.getVirtualItems() || []);
-	const totalSize = $derived(virtualizer?.getTotalSize() || 0);
+	// Track which status accordions are expanded (default: all expanded)
+	let expandedStatuses = $state<Set<string>>(new Set());
+	let initializedStatuses = $state<Set<string>>(new Set());
+
+	// Initialize all statuses as expanded once when statusOrder is available
+	$effect(() => {
+		if (statusOrder.length > 0) {
+			// Only add statuses that we haven't seen before (new statuses that appear)
+			const newExpandedSet = new Set(expandedStatuses);
+			const newInitializedSet = new Set(initializedStatuses);
+			let changed = false;
+			
+			statusOrder.forEach(statusId => {
+				// If this is a brand new status we've never initialized, add it as expanded
+				if (!newInitializedSet.has(statusId)) {
+					newExpandedSet.add(statusId);
+					newInitializedSet.add(statusId);
+					changed = true;
+				}
+			});
+			
+			if (changed) {
+				expandedStatuses = newExpandedSet;
+				initializedStatuses = newInitializedSet;
+			}
+		}
+	});
+
+	function toggleStatus(statusId: string) {
+		console.log('Toggling status:', statusId, 'Current expanded:', Array.from(expandedStatuses));
+		const newSet = new Set(expandedStatuses);
+		if (newSet.has(statusId)) {
+			newSet.delete(statusId);
+			console.log('Closing status:', statusId);
+		} else {
+			newSet.add(statusId);
+			console.log('Opening status:', statusId);
+		}
+		expandedStatuses = newSet;
+		console.log('New expanded:', Array.from(expandedStatuses));
+	}
+
+	function getStatusLabel(statusId: string): string {
+		return statusOptions.find(opt => opt.value === statusId)?.label || statusId;
+	}
+
+	function getStatusColor(statusId: string): string | undefined {
+		return statusOptions.find(opt => opt.value === statusId)?.color;
+	}
 
 	function handleTaskClick(event: CustomEvent<{ id: string }>) {
 		dispatch('taskClick', event.detail);
@@ -94,16 +159,15 @@
 </script>
 
 <div
-	bind:this={scrollElement}
 	class="task-list-container overflow-auto h-full"
-	style="contain: strict"
+	style="background-color: var(--theme-section-bg);"
 >
 	{#if tasks.length === 0}
 		<!-- Empty State -->
 		<div class="flex flex-col items-center justify-center h-full p-8 text-center">
 			<svg
 				class="w-16 h-16 mb-4"
-				style="color: var(--theme-text-muted, #78716c);"
+				style="color: var(--theme-text-muted);"
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
@@ -115,34 +179,77 @@
 					d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
 				/>
 			</svg>
-			<h3 class="text-lg font-semibold mb-2" style="color: var(--theme-foreground, #1c1917);">No tasks found</h3>
-			<p class="text-sm" style="color: var(--theme-text-muted, #78716c);">
+			<h3 class="text-lg font-semibold mb-2" style="color: var(--theme-foreground);">No tasks found</h3>
+			<p class="text-sm" style="color: var(--theme-text-muted);">
 				Try adjusting your filters or create a new task to get started.
 			</p>
 		</div>
 	{:else}
-		<!-- Virtual List -->
-		<div style="height: {totalSize}px; width: 100%; position: relative;">
-			{#each virtualItems as virtualItem (tasks[virtualItem.index].id)}
-				{@const task = tasks[virtualItem.index]}
-				<div
-					style="position: absolute; top: 0; left: 0; width: 100%; transform: translateY({virtualItem.start}px);"
-				>
-					<div class="px-4 py-2">
-						<TaskCard
-							{...task}
-							{statusOptions}
-							{selectable}
-							selected={selectedIds.has(task.id)}
-							viewMode="list"
-							on:click={handleTaskClick}
-							on:select={handleTaskSelect}
-							on:statusChange={handleStatusChange}
-							on:priorityChange={handlePriorityChange}
-							on:dueDateChange={handleDueDateChange}
-						/>
+		<!-- Tasks grouped by status in accordions -->
+		<div class="flex flex-col gap-4 p-4">
+			{#each statusOrder as statusId}
+				{@const statusTasks = tasksByStatus[statusId] || []}
+				{@const isExpanded = expandedStatuses.has(statusId)}
+				{@const statusColor = getStatusColor(statusId)}
+				{@const statusLabel = getStatusLabel(statusId)}
+				
+				{#if statusTasks.length > 0}
+					<div class="flex flex-col gap-2">
+						<!-- Accordion Header -->
+						<button
+							type="button"
+							onclick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								toggleStatus(statusId);
+							}}
+							class="flex items-center justify-between w-full px-4 py-3 rounded-lg border transition-colors hover:opacity-90"
+							style="
+								background-color: var(--theme-card-bg);
+								border-color: var(--theme-border);
+								color: var(--theme-foreground);
+							"
+						>
+							<div class="flex items-center gap-3">
+								{#if isExpanded}
+									<ChevronDown class="w-4 h-4" style="color: var(--theme-text-muted);" />
+								{:else}
+									<ChevronRight class="w-4 h-4" style="color: var(--theme-text-muted);" />
+								{/if}
+								{#if statusColor}
+									<span
+										class="w-3 h-3 rounded-full"
+										style="background-color: {statusColor}"
+									></span>
+								{/if}
+								<span class="font-semibold text-sm">{statusLabel}</span>
+								<span class="text-xs px-2 py-0.5 rounded-full" style="background-color: var(--theme-section-bg); color: var(--theme-text-muted);">
+									{statusTasks.length}
+								</span>
+							</div>
+						</button>
+
+						<!-- Accordion Content -->
+						{#if isExpanded}
+							<div class="flex flex-col gap-3 px-4">
+								{#each statusTasks as task (task.id)}
+									<TaskCard
+										{...task}
+										{statusOptions}
+										{selectable}
+										selected={selectedIds.has(task.id)}
+										viewMode="list"
+										on:click={handleTaskClick}
+										on:select={handleTaskSelect}
+										on:statusChange={handleStatusChange}
+										on:priorityChange={handlePriorityChange}
+										on:dueDateChange={handleDueDateChange}
+									/>
+								{/each}
+							</div>
+						{/if}
 					</div>
-				</div>
+				{/if}
 			{/each}
 		</div>
 	{/if}
@@ -153,4 +260,3 @@
 		will-change: scroll-position;
 	}
 </style>
-

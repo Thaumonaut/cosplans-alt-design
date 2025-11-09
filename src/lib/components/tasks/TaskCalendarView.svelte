@@ -122,30 +122,43 @@
 		currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 	);
 
-	const priorityColors = {
-		high: 'bg-red-500',
-		medium: 'bg-yellow-500',
-		low: 'bg-green-500',
-	};
+	function getPriorityColor(priority: string): string {
+		switch (priority) {
+			case 'high':
+				return 'var(--theme-error)';
+			case 'medium':
+				return 'var(--theme-warning)';
+			case 'low':
+				return 'var(--theme-success)';
+			default:
+				return 'var(--theme-text-muted)';
+		}
+	}
 </script>
 
 <div class="calendar-container h-full flex flex-col">
 	<!-- Calendar Header -->
-	<div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">{monthName}</h2>
+	<div class="flex items-center justify-between p-4 border-b" style="border-color: var(--theme-border);">
+		<h2 class="text-lg font-semibold" style="color: var(--theme-foreground);">{monthName}</h2>
 		<div class="flex items-center gap-2">
 			<button
 				type="button"
-				on:click={goToToday}
-				class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+				onclick={()=>goToToday}
+				class="px-3 py-1.5 text-sm font-medium rounded transition-colors"
+				style="color: var(--theme-foreground); background-color: var(--theme-card-bg); border-color: var(--theme-border);"
+				onmouseenter={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-hover)'}
+				onmouseleave={(e) => e.currentTarget.style.backgroundColor = 'var(--theme-card-bg)'}
 			>
 				Today
 			</button>
 			<button
 				type="button"
-				on:click={previousMonth}
-				class="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+				onclick={()=>previousMonth}
+				class="p-1.5 transition-colors"
+				style="color: var(--theme-text-muted);"
 				aria-label="Previous month"
+				onmouseenter={(e) => e.currentTarget.style.color = 'var(--theme-foreground)'}
+				onmouseleave={(e) => e.currentTarget.style.color = 'var(--theme-text-muted)'}
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -153,9 +166,12 @@
 			</button>
 			<button
 				type="button"
-				on:click={nextMonth}
-				class="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+				onclick={()=>nextMonth}
+				class="p-1.5 transition-colors"
+				style="color: var(--theme-text-muted);"
 				aria-label="Next month"
+				onmouseenter={(e) => e.currentTarget.style.color = 'var(--theme-foreground)'}
+				onmouseleave={(e) => e.currentTarget.style.color = 'var(--theme-text-muted)'}
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -165,9 +181,9 @@
 	</div>
 
 	<!-- Day Headers -->
-	<div class="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
+	<div class="grid grid-cols-7 border-b" style="border-color: var(--theme-border);">
 		{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
-			<div class="p-2 text-xs font-semibold text-center text-gray-600 dark:text-gray-400">
+			<div class="p-2 text-xs font-semibold text-center" style="color: var(--theme-text-muted);">
 				{day}
 			</div>
 		{/each}
@@ -178,22 +194,22 @@
 		{#each calendarDays() as day (day.date.toISOString())}
 			{@const dateTasks = getTasksForDate(day.date)}
 			<div
-				class="border-r border-b border-gray-200 dark:border-gray-700 p-2 overflow-y-auto {!day.isCurrentMonth
-					? 'bg-gray-50 dark:bg-gray-900/50'
-					: ''} {isToday(day.date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}"
+				class="border-r border-b p-2 overflow-y-auto"
+				style="border-color: var(--theme-border); {!day.isCurrentMonth ? 'background-color: var(--theme-section-bg); opacity: 0.6;' : ''} {isToday(day.date) ? 'background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent);' : ''}"
 			>
 				<div class="flex items-center justify-between mb-1">
 					<span
-						class="text-sm font-medium {!day.isCurrentMonth
-							? 'text-gray-400 dark:text-gray-600'
+						class="text-sm font-medium"
+						style={!day.isCurrentMonth
+							? 'color: var(--theme-text-muted); opacity: 0.5;'
 							: isToday(day.date)
-							? 'text-blue-600 dark:text-blue-400 font-bold'
-							: 'text-gray-900 dark:text-white'}"
+							? 'color: var(--theme-primary); font-weight: 600;'
+							: 'color: var(--theme-foreground);'}
 					>
 						{day.date.getDate()}
 					</span>
 					{#if dateTasks.length > 0}
-						<span class="text-xs text-gray-500 dark:text-gray-400">
+						<span class="text-xs" style="color: var(--theme-text-muted);">
 							{dateTasks.length}
 						</span>
 					{/if}
@@ -204,17 +220,20 @@
 					{#each dateTasks.slice(0, 3) as task (task.id)}
 						<button
 							type="button"
-							on:click={() => handleTaskClick(task.id)}
-							class="w-full text-left text-xs p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-sm transition-shadow truncate"
+							onclick={() => handleTaskClick(task.id)}
+							class="w-full text-left text-xs p-1.5 rounded transition-shadow truncate"
+							style="background-color: var(--theme-card-bg); border: 1px solid var(--theme-border); color: var(--theme-foreground);"
+							onmouseenter={(e) => e.currentTarget.style.boxShadow = 'var(--theme-shadow-sm)'}
+							onmouseleave={(e) => e.currentTarget.style.boxShadow = 'none'}
 						>
 							<div class="flex items-center gap-1">
-								<div class="w-2 h-2 rounded-full {priorityColors[task.priority]}" />
+								<div class="w-2 h-2 rounded-full" style="background-color: {getPriorityColor(task.priority)};" />
 								<span class="truncate">{task.title}</span>
 							</div>
 						</button>
 					{/each}
 					{#if dateTasks.length > 3}
-						<div class="text-xs text-gray-500 dark:text-gray-400 text-center">
+						<div class="text-xs text-center" style="color: var(--theme-text-muted);">
 							+{dateTasks.length - 3} more
 						</div>
 					{/if}
@@ -225,22 +244,25 @@
 
 	<!-- Undated Tasks Section -->
 	{#if undatedTasks.length > 0}
-		<div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
-			<h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+		<div class="border-t p-4" style="border-color: var(--theme-border); background-color: var(--theme-section-bg);">
+			<h3 class="text-sm font-semibold mb-2" style="color: var(--theme-foreground);">
 				No Due Date ({undatedTasks.length})
 			</h3>
 			<div class="flex flex-wrap gap-2">
 				{#each undatedTasks.slice(0, 10) as task (task.id)}
 					<button
 						type="button"
-						on:click={() => handleTaskClick(task.id)}
-						class="text-xs px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-sm"
+						onclick={() => handleTaskClick(task.id)}
+						class="text-xs px-2 py-1 rounded transition-shadow"
+						style="background-color: var(--theme-card-bg); border: 1px solid var(--theme-border); color: var(--theme-foreground);"
+						onmouseenter={(e) => e.currentTarget.style.boxShadow = 'var(--theme-shadow-sm)'}
+						onmouseleave={(e) => e.currentTarget.style.boxShadow = 'none'}
 					>
 						{task.title}
 					</button>
 				{/each}
 				{#if undatedTasks.length > 10}
-					<span class="text-xs text-gray-500 dark:text-gray-400">
+					<span class="text-xs" style="color: var(--theme-text-muted);">
 						+{undatedTasks.length - 10} more
 					</span>
 				{/if}
