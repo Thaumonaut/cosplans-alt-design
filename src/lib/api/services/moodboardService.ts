@@ -8,6 +8,7 @@
 
 import { supabase } from '$lib/supabase';
 import type {
+  GhostCacheEntry,
   MoodboardNode,
   MoodboardNodeCreate,
   MoodboardNodeUpdate,
@@ -24,6 +25,7 @@ import {
   calculateGridPosition,
   DEFAULT_GRID_CONFIG,
 } from '$lib/types/domain/moodboard';
+import { ghostNodeService } from '$lib/api/services/ghostNodeService';
 
 const PROJECT_REFERENCE_NODE_WIDTH = 300;
 
@@ -418,6 +420,105 @@ export const moodboardService = {
   },
 
   /**
+   * Get ghost edges for a container node
+   */
+  async getGhostEdges(containerId: string): Promise<MoodboardEdge[]> {
+    const edges = await ghostNodeService.fetchGhostEdges(containerId);
+    return edges.filter((edge) => edge.targetNodeId === containerId);
+  },
+
+  /**
+   * Get source nodes for ghost edges
+   */
+  async getGhostSourceNodes(nodeIds: string[]): Promise<MoodboardNode[]> {
+    return ghostNodeService.fetchSourceNodes(nodeIds);
+  },
+
+  /**
+   * Identify stale ghost nodes by comparing cached entries to current nodes
+   */
+  async getStaleGhostNodes(
+    cachedNodes: Map<string, GhostCacheEntry>,
+    currentNodes: MoodboardNode[]
+  ): Promise<string[]> {
+    return ghostNodeService.checkStaleness(cachedNodes, currentNodes);
+  },
+
+  /**
+   * Create a ghost edge between a source node and a target container
+   */
+  async createGhostEdge(
+    sourceNodeId: string,
+    targetContainerId: string,
+    metadata?: Record<string, unknown>
+  ): Promise<MoodboardEdge> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error('Not authenticated');
+
+    if (sourceNodeId === targetContainerId) {
+      throw new Error('Ghost edges cannot be self-referential.');
+    }
+
+    const [sourceNode, targetNode] = await Promise.all([
+      this.getNode(sourceNodeId),
+      this.getNode(targetContainerId),
+    ]);
+
+    if (!sourceNode) {
+      throw new Error('Source node not found or access denied.');
+    }
+
+    if (!targetNode) {
+      throw new Error('Target container not found or access denied.');
+    }
+
+    if (
+      sourceNode.ideaId &&
+      targetNode.ideaId &&
+      sourceNode.ideaId !== targetNode.ideaId
+    ) {
+      throw new Error('Ghost edges must connect nodes within the same idea.');
+    }
+
+    const ideaId = sourceNode.ideaId ?? targetNode.ideaId ?? null;
+    if (!ideaId) {
+      throw new Error('Unable to resolve idea for ghost edge.');
+    }
+
+    const moodboardId = sourceNode.moodboardId ?? targetNode.moodboardId ?? null;
+    if (!moodboardId) {
+      throw new Error('Unable to resolve moodboard for ghost edge.');
+    }
+
+    const { data, error } = await supabase
+      .from('moodboard_edges')
+      .insert({
+        idea_id: ideaId,
+        moodboard_id: moodboardId,
+        source_node_id: sourceNodeId,
+        target_node_id: targetContainerId,
+        edge_type: 'ghost',
+        edge_metadata: metadata || {},
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '42501') {
+        throw new Error(
+          'Permission denied: You must be a member of this team to create ghost connections.'
+        );
+      }
+      throw error;
+    }
+
+    return mapMoodboardEdgeFromDb(data);
+  },
+
+  /**
    * Create a new edge between nodes
    */
   async createEdge(edge: MoodboardEdgeCreate): Promise<MoodboardEdge> {
@@ -428,14 +529,26 @@ export const moodboardService = {
 
     if (!user) throw new Error('Not authenticated');
 
+    const [sourceNode, targetNode] = await Promise.all([
+      this.getNode(edge.sourceNodeId),
+      this.getNode(edge.targetNodeId),
+    ]);
+
+    const moodboardId = sourceNode?.moodboardId ?? targetNode?.moodboardId ?? null;
+    if (!moodboardId) {
+      throw new Error('Unable to resolve moodboard for edge.');
+    }
+
     const { data, error } = await supabase
       .from('moodboard_edges')
       .insert({
         idea_id: edge.ideaId,
+        moodboard_id: moodboardId,
         source_node_id: edge.sourceNodeId,
         target_node_id: edge.targetNodeId,
         edge_type: edge.edgeType,
         label: edge.label || null,
+        edge_metadata: edge.edgeMetadata || {},
       })
       .select()
       .single();

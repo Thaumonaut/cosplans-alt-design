@@ -10,15 +10,11 @@ import { supabase } from '$lib/supabase';
 import {
   mapMoodboardEdgeFromDb,
   mapMoodboardNodeFromDb,
+  type GhostCacheEntry,
   type MoodboardEdge,
   type MoodboardNode,
 } from '$lib/types/domain/moodboard';
 import type { Database } from '$lib/types/supabase';
-
-export interface GhostCacheEntry {
-  node: MoodboardNode;
-  cachedAt: Date;
-}
 
 function getClient(client?: SupabaseClient<Database>) {
   return client ?? supabase;
@@ -32,7 +28,8 @@ export const ghostNodeService = {
     const { data, error } = await getClient(client)
       .from('moodboard_edges')
       .select('*')
-      .eq('target_node_id', containerId);
+      .eq('target_node_id', containerId)
+      .eq('edge_type', 'ghost');
 
     if (error) throw error;
 

@@ -342,6 +342,26 @@ export interface MoodboardProjectReferenceCreate {
 }
 
 // ============================================================================
+// Ghost Node Types
+// ============================================================================
+
+export interface GhostCacheEntry {
+  node: MoodboardNode;
+  cachedAt: Date;
+}
+
+export interface GhostEdgeMetadata {
+  /** User ID of the creator */
+  createdBy?: string;
+  /** Why this ghost link was created */
+  reason?: string;
+  /** Lightweight tags for ghost edges */
+  tags?: string[];
+  /** Custom metadata payload */
+  customFields?: Record<string, unknown>;
+}
+
+// ============================================================================
 // Moodboard Edge Interface
 // ============================================================================
 
@@ -350,15 +370,18 @@ export type MoodboardEdgeType =
   | "reference" // References inspiration
   | "alternative" // Alternative approach
   | "shared_resource" // Shared across options
-  | "supplier_option"; // Vendor/supplier link
+  | "supplier_option" // Vendor/supplier link
+  | "ghost"; // Ghost edge to reference nodes across containers
 
 export interface MoodboardEdge {
   id: string;
   ideaId: string;
+  moodboardId?: string | null;
   sourceNodeId: string;
   targetNodeId: string;
   edgeType: MoodboardEdgeType;
   label?: string | null;
+  edgeMetadata?: GhostEdgeMetadata | Record<string, unknown>;
   createdAt: string;
 }
 
@@ -368,6 +391,7 @@ export interface MoodboardEdgeCreate {
   targetNodeId: string;
   edgeType: MoodboardEdgeType;
   label?: string;
+  edgeMetadata?: GhostEdgeMetadata | Record<string, unknown>;
 }
 
 // ============================================================================
@@ -560,10 +584,12 @@ export function mapMoodboardEdgeFromDb(row: any): MoodboardEdge {
   return {
     id: row.id,
     ideaId: row.idea_id,
+    moodboardId: row.moodboard_id ?? null,
     sourceNodeId: row.source_node_id,
     targetNodeId: row.target_node_id,
     edgeType: row.edge_type as MoodboardEdgeType,
     label: row.label,
+    edgeMetadata: row.edge_metadata || {},
     createdAt: row.created_at,
   };
 }
