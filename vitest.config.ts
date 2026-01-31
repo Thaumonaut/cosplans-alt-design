@@ -12,7 +12,7 @@ dotenv.config({ path: ".env.test" });
  * Fast unit tests with jsdom environment
  * 80%+ coverage requirements
  * 8 parallel workers for optimal performance
- * 5-second timeout per test (unit), 30s for integration
+ * 5-second timeout per test (unit/integration), 30s for performance
  */
 export default defineConfig({
   plugins: [sveltekit()],
@@ -27,15 +27,6 @@ export default defineConfig({
   },
 
   test: {
-    // Test environment
-    environment: "jsdom",
-
-    // Include test files - ONLY from tests/ directory, NOT src/
-    include: [
-      "tests/unit/**/*.{test,spec}.{js,ts}",
-      "tests/integration/**/*.{test,spec}.{js,ts}",
-    ],
-
     // Exclude patterns
     exclude: [
       "node_modules",
@@ -50,9 +41,6 @@ export default defineConfig({
 
     // Global test setup
     setupFiles: ["tests/unit/setup.ts"],
-
-    // Test timeout (5 seconds for unit tests)
-    testTimeout: 5000,
 
     // Hook timeout (10 seconds for setup/teardown)
     hookTimeout: 10000,
@@ -107,4 +95,29 @@ export default defineConfig({
     // Timing warnings at 80% threshold
     slowTestThreshold: 4000, // Warn if test approaches 5s timeout
   },
+
+  projects: [
+    {
+      test: {
+        name: "unit-integration",
+        environment: "jsdom",
+        include: [
+          "tests/unit/**/*.{test,spec}.{js,ts}",
+          "tests/integration/**/*.{test,spec}.{js,ts}",
+        ],
+        testTimeout: 5000,
+      },
+    },
+    {
+      test: {
+        name: "performance",
+        environment: "node",
+        include: ["tests/performance/**/*.{test,spec}.{js,ts}"],
+        testTimeout: 30000,
+        hookTimeout: 30000,
+        setupFiles: [],
+        slowTestThreshold: 25000,
+      },
+    },
+  ],
 });
