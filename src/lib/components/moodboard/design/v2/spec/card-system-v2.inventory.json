@@ -1,0 +1,745 @@
+{
+  "generatedAt": "2026-02-27T00:40:49.609Z",
+  "source": ".cv/design/feat-006/explorations/card-system-v2.html",
+  "totalEntries": 82,
+  "entries": [
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Item (Single expense)",
+      "family": "budget-item",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "budget-item.compact"
+    },
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Item (Single expense)",
+      "family": "budget-item",
+      "variantLabel": "Planned (not purchased)",
+      "variant": "planned",
+      "key": "budget-item.planned"
+    },
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Item (Single expense)",
+      "family": "budget-item",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "budget-item.standard"
+    },
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Summary (Multiple items + income)",
+      "family": "budget-summary",
+      "variantLabel": "Compact summary",
+      "variant": "compact-summary",
+      "key": "budget-summary.compact-summary"
+    },
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Summary (Multiple items + income)",
+      "family": "budget-summary",
+      "variantLabel": "Full summary card",
+      "variant": "full-summary",
+      "key": "budget-summary.full-summary"
+    },
+    {
+      "sectionId": "budget",
+      "sectionLabel": "Budget",
+      "familyLabel": "Budget Summary (Multiple items + income)",
+      "family": "budget-summary",
+      "variantLabel": "Income item",
+      "variant": "income-item",
+      "key": "budget-summary.income-item"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Checklist",
+      "family": "checklist",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "checklist.compact"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Checklist",
+      "family": "checklist",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "checklist.standard"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Compact Cards",
+      "family": "compact-cards",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "compact-cards.standard"
+    },
+    {
+      "sectionId": "compare",
+      "sectionLabel": "Compare",
+      "familyLabel": "Compare",
+      "family": "compare",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "compare.compact"
+    },
+    {
+      "sectionId": "compare",
+      "sectionLabel": "Compare",
+      "familyLabel": "Compare",
+      "family": "compare",
+      "variantLabel": "4-Way Comparison",
+      "variant": "grid-4",
+      "key": "compare.grid-4"
+    },
+    {
+      "sectionId": "compare",
+      "sectionLabel": "Compare",
+      "familyLabel": "Compare",
+      "family": "compare",
+      "variantLabel": "Side-by-Side",
+      "variant": "side-by-side",
+      "key": "compare.side-by-side"
+    },
+    {
+      "sectionId": "compare",
+      "sectionLabel": "Compare",
+      "familyLabel": "Compare",
+      "family": "compare",
+      "variantLabel": "Slider Mode",
+      "variant": "slider",
+      "key": "compare.slider"
+    },
+    {
+      "sectionId": "contacts",
+      "sectionLabel": "Contacts",
+      "familyLabel": "Contacts",
+      "family": "contact",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "contact.compact"
+    },
+    {
+      "sectionId": "contacts",
+      "sectionLabel": "Contacts",
+      "familyLabel": "Contacts",
+      "family": "contact",
+      "variantLabel": "Standard contact",
+      "variant": "standard",
+      "key": "contact.standard"
+    },
+    {
+      "sectionId": "contacts",
+      "sectionLabel": "Contacts",
+      "familyLabel": "Contacts",
+      "family": "contact",
+      "variantLabel": "Vendor / Store",
+      "variant": "vendor-store",
+      "key": "contact.vendor-store"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Containers (Open nested canvas)",
+      "family": "container",
+      "variantLabel": "Character",
+      "variant": "character",
+      "key": "container.character"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Containers (Open nested canvas)",
+      "family": "container",
+      "variantLabel": "Moodboard Link",
+      "variant": "moodboard-link",
+      "key": "container.moodboard-link"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Containers (Open nested canvas)",
+      "family": "container",
+      "variantLabel": "Prop",
+      "variant": "prop",
+      "key": "container.prop"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Containers (Open nested canvas)",
+      "family": "container",
+      "variantLabel": "Option / Variant",
+      "variant": "standard",
+      "key": "container.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Equipment",
+      "family": "equipment",
+      "variantLabel": "Camera",
+      "variant": "camera",
+      "key": "equipment.camera"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Equipment",
+      "family": "equipment",
+      "variantLabel": "Lens",
+      "variant": "lens",
+      "key": "equipment.lens"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Equipment",
+      "family": "equipment",
+      "variantLabel": "Lighting",
+      "variant": "lighting",
+      "key": "equipment.lighting"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Event",
+      "family": "event",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "event.compact"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Event",
+      "family": "event",
+      "variantLabel": "Photoshoot",
+      "variant": "photoshoot",
+      "key": "event.photoshoot"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Event",
+      "family": "event",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "event.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Fabric",
+      "family": "fabric",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "fabric.compact"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Fabric",
+      "family": "fabric",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "fabric.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "3D Print Filament",
+      "family": "filament",
+      "variantLabel": "Flexible (TPU)",
+      "variant": "flexible",
+      "key": "filament.flexible"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "3D Print Filament",
+      "family": "filament",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "filament.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Foam / EVA",
+      "family": "foam",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "foam.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Hardware",
+      "family": "hardware",
+      "variantLabel": "Fasteners",
+      "variant": "fasteners",
+      "key": "hardware.fasteners"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Hardware",
+      "family": "hardware",
+      "variantLabel": "Magnets",
+      "variant": "magnets",
+      "key": "hardware.magnets"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Hardware",
+      "family": "hardware",
+      "variantLabel": "Structural",
+      "variant": "structural",
+      "key": "hardware.structural"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Images",
+      "family": "image",
+      "variantLabel": "Landscape (16:9)",
+      "variant": "landscape",
+      "key": "image.landscape"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Images",
+      "family": "image",
+      "variantLabel": "Portrait (3:4)",
+      "variant": "portrait",
+      "key": "image.portrait"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Images",
+      "family": "image",
+      "variantLabel": "Square (1:1)",
+      "variant": "square",
+      "key": "image.square"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Images",
+      "family": "image",
+      "variantLabel": "Thumbnail (no caption)",
+      "variant": "thumbnail",
+      "key": "image.thumbnail"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "Instagram",
+      "family": "instagram",
+      "variantLabel": "Carousel",
+      "variant": "carousel",
+      "key": "instagram.carousel"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "Instagram",
+      "family": "instagram",
+      "variantLabel": "Compact (thumbnail)",
+      "variant": "compact",
+      "key": "instagram.compact"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "Instagram",
+      "family": "instagram",
+      "variantLabel": "Post (1:1)",
+      "variant": "post",
+      "key": "instagram.post"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "Instagram",
+      "family": "instagram",
+      "variantLabel": "Reel (9:16)",
+      "variant": "reel",
+      "key": "instagram.reel"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Leather",
+      "family": "leather",
+      "variantLabel": "Faux Leather",
+      "variant": "faux-leather",
+      "key": "leather.faux-leather"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Leather",
+      "family": "leather",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "leather.standard"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Links",
+      "family": "link",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "link.compact"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Links",
+      "family": "link",
+      "variantLabel": "With preview image",
+      "variant": "with-preview",
+      "key": "link.with-preview"
+    },
+    {
+      "sectionId": "media",
+      "sectionLabel": "Images & Video",
+      "familyLabel": "Links",
+      "family": "link",
+      "variantLabel": "No preview",
+      "variant": "without-preview",
+      "key": "link.without-preview"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Map / Location",
+      "family": "location",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "location.compact"
+    },
+    {
+      "sectionId": "planning",
+      "sectionLabel": "Planning",
+      "familyLabel": "Map / Location",
+      "family": "location",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "location.standard"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Measurements",
+      "family": "measurements",
+      "variantLabel": "Body measurements",
+      "variant": "body",
+      "key": "measurements.body"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Measurements",
+      "family": "measurements",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "measurements.compact"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Measurements",
+      "family": "measurements",
+      "variantLabel": "Garment measurements",
+      "variant": "garment",
+      "key": "measurements.garment"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Metal",
+      "family": "metal",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "metal.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Metal",
+      "family": "metal",
+      "variantLabel": "Wire",
+      "variant": "wire",
+      "key": "metal.wire"
+    },
+    {
+      "sectionId": "references",
+      "sectionLabel": "References",
+      "familyLabel": "Moodboard Link",
+      "family": "moodboard-link",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "moodboard-link.standard"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Notes",
+      "family": "note",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "note.compact"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Notes",
+      "family": "note",
+      "variantLabel": "Long note",
+      "variant": "long-note",
+      "key": "note.long-note"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Notes",
+      "family": "note",
+      "variantLabel": "Standard note",
+      "variant": "standard",
+      "key": "note.standard"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Color Palette",
+      "family": "palette",
+      "variantLabel": "Compact (3-4 colors)",
+      "variant": "compact",
+      "key": "palette.compact"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Color Palette",
+      "family": "palette",
+      "variantLabel": "Horizontal strip (full width)",
+      "variant": "horizontal-strip",
+      "key": "palette.horizontal-strip"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Color Palette",
+      "family": "palette",
+      "variantLabel": "Standard (expandable width)",
+      "variant": "standard",
+      "key": "palette.standard"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Piles (Expand inline)",
+      "family": "piles",
+      "variantLabel": "Pile (Collapsed)",
+      "variant": "collapsed",
+      "key": "piles.collapsed"
+    },
+    {
+      "sectionId": "containers",
+      "sectionLabel": "Containers",
+      "familyLabel": "Piles (Expand inline)",
+      "family": "piles",
+      "variantLabel": "Pile (Expanded)",
+      "variant": "expanded",
+      "key": "piles.expanded"
+    },
+    {
+      "sectionId": "references",
+      "sectionLabel": "References",
+      "familyLabel": "Project Reference",
+      "family": "project-reference",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "project-reference.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Resin",
+      "family": "resin",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "resin.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Resin",
+      "family": "resin",
+      "variantLabel": "UV Resin",
+      "variant": "uv-resin",
+      "key": "resin.uv-resin"
+    },
+    {
+      "sectionId": "references",
+      "sectionLabel": "References",
+      "familyLabel": "Resource Reference",
+      "family": "resource-reference",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "resource-reference.standard"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Sketch",
+      "family": "sketch",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "sketch.compact"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Sketch",
+      "family": "sketch",
+      "variantLabel": "Standard sketch",
+      "variant": "standard-sketch",
+      "key": "sketch.standard-sketch"
+    },
+    {
+      "sectionId": "design",
+      "sectionLabel": "Design",
+      "familyLabel": "Sketch",
+      "family": "sketch",
+      "variantLabel": "With side notes",
+      "variant": "with-side-notes",
+      "key": "sketch.with-side-notes"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Thermoplastic",
+      "family": "thermoplastic",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "thermoplastic.compact"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Thermoplastic",
+      "family": "thermoplastic",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "thermoplastic.standard"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "TikTok",
+      "family": "tiktok",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "tiktok.compact"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "TikTok",
+      "family": "tiktok",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "tiktok.standard"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Tools",
+      "family": "tools",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "tools.compact"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Tools",
+      "family": "tools",
+      "variantLabel": "Need to buy",
+      "variant": "need-to-buy",
+      "key": "tools.need-to-buy"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Tools",
+      "family": "tools",
+      "variantLabel": "Owned",
+      "variant": "owned",
+      "key": "tools.owned"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Wood",
+      "family": "wood",
+      "variantLabel": "Dowels",
+      "variant": "dowels",
+      "key": "wood.dowels"
+    },
+    {
+      "sectionId": "resources",
+      "sectionLabel": "Materials",
+      "familyLabel": "Wood",
+      "family": "wood",
+      "variantLabel": "Standard",
+      "variant": "standard",
+      "key": "wood.standard"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "YouTube",
+      "family": "youtube",
+      "variantLabel": "Compact",
+      "variant": "compact",
+      "key": "youtube.compact"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "YouTube",
+      "family": "youtube",
+      "variantLabel": "Short (9:16)",
+      "variant": "short",
+      "key": "youtube.short"
+    },
+    {
+      "sectionId": "social",
+      "sectionLabel": "Social Media",
+      "familyLabel": "YouTube",
+      "family": "youtube",
+      "variantLabel": "Video (16:9)",
+      "variant": "video",
+      "key": "youtube.video"
+    }
+  ]
+}

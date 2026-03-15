@@ -64,13 +64,14 @@
       switch (n.containerType) {
         case "character":
           return Users;
-        case "option":
-          return Palette;
-        case "prop":
-          return Scissors;
+        case "group":
+          return Folder;
         default:
           return Folder;
       }
+    }
+    if (n.nodeType === "moodboard_link") {
+      return ExternalLink; // Link to another moodboard
     }
     switch (n.nodeType) {
       case "image":
@@ -127,6 +128,9 @@
     if (n.shortComment) return n.shortComment;
     if (n.nodeType === "container" && n.containerType) {
       return n.containerType.charAt(0).toUpperCase() + n.containerType.slice(1);
+    }
+    if (n.nodeType === "moodboard_link") {
+      return n.title || "Moodboard Link";
     }
     if (n.nodeType === "social_media" && isSocialMediaMetadata(n.metadata)) {
       return `${n.metadata.platform} post`;
@@ -417,6 +421,21 @@
           {#if node.title}
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {node.title}
+            </div>
+          {/if}
+        </div>
+      {:else if node.nodeType === "moodboard_link"}
+        <!-- Moodboard link preview -->
+        <div
+          class="w-full h-full p-4 flex flex-col justify-center items-center text-center"
+        >
+          <div class="text-4xl mb-2">🎨</div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {node.title || "Moodboard"}
+          </div>
+          {#if (node.metadata as any)?.ownerType}
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {(node.metadata as any).ownerType === "idea" ? "Idea" : "Project"} Moodboard
             </div>
           {/if}
         </div>

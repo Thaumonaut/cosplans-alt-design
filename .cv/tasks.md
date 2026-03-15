@@ -20,8 +20,7 @@ Detailed task breakdowns for each feature:
 > **Full task list:** `.cv/spec/features/feat-006/tasks.md`
 > **Spec version:** 3.0 (SFS-v2 — Hierarchical Architecture)
 
-
-**Current focus:** Checkpoint 4 — Card Types
+**Current focus:** Integration with Ideas & Plans
 
 - [x] T-001: Database migration for moodboards table
 - [x] T-002: Database migration for hierarchical nodes
@@ -32,6 +31,26 @@ Detailed task breakdowns for each feature:
 - [x] T-007: Install and configure Svelte Flow
 - [x] T-008: Create base MoodboardNode component
 - [x] T-009: Implement drill-in navigation for containers
+- [x] T-010: Implement position persistence
+- [x] T-011: Create ViewSwitcher component
+- [x] T-012: Implement Gallery view (hierarchical)
+- [x] T-013: Implement List view (hierarchical tree)
+- [x] T-014: Integrate views into moodboard page
+- [x] **COMPLETED** - T-015: Implement container card types (+ drag-and-drop)
+- [x] **COMPLETED** - T-016: Implement reference card types (platform badges + metadata)
+- [x] **COMPLETED** - T-017: Implement design card types (color palette + measurements)
+- [x] **COMPLETED** - T-018: Implement budget and contact card types
+- [x] **COMPLETED** - T-019: Implement Fabric card type
+- [x] **COMPLETED** - T-020: Create Add Card menu
+- [x] **COMPLETED** - T-021: Connect moodboards to ideas and projects
+  - Added moodboard tab to IdeaDetail component
+  - Added moodboard tab to ProjectDetail component  
+  - Integrated moodboard creation and navigation
+  - Fixed service imports and type issues
+  - Added hierarchical moodboard linking via moodboard_link nodes
+  - Updated NodeCard to display moodboard_link nodes with 🎨 icon
+  - Modified drill-in navigation to handle moodboard links (navigate to linked moodboard)
+  - Users can now access nested moodboards from main moodboard or detail pages
 - [x] T-010: Implement position persistence
 - [x] T-011: Create ViewSwitcher component
 - [x] T-012: Implement Gallery view (hierarchical)

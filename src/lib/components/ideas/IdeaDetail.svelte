@@ -38,8 +38,8 @@
     import { moodboard } from "$lib/stores/moodboard";
     import ReferencesTab from "./ReferencesTab.svelte";
     import { getImageNodesForIdea } from "$lib/services/imageMigration";
-    import { moodboardService } from "$lib/api/services/moodboardService";
-    import type { MoodboardNode } from "$lib/types/domain/moodboard";
+    import { moodboardsService } from "$lib/api/services/moodboardsService";
+    import type { MoodboardNode, Moodboard } from "$lib/types/domain/moodboard";
 
     interface Props {
         ideaId?: string;
@@ -67,9 +67,48 @@
     let saving = $state(false);
     let deleting = $state(false);
     let showDeleteDialog = $state(false);
-    let activeTab = $state<"overview" | "images" | "references">("overview");
+    let activeTab = $state<"overview" | "images" | "references" | "moodboard">("overview");
     let imageNodes = $state<MoodboardNode[]>([]);
     let lastMoodboardIdeaId: string | null = null;
+    let ideaMoodboard = $state<Moodboard | null>(null);
+    let moodboardLoading = $state(false);
+
+    // Helper function to create moodboard link nodes in user's main moodboard
+    async function createMoodboardLink(moodboardId: string, ownerType: "idea" | "project", ownerId: string) {
+        try {
+            // Get user from store
+            const userStore = get(user);
+            if (!userStore?.id) return;
+
+            const userMoodboard = await moodboardsService.getPersonalMoodboard(userStore.id);
+            if (!userMoodboard) return;
+
+            // Create moodboard link node
+            await moodboardsService.createNode({
+                moodboardId: userMoodboard.id,
+                nodeType: 'moodboard_link',
+                linkedMoodboardId: moodboardId,
+                title: `${ownerType === 'idea' ? 'Idea' : 'Project'} Moodboard`,
+                contentUrl: undefined,
+                thumbnailUrl: undefined,
+                metadata: {
+                    ownerType,
+                    ownerId,
+                    createdAt: new Date().toISOString()
+                } as any,
+                tags: [],
+                positionX: 0,
+                positionY: 0,
+                width: 300,
+                height: 200,
+                zIndex: 0,
+                parentId: undefined,
+                isExpanded: true
+            });
+        } catch (err) {
+            console.error("Failed to create moodboard link:", err);
+        }
+    }
 
     let estimatedCostValue = $state(0);
     $effect(() => {
@@ -267,6 +306,21 @@
             // Load image nodes from moodboard
             if (ideaId) {
                 imageNodes = await getImageNodesForIdea(ideaId);
+            }
+
+            // Load idea's moodboard
+            if (ideaId) {
+                try {
+                    ideaMoodboard = await moodboardsService.getMoodboardByOwner("idea", ideaId);
+                    
+                    // If moodboard exists, create link in user's main moodboard
+                    if (ideaMoodboard) {
+                        await createMoodboardLink(ideaMoodboard.id, "idea", ideaId);
+                    }
+                } catch (err) {
+                    console.error("Failed to load idea moodboard:", err);
+                    // Not critical - moodboard might not exist yet
+                }
             }
         } catch (err: any) {
             error = err?.message || "Failed to load idea";
@@ -626,7 +680,7 @@
             const posX = 50 + (gridCol * 320);
             const posY = 50 + (gridRow * 420);
 
-            await moodboardService.createNode({
+            await moodboardsService.createNode({
                 ideaId,
                 nodeType: 'image',
                 contentUrl: url,
@@ -936,6 +990,15 @@
                         : 'border-transparent text-muted-foreground hover:text-foreground'}"
                 >
                     References {#if $moodboard.nodes.length > 0}({$moodboard.nodes.length}){/if}
+                </button>
+                <button
+                    onclick={() => (activeTab = "moodboard")}
+                    class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab ===
+                    'moodboard'
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                >
+                    Moodboard
                 </button>
             </div>
         </div>
@@ -1376,7 +1439,7 @@
                                                         const posX = 50 + (gridCol * 320);
                                                         const posY = 50 + (gridRow * 420);
 
-                                                        await moodboardService.updateNode(node.id, {
+                                                        await moodboardsService.updateNode(node.id, {
                                                             positionX: posX,
                                                             positionY: posY,
                                                         });
@@ -1569,6 +1632,84 @@
                     {:else}
                         <div class="mx-auto max-w-3xl text-center py-12">
                             <p class="text-muted-foreground">Create the idea first to add references.</p>
+                        </div>
+                    {/if}
+                {:else if activeTab === "moodboard"}
+                    <!-- Moodboard Tab: Full Moodboard Integration -->
+                    {#if ideaMoodboard}
+                        <div class="space-y-6">
+                            <!-- Moodboard Header -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-2xl font-bold">Moodboard</h2>
+                                    <p class="text-muted-foreground">
+                                        Visual brainstorming workspace for {characterValue || "this idea"}
+                                    </p>
+                                </div>
+                                <Button
+                                    onclick={() => goto(`/moodboard/${ideaMoodboard?.id}`)}
+                                    variant="default"
+                                >
+                                    Open in Full Screen
+                                </Button>
+                            </div>
+
+                            <!-- Moodboard Preview -->
+                            <div class="border rounded-lg bg-background p-4">
+                                <div class="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                                    <div class="text-center">
+                                        <p class="text-lg font-medium mb-2">Moodboard Ready</p>
+                                        <p class="text-muted-foreground mb-4">
+                                            This idea has an associated moodboard
+                                        </p>
+                                        <Button
+                                            onclick={() => goto(`/moodboard/${ideaMoodboard.id}`)}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            View Moodboard
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {:else if idea?.id}
+                        <!-- No Moodboard Yet -->
+                        <div class="mx-auto max-w-3xl text-center py-12">
+                            <div class="space-y-4">
+                                <h3 class="text-xl font-semibold">No Moodboard Yet</h3>
+                                <p class="text-muted-foreground">
+                                    Create a moodboard to start collecting visual references, inspiration, and ideas for this cosplay.
+                                </p>
+                                <Button
+                                    onclick={async () => {
+                                        try {
+                                            moodboardLoading = true;
+                                            const newMoodboard = await moodboardsService.createMoodboard({
+                                                ownerType: "idea",
+                                                ownerId: idea.id,
+                                                title: `${characterValue || "Idea"} Moodboard`
+                                            });
+                                            ideaMoodboard = newMoodboard;
+                                        } catch (err) {
+                                            console.error("Failed to create moodboard:", err);
+                                        } finally {
+                                            moodboardLoading = false;
+                                        }
+                                    }}
+                                    disabled={moodboardLoading}
+                                >
+                                    {#if moodboardLoading}
+                                        Creating...
+                                    {:else}
+                                        Create Moodboard
+                                    {/if}
+                                </Button>
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="mx-auto max-w-3xl text-center py-12">
+                            <p class="text-muted-foreground">Create the idea first to access the moodboard.</p>
                         </div>
                     {/if}
                 {/if}
@@ -1973,7 +2114,7 @@
                                 // Delete moodboard node
                                 const nodeToDelete = imageNodes[currentIndex];
                                 if (nodeToDelete) {
-                                    await moodboardService.deleteNode(nodeToDelete.id);
+                                    await moodboardsService.deleteNode(nodeToDelete.id);
                                     // Reload image nodes after deleting
                                     imageNodes = await getImageNodesForIdea(idea.id);
                                 }

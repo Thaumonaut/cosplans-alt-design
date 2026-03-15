@@ -26,6 +26,8 @@
   import CreationFlyout from '$lib/components/ui/CreationFlyout.svelte'
   import NotFound from '$lib/components/base/NotFound.svelte'
   import type { Project, ProjectCreate } from '$lib/types/domain/project'
+  import { moodboardsService } from '$lib/api/services/moodboardsService'
+  import type { Moodboard } from '$lib/types/domain/moodboard'
   import { get } from 'svelte/store'
 
 
@@ -56,7 +58,7 @@
   let convertingToIdea = $state(false)
   let showDeleteDialog = $state(false)
   let showConvertToIdeaDialog = $state(false)
-  let activeTab = $state<'overview' | 'resources' | 'tasks' | 'gallery' | 'notes' | 'references'>('overview')
+  let activeTab = $state<'overview' | 'resources' | 'tasks' | 'gallery' | 'notes' | 'references' | 'moodboard'>('overview')
 
   let estimatedBudgetValue = $state(0)
   let progressValue = $state(0)
@@ -64,6 +66,45 @@
   let linkedResourcesData = $state<any[]>([])
   let showResourceDetailFlyout = $state(false)
   let selectedResourceId = $state<string | null>(null)
+  let projectMoodboard = $state<Moodboard | null>(null)
+  let moodboardLoading = $state(false)
+
+  // Helper function to create moodboard link nodes in user's main moodboard
+  async function createMoodboardLink(moodboardId: string, ownerType: "idea" | "project", ownerId: string) {
+    try {
+      // Get user from store
+      const userStore = get(user)
+      if (!userStore?.id) return
+
+      const userMoodboard = await moodboardsService.getPersonalMoodboard(userStore.id)
+      if (!userMoodboard) return
+
+      // Create moodboard link node
+      await moodboardsService.createNode({
+        moodboardId: userMoodboard.id,
+        nodeType: 'moodboard_link',
+        linkedMoodboardId: moodboardId,
+        title: `${ownerType === 'idea' ? 'Idea' : 'Project'} Moodboard`,
+        contentUrl: undefined,
+        thumbnailUrl: undefined,
+        metadata: {
+          ownerType,
+          ownerId,
+          createdAt: new Date().toISOString()
+        } as any,
+        tags: [],
+        positionX: 0,
+        positionY: 0,
+        width: 300,
+        height: 200,
+        zIndex: 0,
+        parentId: undefined,
+        isExpanded: true
+      })
+    } catch (err) {
+      console.error("Failed to create moodboard link:", err)
+    }
+  }
 
   $effect(() => {
     if (mode === 'create') {
@@ -208,6 +249,21 @@
       error = err?.message || 'Failed to load project'
     } finally {
       loading = false
+    }
+
+    // Load project's moodboard
+    if (projectId) {
+      try {
+        projectMoodboard = await moodboardsService.getMoodboardByOwner("project", projectId);
+        
+        // If moodboard exists, create link in user's main moodboard
+        if (projectMoodboard) {
+          await createMoodboardLink(projectMoodboard.id, "project", projectId);
+        }
+      } catch (err) {
+        console.error("Failed to load project moodboard:", err);
+        // Not critical - moodboard might not exist yet
+      }
     }
   })
 
@@ -659,6 +715,12 @@
           >
             References {#if $moodboard.nodes.length > 0}({$moodboard.nodes.length}){/if}
           </button>
+          <button
+            onclick={() => activeTab = 'moodboard'}
+            class="border-b-2 px-1 py-4 text-sm font-medium transition-colors {activeTab === 'moodboard' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+          >
+            Moodboard
+          </button>
         {/if}
         <button
           onclick={() => activeTab = 'notes'}
@@ -1005,6 +1067,85 @@
               />
             </div>
           </div>
+
+        {:else if activeTab === 'moodboard'}
+          <!-- Moodboard Tab: Full Moodboard Integration -->
+          {#if projectMoodboard}
+            <div class="space-y-6">
+              <!-- Moodboard Header -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-2xl font-bold">Moodboard</h2>
+                  <p class="text-muted-foreground">
+                    Visual brainstorming workspace for {project?.character || "this project"}
+                  </p>
+                </div>
+                <Button
+                  onclick={() => goto(`/moodboard/${projectMoodboard?.id}`)}
+                  variant="default"
+                >
+                  Open in Full Screen
+                </Button>
+              </div>
+
+              <!-- Moodboard Preview -->
+              <div class="border rounded-lg bg-background p-4">
+                <div class="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                  <div class="text-center">
+                    <p class="text-lg font-medium mb-2">Moodboard Ready</p>
+                    <p class="text-muted-foreground mb-4">
+                      This project has an associated moodboard
+                    </p>
+                    <Button
+                      onclick={() => goto(`/moodboard/${projectMoodboard?.id}`)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      View Moodboard
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {:else if project?.id}
+            <!-- No Moodboard Yet -->
+            <div class="mx-auto max-w-3xl text-center py-12">
+              <div class="space-y-4">
+                <h3 class="text-xl font-semibold">No Moodboard Yet</h3>
+                <p class="text-muted-foreground">
+                  Create a moodboard to start collecting visual references, inspiration, and ideas for this project.
+                </p>
+                <Button
+                  onclick={async () => {
+                    try {
+                      moodboardLoading = true;
+                      const newMoodboard = await moodboardsService.createMoodboard({
+                        ownerType: "project",
+                        ownerId: project?.id || "",
+                        title: `${project?.character || "Project"} Moodboard`
+                      });
+                      projectMoodboard = newMoodboard;
+                    } catch (err) {
+                      console.error("Failed to create moodboard:", err);
+                    } finally {
+                      moodboardLoading = false;
+                    }
+                  }}
+                  disabled={moodboardLoading}
+                >
+                  {#if moodboardLoading}
+                    Creating...
+                  {:else}
+                    Create Moodboard
+                  {/if}
+                </Button>
+              </div>
+            </div>
+          {:else}
+            <div class="mx-auto max-w-3xl text-center py-12">
+              <p class="text-muted-foreground">Create project first to access moodboard.</p>
+            </div>
+          {/if}
 
         {/if}
       </div>
