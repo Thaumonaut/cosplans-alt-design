@@ -65,7 +65,7 @@
 
 | ID | Title |
 |---|---|
-| CHR-### | <Chronicle title> |
+| CHR-001 | First idea to moodboard with mobile capture |
 
 ---
 

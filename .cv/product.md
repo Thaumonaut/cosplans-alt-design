@@ -74,7 +74,7 @@
 
 | ID | Title | Persona |
 |---|---|---|
-| CHR-### | <Chronicle title> | PERS-### |
+| CHR-001 | First idea to moodboard with mobile capture | PERS-001 |
 
 ---
 _Product by: <author> | Created: 2026-03-16 | Last updated: 2026-03-16_
