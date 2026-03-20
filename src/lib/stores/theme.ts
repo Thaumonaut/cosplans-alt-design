@@ -4,8 +4,10 @@ import { writable, get } from "svelte/store";
 import type { ThemeState, ThemeVariant } from "$lib/types/theme";
 import { DEFAULT_THEME_ID, THEME_VARIANTS, getThemeVariantById } from "$lib/utils/theme-variants";
 
-const THEME_STORAGE_KEY = "cosplans:theme-id";
-const CUSTOM_THEMES_STORAGE_KEY = "cosplans:custom-themes";
+const THEME_STORAGE_KEY = "craftbound:theme-id";
+const CUSTOM_THEMES_STORAGE_KEY = "craftbound:custom-themes";
+const LEGACY_THEME_STORAGE_KEY = "cosplans:theme-id";
+const LEGACY_CUSTOM_THEMES_STORAGE_KEY = "cosplans:custom-themes";
 const MAX_CUSTOM_THEMES = 10;
 
 function applyTheme(variant: ThemeVariant) {
@@ -39,6 +41,13 @@ function applyTheme(variant: ThemeVariant) {
 
 function loadCustomThemes(): ThemeVariant[] {
   if (!browser) return [];
+
+  // One-time migration from cosplans:* keys to craftbound:* keys
+  const legacyCustom = localStorage.getItem(LEGACY_CUSTOM_THEMES_STORAGE_KEY);
+  if (legacyCustom !== null && localStorage.getItem(CUSTOM_THEMES_STORAGE_KEY) === null) {
+    localStorage.setItem(CUSTOM_THEMES_STORAGE_KEY, legacyCustom);
+    localStorage.removeItem(LEGACY_CUSTOM_THEMES_STORAGE_KEY);
+  }
 
   const raw = localStorage.getItem(CUSTOM_THEMES_STORAGE_KEY);
   if (!raw) {
@@ -229,6 +238,14 @@ function createThemeStore() {
 
   function initialize() {
     const customThemes = loadCustomThemes();
+    // One-time migration: move theme-id from old key to new key
+    if (browser && localStorage.getItem(THEME_STORAGE_KEY) === null) {
+      const legacyId = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+      if (legacyId !== null) {
+        localStorage.setItem(THEME_STORAGE_KEY, legacyId);
+        localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+      }
+    }
     const storedId = browser
       ? (localStorage.getItem(THEME_STORAGE_KEY) ?? DEFAULT_THEME_ID)
       : DEFAULT_THEME_ID;

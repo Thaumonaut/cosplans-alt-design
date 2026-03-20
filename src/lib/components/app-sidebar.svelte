@@ -166,7 +166,7 @@
             >
                 <Logo size="lg" />
                 <div class="flex flex-1 flex-col overflow-hidden">
-                    <span class="text-lg font-semibold">Cosplans</span>
+                    <span class="text-lg font-semibold">CraftBound</span>
                 </div>
             </a>
         </div>

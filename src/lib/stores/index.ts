@@ -43,4 +43,4 @@ export {
 export { theme, toggleTheme, setTheme } from './theme.js'
 export { appSettings, updateSettings } from './settings.js'
 export { initializeStores, loadSampleData } from './init.js'
-export { setupPersistence, loadPersistedData, clearPersistedData } from './persistence.js'
+export { setupPersistence, loadPersistedData, clearPersistedData, migrateStorageKeys } from './persistence.js'

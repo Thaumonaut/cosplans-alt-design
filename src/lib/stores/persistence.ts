@@ -6,11 +6,39 @@ import { user } from './user.js'
 import type { Project, Task, Event, User } from '$lib/types'
 
 const STORAGE_KEYS = {
+  projects: 'craftbound_projects',
+  tasks: 'craftbound_tasks',
+  events: 'craftbound_events',
+  user: 'craftbound_user'
+} as const
+
+const LEGACY_STORAGE_KEYS: Record<keyof typeof STORAGE_KEYS, string> = {
   projects: 'cosplans_projects',
   tasks: 'cosplans_tasks',
   events: 'cosplans_events',
   user: 'cosplans_user'
-} as const
+}
+
+/**
+ * One-time migration: move data from old cosplans_* keys to craftbound_* keys.
+ * Safe to run on every boot — exits immediately once migration is complete.
+ */
+export function migrateStorageKeys() {
+  if (!browser) return
+  if (localStorage.getItem('craftbound_storage_migrated')) return
+
+  for (const key of Object.keys(STORAGE_KEYS) as Array<keyof typeof STORAGE_KEYS>) {
+    const oldKey = LEGACY_STORAGE_KEYS[key]
+    const newKey = STORAGE_KEYS[key]
+    const existing = localStorage.getItem(oldKey)
+    if (existing !== null) {
+      localStorage.setItem(newKey, existing)
+      localStorage.removeItem(oldKey)
+    }
+  }
+
+  localStorage.setItem('craftbound_storage_migrated', '1')
+}
 
 /**
  * Save store data to localStorage

@@ -83,7 +83,7 @@ Over-provision data models for known future features:
 
 **Capacitor approach:**
 - SvelteKit app wrapped for iOS
-- Native share extension for "Share to Cosplans" flow
+- Native share extension for "Share to CraftBound" flow
 - Same codebase as web, minimal native code
 - Enables App Store presence before Flutter
 

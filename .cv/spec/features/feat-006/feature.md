@@ -1,7 +1,7 @@
 # Feature FEAT-006 — Enhanced Moodboard System
 
 > **Status:** draft  
-> **Linked product:** Cosplans (`.cv/product.md`)  
+> **Linked product:** CraftBound (`.cv/product.md`)  
 > **Primary chronicle:** CHR-001 — First idea to moodboard with mobile capture  
 > **Personas:** PERS-001 (Michael — The Regular), plus other cosplayer personas as applicable
 
@@ -53,7 +53,7 @@ A visual moodboard workspace that replaces scattered tools with a single place w
 
 ## 3. Linked Artifacts
 
-- **Product:** `.cv/product.md` (Cosplans product definition)
+- **Product:** `.cv/product.md` (CraftBound product definition)
 - **Chronicles:**
   - `chronicles/CHR-001.md` — First idea to moodboard with mobile capture
   - Future chronicles that involve moodboards should link back to FEAT-006.

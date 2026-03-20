@@ -1,16 +1,16 @@
-# Product — Cosplans
+# Product — CraftBound
 <!-- product.md | Loaded by /cv.chronicle, /cv.persona, /cv.prd, and any command that produces user-facing content. -->
 <!-- Update this file with /cv.product whenever the product definition changes. -->
 
 ## Identity
 
-**Name:** Cosplans
+**Name:** CraftBound
 
 **Type:** Cross-platform web application (web today, mobile app later)
 
 **Stage:** Live, early development (MVP live, limited users, incomplete and buggy)
 
-**One-line description:** Cosplans is an ADHD-friendly planning studio for cosplayers that turns scattered inspiration into moodboards, plans, and projects — from first spark to finished cosplay.
+**One-line description:** CraftBound is an ADHD-friendly planning studio for cosplayers that turns scattered inspiration into moodboards, plans, and projects — from first spark to finished cosplay.
 
 ---
 
@@ -33,7 +33,7 @@
 
 **Primary platform:** Mixed — web for deep planning sessions, PWA/mobile share flow for fast capture.
 
-**Typical usage context:** Users quickly save inspiration from social apps or the web into Cosplans on their phone (via share/PWA), then later sit down at a computer or tablet to clean up boards, plan builds, and manage projects before cons or photoshoots.
+**Typical usage context:** Users quickly save inspiration from social apps or the web into CraftBound on their phone (via share/PWA), then later sit down at a computer or tablet to clean up boards, plan builds, and manage projects before cons or photoshoots.
 
 **Target user:** Cosplayers at all levels — from solo hobbyists dreaming up their first build to small groups and emerging professionals who need a central place to plan, track, and eventually sell or collaborate. (See personas in `.cv/spec.md` for Solo Cosplayer, Cosplay Group, Creator/Commissioner, Professional.)
 

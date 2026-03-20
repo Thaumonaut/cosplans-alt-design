@@ -486,7 +486,7 @@
 </script>
 
 <svelte:head>
-    <title>{moodboard?.title || "Moodboard"} - Cosplans</title>
+    <title>{moodboard?.title || "Moodboard"} - CraftBound</title>
 </svelte:head>
 
 <div class="flex flex-col h-full">

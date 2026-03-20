@@ -1,5 +1,5 @@
 /**
- * Service Worker for Cosplans PWA
+ * Service Worker for CraftBound PWA
  * Feature: 006-brainstorming-moodboard
  *
  * Provides:
@@ -18,7 +18,7 @@ import { build, files, version } from '$service-worker';
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 // Unique cache name for this version
-const CACHE_NAME = `cosplans-cache-${version}`;
+const CACHE_NAME = `craftbound-cache-${version}`;
 
 // Assets to cache (SvelteKit provides build files and static files)
 const ASSETS_TO_CACHE = [
@@ -63,7 +63,7 @@ sw.addEventListener('activate', (event) => {
         // Delete old caches
         return Promise.all(
           cacheNames
-            .filter((name) => name !== CACHE_NAME && name.startsWith('cosplans-cache-'))
+            .filter((name) => name !== CACHE_NAME && name.startsWith('craftbound-cache-'))
             .map((name) => {
               console.log('[Service Worker] Deleting old cache:', name);
               return caches.delete(name);

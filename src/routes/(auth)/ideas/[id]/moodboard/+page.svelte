@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-  <title>Loading Moodboard - Cosplans</title>
+  <title>Loading Moodboard - CraftBound</title>
 </svelte:head>
 
 <div class="flex items-center justify-center h-64 p-6">

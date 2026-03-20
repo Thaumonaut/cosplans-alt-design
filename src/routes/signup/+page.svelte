@@ -127,8 +127,8 @@
 </script>
 
 <svelte:head>
-  <title>Create Account - Cosplans</title>
-  <meta name="description" content="Create your Cosplans account to start planning your photoshoots" />
+  <title>Create Account - CraftBound</title>
+  <meta name="description" content="Create your CraftBound account to start planning your cosplays" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -141,7 +141,7 @@
         Create your account
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
-        Start planning your photoshoots with Cosplans
+        Start planning your cosplays with CraftBound
       </p>
     </div>
 

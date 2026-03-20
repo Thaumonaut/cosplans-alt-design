@@ -10,7 +10,7 @@
 
 ## Feature Intent
 
-Transform the Cosplans moodboard from a simple reference collection into a comprehensive visual planning workspace that supports:
+Transform the CraftBound moodboard from a simple reference collection into a comprehensive visual planning workspace that supports:
 - Complex multi-project organization (containers, piles, ghost nodes)
 - Event scheduling and contact management (calendar sync, task lists)
 - Progress tracking and comparison (sequential chains, compare nodes, annotations)

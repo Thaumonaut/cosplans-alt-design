@@ -1,6 +1,6 @@
 {
-  "name": "Cosplans - Cosplay Planning & Moodboards",
-  "short_name": "Cosplans",
+  "name": "CraftBound - Cosplay Planning & Moodboards",
+  "short_name": "CraftBound",
   "description": "Plan your cosplay projects and collect inspiration from social media",
   "start_url": "/dashboard",
   "display": "standalone",

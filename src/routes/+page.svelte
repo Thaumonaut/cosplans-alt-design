@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-  <title>Cosplans - Cosplay Project Tracker (Beta)</title>
+  <title>CraftBound - Cosplay Project Tracker (Beta)</title>
   <meta name="description" content="Open-source cosplay project tracker for managing builds, teams, and photoshoots. Built with SvelteKit and Supabase." />
 </svelte:head>
 
@@ -33,7 +33,7 @@
   <nav class="flex items-center justify-between p-6">
     <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
       <Logo size="md" />
-      <span class="text-xl font-bold">Cosplans</span>
+      <span class="text-xl font-bold">CraftBound</span>
       <span class="ml-2 rounded-full bg-purple-100 dark:bg-purple-900 px-2 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300">BETA</span>
     </a>
     <div class="flex items-center gap-4">
@@ -274,11 +274,11 @@
       <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
         <div class="flex items-center gap-2">
           <Logo size="sm" />
-          <span class="font-semibold">Cosplans</span>
+          <span class="font-semibold">CraftBound</span>
           <span class="text-xs text-muted-foreground">Beta</span>
         </div>
         <p class="text-sm text-muted-foreground">
-          © 2025 Cosplans. Open source project in active development.
+          © 2025 CraftBound. Open source project in active development.
         </p>
       </div>
     </div>

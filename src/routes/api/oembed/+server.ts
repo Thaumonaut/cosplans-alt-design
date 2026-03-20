@@ -110,7 +110,7 @@ export const GET: RequestHandler = async ({ url: requestUrl }) => {
     // Fetch oEmbed data with proper headers
     const response = await fetch(oembedEndpoint, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Cosplans/1.0; +https://cosplans.com)',
+        'User-Agent': 'Mozilla/5.0 (compatible; CraftBound/1.0; +https://craftbound.app)',
       },
       // 10 second timeout
       signal: AbortSignal.timeout(10000),
