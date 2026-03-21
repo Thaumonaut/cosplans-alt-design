@@ -55,7 +55,7 @@
 </script>
 
 <svelte:head>
-    <title>My Moodboard - Cosplans</title>
+    <title>My Moodboard - CraftBound</title>
 </svelte:head>
 
 <div class="p-6">

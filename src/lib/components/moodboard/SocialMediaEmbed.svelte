@@ -238,7 +238,7 @@
       const parsed = new URL(url);
       const baseUrl = `${parsed.origin}${parsed.pathname.replace(/\/$/, '')}/embed`;
       const params = new URLSearchParams({
-        utm_source: 'cosplans',
+        utm_source: 'craftbound',
       });
       return `${baseUrl}?${params.toString()}`;
     } catch {

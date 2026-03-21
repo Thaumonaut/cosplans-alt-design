@@ -11,7 +11,8 @@ type TeamsState = {
   error: string | null
 }
 
-const CURRENT_TEAM_STORAGE_KEY = 'cosplans_current_team_id'
+const CURRENT_TEAM_STORAGE_KEY = 'craftbound_current_team_id'
+const LEGACY_TEAM_STORAGE_KEY = 'cosplans_current_team_id'
 
 const initialState: TeamsState = {
   items: [],
@@ -41,6 +42,12 @@ function createTeamsStore() {
         const items = await teamService.list(userId)
         let current: Team | null = items[0] ?? null
         if (browser) {
+          // One-time migration from old key
+          const legacyId = localStorage.getItem(LEGACY_TEAM_STORAGE_KEY)
+          if (legacyId !== null) {
+            localStorage.setItem(CURRENT_TEAM_STORAGE_KEY, legacyId)
+            localStorage.removeItem(LEGACY_TEAM_STORAGE_KEY)
+          }
           const storedId = localStorage.getItem(CURRENT_TEAM_STORAGE_KEY)
           const storedTeam = storedId ? items.find((team) => team.id === storedId) : null
           if (storedTeam) {

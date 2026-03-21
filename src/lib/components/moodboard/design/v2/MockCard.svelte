@@ -56,7 +56,7 @@
 
 <!-- 
   CARD COMPONENT - "Warm Clean Aesthetic"
-  Matches Cosplans Dashboard: White cards, soft shadows, rounded-2xl, gentle hover lift
+  Matches CraftBound Dashboard: White cards, soft shadows, rounded-2xl, gentle hover lift
 -->
 <div
     class="

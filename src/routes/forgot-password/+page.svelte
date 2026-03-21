@@ -31,8 +31,8 @@
 </script>
 
 <svelte:head>
-  <title>Forgot Password - Cosplans</title>
-  <meta name="description" content="Reset your Cosplans password" />
+  <title>Forgot Password - CraftBound</title>
+  <meta name="description" content="Reset your CraftBound password" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

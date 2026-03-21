@@ -226,7 +226,7 @@
 </script>
 
 <svelte:head>
-  <title>Save Reference - Cosplans</title>
+  <title>Save Reference - CraftBound</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-4xl py-8 px-4">

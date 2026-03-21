@@ -18,7 +18,7 @@ import {
 	getOfflineDB,
 	getNetworkMonitor,
 	SyncQueueManager,
-	type CosplansOfflineDB
+	type CraftBoundOfflineDB
 } from '$lib/utils/offlineSync';
 
 /**

@@ -19,7 +19,7 @@ import { DEFAULT_SYNC_CONFIG } from "$lib/types/offline";
 /**
  * Dexie database schema for offline storage
  */
-export class CosplansOfflineDB extends Dexie {
+export class CraftBoundOfflineDB extends Dexie {
   // Tables
   syncQueue!: Table<SyncQueueItem, string>;
   conflicts!: Table<SyncConflict, string>;
@@ -28,7 +28,7 @@ export class CosplansOfflineDB extends Dexie {
   teams!: Table<LocalTeamData, string>;
 
   constructor() {
-    super("CosplansOfflineDB");
+    super("CraftBoundOfflineDB");
 
     // Define schema
     this.version(1).stores({
@@ -88,11 +88,11 @@ export class CosplansOfflineDB extends Dexie {
 }
 
 // Singleton instance
-let dbInstance: CosplansOfflineDB | null = null;
+let dbInstance: CraftBoundOfflineDB | null = null;
 
-export function getOfflineDB(): CosplansOfflineDB {
+export function getOfflineDB(): CraftBoundOfflineDB {
   if (!dbInstance) {
-    dbInstance = new CosplansOfflineDB();
+    dbInstance = new CraftBoundOfflineDB();
   }
   return dbInstance;
 }
@@ -183,7 +183,7 @@ export function getNetworkMonitor(): NetworkMonitor {
  * Sync queue manager
  */
 export class SyncQueueManager {
-  private db: CosplansOfflineDB;
+  private db: CraftBoundOfflineDB;
   private config: SyncConfig;
   private isProcessing = false;
 

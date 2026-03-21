@@ -46,7 +46,7 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
     const response = await fetch(targetUrl, {
       headers: {
         'User-Agent':
-          'Mozilla/5.0 (compatible; Cosplans/1.0; +https://cosplans.app)',
+          'Mozilla/5.0 (compatible; CraftBound/1.0; +https://craftbound.app)',
         Accept: 'text/html,application/xhtml+xml',
       },
       // Set a timeout to prevent hanging

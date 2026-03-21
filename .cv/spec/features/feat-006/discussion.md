@@ -1,7 +1,7 @@
 # Discussion: FEAT-006 — Enhanced Moodboard System
 
 ## Historical Context & Evolution
-The "Brainstorming & Moodboard" feature (originally FEAT-006) identifies the "Idea Phase" as the core differentiator for Cosplans. Unlike competitors that start at project creation, Cosplans captures the chaotic "messy middle" of inspiration gathering.
+The "Brainstorming & Moodboard" feature (originally FEAT-006) identifies the "Idea Phase" as the core differentiator for CraftBound. Unlike competitors that start at project creation, CraftBound captures the chaotic "messy middle" of inspiration gathering.
 
 This specification unifies three previous documents:
 1. `specs [depricated]/006-brainstorming-moodboard` (Original vision)

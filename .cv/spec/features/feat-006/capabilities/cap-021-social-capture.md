@@ -25,7 +25,7 @@ Allow users to seamlessly capture inspiration from external apps (Instagram, Tik
 - **Integration:** The app must register as a Web Share Target in `manifest.json`.
 - **Flow:** 
   1. User clicks "Share" in external app (e.g. Instagram).
-  2. Selects "Cosplans" from Android share sheet.
+  2. Selects "CraftBound" from Android share sheet.
   3. App opens to a "Quick Capture" modal.
   4. User confirms destination moodboard (default: last used).
   5. App parses URL in background and notifies success.
@@ -53,5 +53,5 @@ Allow users to seamlessly capture inspiration from external apps (Instagram, Tik
 
 ## 21.6 Verification
 
-- **Manual:** Share a text/URL from another app to Cosplans.
+- **Manual:** Share a text/URL from another app to CraftBound.
 - **Manual:** Paste a YouTube URL into the canvas; verify it turns into a video card.

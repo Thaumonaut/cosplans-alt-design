@@ -155,7 +155,7 @@
 </script>
 
 <svelte:head>
-    <title>Cosplans - Cosplay Project Tracker</title>
+    <title>CraftBound - Cosplay Project Tracker</title>
     <meta
         name="description"
         content="Track your cosplay projects from inspiration to completion"
@@ -172,11 +172,11 @@
     <meta name="theme-color" content="#6366f1" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Cosplans" />
+    <meta name="apple-mobile-web-app-title" content="CraftBound" />
 
     <!-- Mobile Web App Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Cosplans" />
+    <meta name="application-name" content="CraftBound" />
 </svelte:head>
 
 <!-- Authenticated app layout with sidebar and header -->

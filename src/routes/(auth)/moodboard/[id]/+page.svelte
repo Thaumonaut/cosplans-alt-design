@@ -137,7 +137,14 @@
 
     // Navigate to a container node
     function drillInto(nodeId: string) {
-        goto(`/moodboard/${moodboardId}?parent=${nodeId}`);
+        const node = nodes.find(n => n.id === nodeId);
+        if (node?.nodeType === "moodboard_link" && node.linkedMoodboardId) {
+            // Navigate to linked moodboard
+            goto(`/moodboard/${node.linkedMoodboardId}`);
+        } else {
+            // Navigate into container (drill-down)
+            goto(`/moodboard/${moodboardId}?parent=${nodeId}`);
+        }
     }
 
     // Navigate up one level
@@ -479,7 +486,7 @@
 </script>
 
 <svelte:head>
-    <title>{moodboard?.title || "Moodboard"} - Cosplans</title>
+    <title>{moodboard?.title || "Moodboard"} - CraftBound</title>
 </svelte:head>
 
 <div class="flex flex-col h-full">

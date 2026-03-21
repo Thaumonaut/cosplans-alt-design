@@ -6,7 +6,7 @@ import { tasks, addTaskLocal, loadTasks } from './tasks.js'
 import { events, addEventLocal, loadEvents } from './events.js'
 import { user, setUser } from './user.js'
 import { authActions } from './auth-store.js'
-import { setupPersistence, loadPersistedData } from './persistence.js'
+import { setupPersistence, loadPersistedData, migrateStorageKeys } from './persistence.js'
 import { get } from 'svelte/store'
 
 /**
@@ -15,6 +15,9 @@ import { get } from 'svelte/store'
  */
 export async function initializeStores() {
   if (!browser) return
+
+  // Migrate localStorage keys from cosplans_* to craftbound_*
+  migrateStorageKeys()
 
   // Initialize theme and settings
   theme.initialize()

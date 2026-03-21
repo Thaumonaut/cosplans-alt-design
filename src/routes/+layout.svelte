@@ -52,7 +52,7 @@
 </script>
 
 <svelte:head>
-  <title>Cosplans - Cosplay Project Tracker</title>
+  <title>CraftBound - Cosplay Project Tracker</title>
   <meta
     name="description"
     content="Track your cosplay projects from inspiration to completion"

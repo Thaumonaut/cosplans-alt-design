@@ -25,7 +25,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
         supabase,
         session: session || null,
         user: data.user || session?.user || null,
-        title: "Cosplans - Cosplay Project Tracker",
+        title: "CraftBound - Cosplay Project Tracker",
         description:
           "Track your cosplay projects from inspiration to completion",
       };
@@ -43,7 +43,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
         supabase: null,
         session: null,
         user: data.user || null,
-        title: "Cosplans - Cosplay Project Tracker",
+        title: "CraftBound - Cosplay Project Tracker",
         description:
           "Track your cosplay projects from inspiration to completion",
       };
@@ -88,7 +88,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
       supabase,
       session: session || null,
       user: data.user || session?.user || null,
-      title: "Cosplans - Cosplay Project Tracker",
+      title: "CraftBound - Cosplay Project Tracker",
       description: "Track your cosplay projects from inspiration to completion",
     };
   } catch (err) {
@@ -98,7 +98,7 @@ export const load: LayoutLoad = async ({ fetch, data, depends, url }) => {
       supabase: null,
       session: null,
       user: data.user || null,
-      title: "Cosplans - Cosplay Project Tracker",
+      title: "CraftBound - Cosplay Project Tracker",
       description: "Track your cosplay projects from inspiration to completion",
     };
   }

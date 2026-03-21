@@ -67,8 +67,8 @@
 </script>
 
 <svelte:head>
-  <title>Sign In - Cosplans</title>
-  <meta name="description" content="Sign in to your Cosplans account" />
+  <title>Sign In - CraftBound</title>
+  <meta name="description" content="Sign in to your CraftBound account" />
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
